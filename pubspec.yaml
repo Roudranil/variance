@@ -1,0 +1,71 @@
+name: variance
+description: "An opinionated expense tracking app with material 3 UI"
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  drift: ^2.24.0
+  sqlite3_flutter_libs: ^0.5.41
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  provider: ^6.1.5+1
+  intl: ^0.20.2
+  drift_dev: ^2.24.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.10.4
+  dartdoc: ^9.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: codenewroman_nf
+      fonts:
+        - asset: fonts/CodeNewRomanNerdFont-Regular.otf
+        - asset: fonts/CodeNewRomanNerdFont-Italic.otf
+          style: italic
+        - asset: fonts/CodeNewRomanNerdFont-Bold.otf
+          weight: 700
+    - family: victormono_nf
+      fonts:
+        - asset: fonts/VictorMonoNerdFont-Regular.ttf
+        - asset: fonts/VictorMonoNerdFont-Bold.ttf
+          weight: 700
+        - asset: fonts/VictorMonoNerdFont-Italic.ttf
+          style: italic
+        - asset: fonts/VictorMonoNerdFont-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: fonts/VictorMonoNerdFont-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: fonts/VictorMonoNerdFont-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: fonts/VictorMonoNerdFont-ThinItalic.ttf
+          weight: 100
+          style: italic
+    - family: lmsans
+      fonts:
+        - asset: fonts/lmsans10-regular.otf
+        - asset: fonts/lmsans10-bold.otf
+          weight: 700
+        - asset: fonts/lmsans10-oblique.otf
+          style: italic
+    - family: lmroman
+      fonts:
+        - asset: fonts/lmroman10-regular.otf
+        - asset: fonts/lmroman10-bold.otf
+          weight: 700
+        - asset: fonts/lmroman10-italic.otf
+          style: italic

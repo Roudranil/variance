@@ -1,0 +1,22 @@
+# top-most EditorConfig file
+root = true
+
+# Default indentation
+[*]
+indent_style = space
+indent_size = 2
+
+# YAML files
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_style = space
+indent_size = 2
+
+# TOML files
+[*.toml]
+indent_style = space
+indent_size = 2
