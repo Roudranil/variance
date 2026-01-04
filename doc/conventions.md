@@ -15,6 +15,8 @@ We use `Provider` + `ChangeNotifier` for its simplicity and adequacy for this sc
 
 ## Coding Style
 *   **Docstrings**: All public classes and methods **must** have docstrings explaining *what* they do and *why*.
+*   **Logging**: STRICTLY use `VarianceLogger` from `lib/core/utils/logger.dart`. Do NOT use `print`, `dart:developer.log` directly, or other logger packages.
+    *   *Why?* To enforce a consistent, colored, and formatted log output across the app.
 *   **Immutability**: Prefer `final` fields. Use `copyWith` methods for updates.
 *   **Small Functions**: Break down large build methods into smaller widgets or helper methods.
 *   **Types**: Avoid `dynamic`. Use strict typing everywhere.

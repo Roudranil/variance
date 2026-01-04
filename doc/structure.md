@@ -11,7 +11,7 @@ lib/
 │   │   ├── extensions/         # Theme Extensions (Semantic Colors, Text Sizes)
 │   │   ├── app_theme.dart      # Main Theme Data generator
 │   │   └── theme_provider.dart # State Management for Theme switching
-│   ├── utils/                  # formatting logic (Currency, Dates)
+│   ├── utils/                  # formatting logic (Currency, Dates) & logger.dart
 │   └── widgets/                # Generic, dumb UI components (Buttons, Cards)
 │
 ├── database/                   # The centralized Data Layer
