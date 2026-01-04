@@ -16,12 +16,13 @@ erDiagram
         int id PK
         enum type "cash, savings, bankAccount, creditCard, loan, investment, insurance"
         double currentBalance "Cached Sum"
+        bool isDeleted "Soft Delete"
     }
 
     Transaction {
         int id PK
         double amount
-        enum type "income, expense, transfer"
+        enum type "income, expense, transfer, adjustment"
         int sourceAccountId FK "Nullable"
         int destinationAccountId FK "Nullable"
     }
@@ -37,6 +38,7 @@ In our context:
 *   **Expense**: Money leaves an Asset account. `Asset ↓` (Equity ↓).
 *   **Income**: Money enters an Asset account. `Asset ↑` (Equity ↑).
 *   **Transfer**: Money moves from one Asset to another. `Asset A ↓`, `Asset B ↑` (Net Zero).
+*   **Adjustment**: Correction of balance. Can be Inflow or Outflow depending on context.
 
 ### Implementation Rules
 When a `Transaction` is created, the repository **atomically**:
@@ -66,6 +68,7 @@ Represents a physical or digital store of value.
 | `currentBalance` | `Real` | Default 0.0 | `initialBalance` + Sum(Transactions) |
 | `currencyCode` | `Text` | Default 'INR' | ISO 4217 Code |
 | `includeInTotals`| `Bool` | Default `true`| Include in Net Worth calculations |
+| `isDeleted` | `Bool` | Default `false` | Soft Delete Flag |
 | `statementDay` | `Int` | Nullable, 1-31 | Only for `creditCard` |
 | `paymentDueDay` | `Int` | Nullable, 1-31 | Only for `creditCard` |
 | `interestRate` | `Real` | Nullable | % for Loans/Savings |
@@ -86,6 +89,7 @@ Classifies where money comes from or goes to.
 | `parentId` | `Int` | FK -> `Categories.id` | Null implies Top-Level Category |
 | `color` | `Int` | Nullable | ARGB Integer for UI styling |
 | `iconData` | `Text` | Nullable | Asset path or Icon CodePoint |
+| `isDeleted` | `Bool` | Default `false` | Soft Delete Flag |
 
 ### 3. Transactions
 The central record of a financial event.
@@ -94,6 +98,7 @@ The central record of a financial event.
 *   **Expense:** Money leaving an account (e.g., Buying Coffee).
 *   **Income:** Money entering an account (e.g., Salary).
 *   **Transfer:** Moving money between accounts (e.g., ATM Withdrawal: Bank -> Cash).
+*   **Adjustment:** Manual balance correction.
 *   **Date:** When it happened. Defaults to Now.
 
 #### Technical Spec (`Transactions`)
@@ -101,7 +106,7 @@ The central record of a financial event.
 | :--- | :--- | :--- | :--- |
 | `id` | `Int` | PK, AutoInc | Unique ID |
 | `amount` | `Real` | > 0 | Magnitude. Polarity determined by Logic. |
-| `type` | `Enum` | `TransactionType`| `expense`, `income`, `transfer` |
+| `type` | `Enum` | `TransactionType`| `expense`, `income`, `transfer`, `adjustment` |
 | `transactionDate` | `DateTime` | Not Null | Event timestamp |
 | `sourceAccountId` | `Int` | FK -> `Accounts` | Required for Expense/Transfer |
 | `destinationAccountId` | `Int` | FK -> `Accounts` | Required for Income/Transfer |
@@ -121,6 +126,7 @@ Flexible labels for cross-cutting analysis.
 | :--- | :--- | :--- |
 | `id` | `Int` | PK |
 | `name` | `Text` | Unique Label |
+| `isDeleted` | `Bool` | Soft Delete Flag |
 
 **Table `TransactionTags` (Join Table)**
 | Column | Type | Constraints |
@@ -143,3 +149,4 @@ Automation engine for repeating transactions.
 | `nextRunDate` | `DateTime` | Optimization field for query speed |
 | `type` | `Enum` | `RecurringType`: `automatic`, `manualReminder` |
 | `templateData` | `Text` | JSON blob of the transaction to clone |
+| `isDeleted` | `Bool` | Soft Delete Flag |
