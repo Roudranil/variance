@@ -7,7 +7,10 @@ Variance adopts a **Feature-First Architecture** to ensure detailed separation o
 ```text
 lib/
 ├── core/                       # Shared components used across features
-│   ├── theme/                  # Design system, colors, and typography
+│   ├── theme/                  # Design system configurations
+│   │   ├── extensions/         # Theme Extensions (Semantic Colors, Text Sizes)
+│   │   ├── app_theme.dart      # Main Theme Data generator
+│   │   └── theme_provider.dart # State Management for Theme switching
 │   ├── utils/                  # formatting logic (Currency, Dates)
 │   └── widgets/                # Generic, dumb UI components (Buttons, Cards)
 │

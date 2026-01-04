@@ -1,8 +1,25 @@
-# Database Unit Tests
+# Unit Tests
 
-This document details the comprehensive unit test suite implemented for the Variance database layer. All tests are run using an in-memory SQLite database (`NativeDatabase.memory()`) to ensure speed and isolation.
+This document details the comprehensive unit test suite implemented for the Variance application, covering both the Database Layer and the UI Foundation. All tests are run using `flutter test`.
 
-## 1. AccountRepository Tests
+## 1. UI Foundation Tests
+**Location:** [`test/core/theme`](file:///home/rudy/code/variance/test/core/theme)
+
+### Group: Extensions
+| Test Case | Description | Expected Result |
+| :--- | :--- | :--- |
+| `TextSizesExtension` | Verifies the Tailwind-inspired scaling logic. | - `xs`...`xl9` match expected pixel values<br>- `scaleFactor` correctly multiplies base sizes<br>- `lerp` handles transition between factors |
+| `SemanticColorsExtension` | Verifies financial color mapping. | - `income` maps to Green (Latte/Mocha dependent)<br>- `expense` maps to Red (Latte/Mocha dependent)<br>- `general` maps to correct accent color |
+
+### Group: Logic (Providers)
+| Test Case | Description | Expected Result |
+| :--- | :--- | :--- |
+| `AppTheme.define` | Verifies theme generation. | - Correct `Brightness`<br>- Extensions are registered<br>- `seedColor` is respected |
+| `ThemeProvider` | Verifies state management unit logic. | - `toggleThemeMode` switches System/Light/Dark<br>- `setAccentColor` disables dynamic color<br>- `toggleDynamicColor` updates state |
+
+---
+
+## 2. AccountRepository Tests
 **Location:** [`test/features/accounts/data/account_repository_test.dart`](file:///home/rudy/code/variance/test/features/accounts/data/account_repository_test.dart)
 
 ### Group: CRUD
@@ -21,7 +38,7 @@ This document details the comprehensive unit test suite implemented for the Vari
 
 ---
 
-## 2. TransactionRepository Tests
+## 3. TransactionRepository Tests
 **Location:** [`test/features/transactions/data/transaction_repository_test.dart`](file:///home/rudy/code/variance/test/features/transactions/data/transaction_repository_test.dart)
 
 ### Group: Double-Entry Validation
@@ -40,7 +57,7 @@ This document details the comprehensive unit test suite implemented for the Vari
 
 ---
 
-## 3. CategoryRepository Tests
+## 4. CategoryRepository Tests
 **Location:** [`test/features/categories/data/category_repository_test.dart`](file:///home/rudy/code/variance/test/features/categories/data/category_repository_test.dart)
 
 ### Group: CRUD

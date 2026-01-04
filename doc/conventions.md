@@ -27,6 +27,17 @@ We use `Provider` + `ChangeNotifier` for its simplicity and adequacy for this sc
 ## Database Pattern
 *   **Repositories** own the database queries. UI should never call `_db.select` directly.
 *   **Streams**: Prefer exposure via `Stream` so the UI reacts automatically to database changes.
+*   **Transactions**: All balance changes must flow through `TransactionRepository` to ensure double-entry book keeping.
+
+## UI Design System
+*   **Theming**: We use a dynamic theme system powered by `provider` + `dynamic_color`.
+*   **Extensions over Constants**: Do NOT hardcode colors or font sizes.
+    *   **Colors**: Use `context.semantic.income` (mapped to Catppuccin flavors).
+    *   **Typography**: Use `context.textSizes.xl` (mapped to Tailwind-inspired scale).
+    *   *Why?* This allows us to scale or switch themes globally without touching widget code.
+*   **Catppuccin**: We use the Catppuccin palette (Latte for Light, Mocha for Dark) as our persistent color identity.
+*   **Tailwind Typography**: We use valid Tailwind CSS font sizes (as doubles) via `TextSizesExtension`.
+
 
 ## API Design Patterns
 *   **Encapsulation**: Public repository methods must **NOT** expose database-specific objects (like Drift's `Companions` or `Value` wrappers).
