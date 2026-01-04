@@ -1,5 +1,8 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
+
+import 'package:variance/core/utils/logger.dart';
 
 /// Configuration
 const String sourceDir = 'doc/temp';
@@ -17,7 +20,7 @@ void main() async {
   final target = Directory(targetDir);
 
   if (!await source.exists()) {
-    print('Error: Source directory $sourceDir does not exist.');
+    VarianceLogger.error('Error: Source directory $sourceDir does not exist.');
     exit(1);
   }
 
@@ -27,7 +30,7 @@ void main() async {
   }
   await target.create(recursive: true);
 
-  print('Scanning $sourceDir...');
+  VarianceLogger.info('Scanning $sourceDir...');
 
   // Map to hold files for each target output file
   // Key: Target filename relative to doc/api, Value: List of source file contents
@@ -53,7 +56,14 @@ void main() async {
 
     final topFolder = segments.first;
 
-    if (ignoredDirs.contains(topFolder)) continue;
+    if (ignoredDirs.contains(topFolder)) {
+      VarianceLogger.debug('Skipping $topFolder');
+      continue;
+    }
+    if (topFolder.endsWith('_test')) {
+      VarianceLogger.debug('Skipping $topFolder');
+      continue;
+    }
 
     // We want one markdown file per top-level folder in lib/
     // e.g. lib/features/accounts -> doc/api/features_accounts.md
@@ -98,10 +108,10 @@ void main() async {
       await outFile.writeAsString(content, mode: FileMode.append);
       await outFile.writeAsString('\n---\n\n', mode: FileMode.append);
     }
-    print('Generated: ${outFile.path}');
+    VarianceLogger.info('Generated: ${outFile.path}');
   }
 
-  print('Done! Documentation generated in $targetDir');
+  VarianceLogger.info('Done! Documentation generated in $targetDir');
 }
 
 String _adjustHeaders(String content, String filepath) {

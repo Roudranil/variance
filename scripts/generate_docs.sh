@@ -47,6 +47,11 @@ dart pub global run dart_doc_markdown_generator . doc/temp
 echo "Running merger..."
 dart run tool/doc_merger.dart
 
+# Remove backup if successful
+if [ -d "doc/api_reference.bak" ]; then
+    rm -rf "doc/api_reference.bak"
+fi
+
 echo "Cleaning up..."
 rm -rf doc/temp
 
