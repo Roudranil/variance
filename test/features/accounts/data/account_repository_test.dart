@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,14 +21,11 @@ void main() {
 
   group('AccountRepository CRUD', () {
     test('createAccount adds a new account with correct defaults', () async {
-      final companion = AccountsCompanion.insert(
+      final id = await repository.createAccount(
         name: 'Test Account',
         type: AccountType.savings,
-        initialBalance: const Value(1000.0),
-        currentBalance: const Value(1000.0),
+        initialBalance: 1000.0,
       );
-
-      final id = await repository.createAccount(companion);
       expect(id, isNotNull);
 
       final validAccount = await repository.getAccount(id);
@@ -43,11 +39,9 @@ void main() {
 
     test('deleteAccount sets isDeleted to true', () async {
       final id = await repository.createAccount(
-        AccountsCompanion.insert(
-          name: 'To Delete',
-          type: AccountType.cash,
-          currentBalance: const Value(0),
-        ),
+        name: 'To Delete',
+        type: AccountType.cash,
+        initialBalance: 0,
       );
 
       await repository.deleteAccount(id);
@@ -64,18 +58,14 @@ void main() {
 
     test('watchAllAccounts returns ordered active accounts', () async {
       await repository.createAccount(
-        AccountsCompanion.insert(
-          name: 'B Account',
-          type: AccountType.cash,
-          currentBalance: const Value(0),
-        ),
+        name: 'B Account',
+        type: AccountType.cash,
+        initialBalance: 0,
       );
       await repository.createAccount(
-        AccountsCompanion.insert(
-          name: 'A Account',
-          type: AccountType.cash,
-          currentBalance: const Value(0),
-        ),
+        name: 'A Account',
+        type: AccountType.cash,
+        initialBalance: 0,
       );
 
       final accounts = await repository.watchAllAccounts().first;
@@ -90,12 +80,9 @@ void main() {
 
     setUp(() async {
       accountId = await repository.createAccount(
-        AccountsCompanion.insert(
-          name: 'Logic Test',
-          type: AccountType.bankAccount,
-          currentBalance: const Value(5000.0),
-          initialBalance: const Value(5000.0),
-        ),
+        name: 'Logic Test',
+        type: AccountType.bankAccount,
+        initialBalance: 5000.0,
       );
     });
 

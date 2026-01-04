@@ -21,19 +21,15 @@ void main() {
 
     // Setup initial accounts
     sourceId = await accountRepository.createAccount(
-      AccountsCompanion.insert(
-        name: 'Source',
-        type: AccountType.cash,
-        currentBalance: const Value(1000.0), // Start with 1000
-      ),
+      name: 'Source',
+      type: AccountType.cash,
+      initialBalance: 1000.0,
     );
 
     destId = await accountRepository.createAccount(
-      AccountsCompanion.insert(
-        name: 'Dest',
-        type: AccountType.savings,
-        currentBalance: const Value(500.0), // Start with 500
-      ),
+      name: 'Dest',
+      type: AccountType.savings,
+      initialBalance: 500.0,
     );
   });
 

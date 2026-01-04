@@ -1,6 +1,6 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:variance/database/database.dart';
 import 'package:variance/database/enums.dart';
 import 'package:variance/features/categories/data/category_repository.dart';
@@ -20,14 +20,12 @@ void main() {
 
   group('CategoryRepository CRUD', () {
     test('createCategory adds category', () async {
-      final companion = CategoriesCompanion.insert(
+      final id = await repository.createCategory(
         name: 'Food',
         kind: CategoryKind.expense,
-        iconData: const Value('fastfood'),
-        color: const Value(0xFF123456),
+        iconData: 'fastfood',
+        color: 0xFF123456,
       );
-
-      final id = await repository.createCategory(companion);
       expect(id, isNotNull);
 
       final categories = await repository.watchAllCategories().first;
@@ -38,12 +36,11 @@ void main() {
 
     test('watchCategoriesByKind filters correctly', () async {
       // Create Expense
-      await repository.createCategory(
-        CategoriesCompanion.insert(name: 'Food', kind: CategoryKind.expense),
-      );
+      await repository.createCategory(name: 'Food', kind: CategoryKind.expense);
       // Create Income
       await repository.createCategory(
-        CategoriesCompanion.insert(name: 'Salary', kind: CategoryKind.income),
+        name: 'Salary',
+        kind: CategoryKind.income,
       );
 
       // Watch Expense
@@ -67,10 +64,8 @@ void main() {
 
     test('deleteCategory soft deletes', () async {
       final id = await repository.createCategory(
-        CategoriesCompanion.insert(
-          name: 'To Delete',
-          kind: CategoryKind.expense,
-        ),
+        name: 'To Delete',
+        kind: CategoryKind.expense,
       );
 
       await repository.deleteCategory(id);
