@@ -1,8 +1,9 @@
-import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 
-import 'extensions/semantic_color_extension.dart';
-import 'extensions/text_sizes_extension.dart';
+import 'package:catppuccin_flutter/catppuccin_flutter.dart';
+
+import 'package:variance/core/theme/extensions/semantic_color_extension.dart';
+import 'package:variance/core/theme/extensions/text_sizes_extension.dart';
 
 /// Defines the configuration for the application theme.
 ///
@@ -38,8 +39,26 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      fontFamily: 'lmsans',
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        indicatorColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: colorScheme.tertiary);
+          }
+          return IconThemeData(color: colorScheme.onSurfaceVariant);
+        }),
+      ),
       extensions: [
-        TextSizesExtension(),
+        const TextSizesExtension(),
         SemanticColorsExtension(flavor: flavor, general: effectiveSeed),
       ],
     );
