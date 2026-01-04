@@ -22,6 +22,16 @@
 
 ## 3. Work Completed
 ### UI Foundation (New - 2026-01-04)
+*   **App Shell**: Implemented `HomeScreen` with 4-tab `NavigationBar` (`IndexedStack` navigation).
+*   **Screens**: Created placeholder screens for Transactions, Dashboard, Accounts, Settings.
+*   **Entry Point**: Refactored into `main.dart` (entry) and `app.dart` (configuration).
+*   **Theming**:
+    *   Font set to `lmsans`.
+    *   Configured `AppBarTheme` (centered, flat) and `NavigationBarTheme` (tertiary selected icon).
+    *   Extensions: `SemanticColorsExtension` & `TextSizesExtension` fully integrated.
+*   **Verification**: 100% Test Coverage for new UI components.
+
+### UI Foundation (Previous)
 *   **Theming Architecture:** Established `lib/core/theme` with `ThemeProvider` and `AppTheme`.
 *   **Extensions:**
     *   `SemanticColorsExtension`: Maps business logic (Income/Expense) to Catppuccin colors (Green/Red).
