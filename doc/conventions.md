@@ -27,3 +27,10 @@ We use `Provider` + `ChangeNotifier` for its simplicity and adequacy for this sc
 ## Database Pattern
 *   **Repositories** own the database queries. UI should never call `_db.select` directly.
 *   **Streams**: Prefer exposure via `Stream` so the UI reacts automatically to database changes.
+
+## API Design Patterns
+*   **Encapsulation**: Public repository methods must **NOT** expose database-specific objects (like Drift's `Companions` or `Value` wrappers).
+    *   *Bad*: `createAccount(AccountsCompanion companion)`
+    *   *Good*: `createAccount({required String name, required AccountType type, ...})`
+*   **Named Parameters**: Use named parameters for all repository methods with more than 1 argument. This improves readability at the call site.
+
