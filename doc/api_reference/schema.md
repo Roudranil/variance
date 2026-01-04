@@ -106,15 +106,15 @@
 
 ---
 
-## Method: `type`
+## Method: `statementDay`
 
 ### Description
 
-The category/nature of the account.
- Used for UI grouping and reporting logic (Net Worth calculation).
+The day of the month (1-31) when the statement is generated.
+ Nullable: Only relevant for [type] == 'creditCard'.
 
 ### Return Type
-`TextColumn`
+`IntColumn`
 
 
 
@@ -230,6 +230,20 @@ The opening balance when the account was created/imported.
 
 ---
 
+## Method: `type`
+
+### Description
+
+The category/nature of the account.
+ Used for UI grouping and reporting logic (Net Worth calculation).
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
 ## Method: `id`
 
 ### Description
@@ -243,15 +257,14 @@ The opening balance when the account was created/imported.
 
 ---
 
-## Method: `statementDay`
+## Method: `isDeleted`
 
 ### Description
 
-The day of the month (1-31) when the statement is generated.
- Nullable: Only relevant for [type] == 'creditCard'.
+Soft Delete flag. If true, the account is hidden from the UI but kept for history.
 
 ### Return Type
-`IntColumn`
+`BoolColumn`
 
 
 
@@ -341,6 +354,19 @@ The account money is going TO.
 
 ---
 
+## Method: `isDeleted`
+
+### Description
+
+Soft Delete flag.
+
+### Return Type
+`BoolColumn`
+
+
+
+---
+
 ## Method: `color`
 
 ### Description
@@ -420,6 +446,19 @@ When this pattern starts active.
 
 ---
 
+## Method: `type`
+
+### Description
+
+Automation type.
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
 ## Method: `name`
 
 ### Description
@@ -433,15 +472,14 @@ Display name (e.g., "Food", "Salary").
 
 ---
 
-## Method: `nextRunDate`
+## Method: `isDeleted`
 
 ### Description
 
-Optimization field: The pre-calculated date of the next occurrence.
- The engine queries this to find what's due today.
+Soft Delete flag.
 
 ### Return Type
-`DateTimeColumn`
+`BoolColumn`
 
 
 
@@ -593,6 +631,19 @@ Icon identifier (stored as string codePoint or asset path).
 
 ---
 
+## Method: `isDeleted`
+
+### Description
+
+Soft Delete flag.
+
+### Return Type
+`BoolColumn`
+
+
+
+---
+
 ## Method: `color`
 
 ### Description
@@ -620,14 +671,15 @@ Self-referencing Foreign Key to support sub-categories.
 
 ---
 
-## Method: `type`
+## Method: `nextRunDate`
 
 ### Description
 
-Automation type.
+Optimization field: The pre-calculated date of the next occurrence.
+ The engine queries this to find what's due today.
 
 ### Return Type
-`TextColumn`
+`DateTimeColumn`
 
 
 

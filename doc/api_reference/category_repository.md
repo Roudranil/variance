@@ -29,6 +29,7 @@
 ### Description
 
 Watches categories by type (Expense/Income).
+ Excluding deleted.
 
 ### Return Type
 `Stream<List<Category>>`
@@ -61,7 +62,7 @@ Creates a new category.
 ### Description
 
 Watches all categories.
- TODO: Add sorting or tree-traversal logic for UI display.
+ Excluding deleted.
 
 ### Return Type
 `Stream<List<Category>>`
@@ -74,11 +75,10 @@ Watches all categories.
 
 ### Description
 
-Deletes a category.
- TODO: Add logic to prevent deleting if it has children or transactions.
+Soft deletes a category.
 
 ### Return Type
-`Future<int>`
+`Future<void>`
 
 ### Parameters
 

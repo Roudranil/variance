@@ -29,13 +29,10 @@
 
 ### Description
 
-Deletes an account.
-
- Note: This logic assumes no cascading delete constraints are blocking the deletion.
- If transactions exist, this might fail depending on FK settings.
+Soft deletes an account.
 
 ### Return Type
-`Future<int>`
+`Future<void>`
 
 ### Parameters
 
@@ -49,9 +46,10 @@ Deletes an account.
 ### Description
 
 Updates an existing account.
+ If [currentBalance] is changed, creates an 'adjustment' Transaction.
 
 ### Return Type
-`Future<bool>`
+`Future<void>`
 
 ### Parameters
 
@@ -97,6 +95,7 @@ Gets a single account by ID.
 ### Description
 
 Watches all accounts ordered by name.
+ Excluding deleted accounts.
 
 ### Return Type
 `Stream<List<Account>>`

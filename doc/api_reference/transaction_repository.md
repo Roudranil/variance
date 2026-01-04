@@ -40,6 +40,22 @@ Watches all transactions from the database.
 
 ---
 
+## Method: `deleteTransaction`
+
+### Description
+
+Deletes a transaction and REVERTS its effect on account balances.
+
+### Return Type
+`Future<void>`
+
+### Parameters
+
+- `id`: `int`
+
+
+---
+
 ## Method: `createTransaction`
 
 ### Description
@@ -68,6 +84,23 @@ Watches all transactions from the database.
 - ``: `dynamic`
 - ``: `dynamic`
 - ``: `dynamic`
+
+
+---
+
+## Method: `updateTransaction`
+
+### Description
+
+Updates a transaction.
+ Conceptually: Reverts the OLD transaction, then Applies the NEW transaction.
+
+### Return Type
+`Future<void>`
+
+### Parameters
+
+- `updatedTransaction`: `Transaction`
 
 
 ---
