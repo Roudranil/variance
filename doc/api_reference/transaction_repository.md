@@ -4,14 +4,12 @@
 
 ### Description
 
-**Transaction Repository**
+Handles all business logic related to the central ledger [Transactions].
 
- Handles all business logic related to the central ledger ([Transactions]).
-
- **Key Responsibilities:**
- *   CRUD operations for transactions.
- *   **Enforcing Double-Entry Integrity**: Ensures that creating a transaction
-     automatically updates the [currentBalance] of related Accounts.
+ Responsibilities:
+ - CRUD operations for transactions.
+ - Enforcing Double-Entry Integrity: Ensures that creating a transaction
+   automatically updates the [currentBalance] of related Accounts.
 
 ### Members
 
@@ -44,7 +42,10 @@ Watches all transactions from the database.
 
 ### Description
 
-Deletes a transaction and REVERTS its effect on account balances.
+Deletes a transaction and reverts its effect on account balances.
+
+ Parameters:
+ - [id]: The ID of the transaction to delete.
 
 ### Return Type
 `Future<void>`
@@ -60,17 +61,25 @@ Deletes a transaction and REVERTS its effect on account balances.
 
 ### Description
 
-**Core Double-Entry Operation**
+Creates a new transaction record and updates the affected Account balances.
 
- Creates a new transaction record AND updates the affected Account balances
- in a single atomic database transaction.
+ This is the core Double-Entry operation. It executes in a single atomic database transaction.
 
- **Logic:**
- *   **Expense**: [sourceAccountId] is required. Reduces Source Balance by [amount].
- *   **Income**: [destinationAccountId] is required. Increases Dest Balance by [amount].
- *   **Transfer**: Both Accounts required. Reduces Source, Increases Dest.
+ Logic:
+ - Expense: [sourceAccountId] is required. Reduces Source Balance by [amount].
+ - Income: [destinationAccountId] is required. Increases Dest Balance by [amount].
+ - Transfer: Both Accounts required. Reduces Source, Increases Dest.
 
  Throws an error if required accounts are missing for the given [type].
+
+ Parameters:
+ - [amount]: The transaction amount.
+ - [type]: The transaction type (expense, income, transfer).
+ - [date]: The date of transaction.
+ - [sourceAccountId]: ID of source account (required for expense/transfer).
+ - [destinationAccountId]: ID of destination account (required for income/transfer).
+ - [categoryId]: ID of the category.
+ - [description]: Optional description.
 
 ### Return Type
 `Future<void>`
@@ -93,7 +102,11 @@ Deletes a transaction and REVERTS its effect on account balances.
 ### Description
 
 Updates a transaction.
+
  Conceptually: Reverts the OLD transaction, then Applies the NEW transaction.
+
+ Parameters:
+ - [updatedTransaction]: The transaction object with updated values.
 
 ### Return Type
 `Future<void>`

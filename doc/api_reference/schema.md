@@ -4,9 +4,8 @@
 
 ### Description
 
-**Categories Table**
+Classifies the nature of a transaction (Flow).
 
- Classifies the nature of a transaction (Flow).
  Technically acts as Nominal Accounts in a strict ledger, but here treated as tagging.
  Supports infinite hierarchy via [parentId].
 
@@ -22,14 +21,13 @@
 
 ### Description
 
-**Accounts Table**
+Represents the physical or digital storage of money.
 
- Represents the physical or digital storage of money.
  This is the core entity for the Double Entry system.
 
- **Constraints:**
- *   [type] must be one of [AccountType] values.
- *   [currencyCode] defaults to 'INR'.
+ Constraints:
+ - [type] must be one of [AccountType] values.
+ - [currencyCode] defaults to 'INR'.
 
 ### Dependencies
 
@@ -43,9 +41,8 @@
 
 ### Description
 
-**Transactions Table**
+Represents the central ledger of the application.
 
- The central ledger of the application.
  Records money moving between accounts (Transfer) or in/out of an account (Income/Expense).
 
 ### Dependencies
@@ -60,9 +57,8 @@
 
 ### Description
 
-**Tags Table**
+Defines cross-cutting labels for grouping transactions across categories.
 
- Cross-cutting labels for grouping transactions across categories.
  Example: "Trip 2025" tag on Food, Flight, and Hotel transactions.
 
 ### Dependencies
@@ -77,9 +73,8 @@
 
 ### Description
 
-**RecurringPatterns Table**
+Represents definitions for transactions that repeat over time.
 
- Definitions for transactions that repeat over time.
  Used by the generator engine to create actual [Transactions] entries.
 
 ### Dependencies
@@ -94,9 +89,7 @@
 
 ### Description
 
-**TransactionTags Table**
-
- Many-to-Many join table linking [Transactions] and [Tags].
+Defines the Many-to-Many relationship between [Transactions] and [Tags].
 
 ### Dependencies
 
@@ -111,6 +104,7 @@
 ### Description
 
 The day of the month (1-31) when the statement is generated.
+
  Nullable: Only relevant for [type] == 'creditCard'.
 
 ### Return Type
@@ -137,7 +131,7 @@ The actual date and time the transaction occurred.
 
 ### Description
 
-Optional user note.
+The optional user-defined note.
 
 ### Return Type
 `TextColumn`
@@ -151,6 +145,7 @@ Optional user note.
 ### Description
 
 The account money is coming FROM.
+
  Required for: 'expense', 'transfer'.
  Null for: 'income'.
 
@@ -166,6 +161,7 @@ The account money is coming FROM.
 ### Description
 
 The classification category.
+
  Required for: 'expense', 'income'.
  Optional/Null for: 'transfer' (Transfers usually don't need categories).
 
@@ -180,7 +176,8 @@ The classification category.
 
 ### Description
 
-Annual Interest Rate (percentage).
+The annual Interest Rate (percentage).
+
  Nullable: Only relevant for loans or savings accounts.
 
 ### Return Type
@@ -194,7 +191,7 @@ Annual Interest Rate (percentage).
 
 ### Description
 
-Primary Key. Auto-incrementing integer.
+The primary Key. Auto-incrementing integer.
 
 ### Return Type
 `IntColumn`
@@ -207,7 +204,8 @@ Primary Key. Auto-incrementing integer.
 
 ### Description
 
-ISO 4217 Currency Code (e.g., 'INR', 'USD').
+The ISO 4217 Currency Code (e.g., 'INR', 'USD').
+
  Defaults to 'INR'.
 
 ### Return Type
@@ -234,7 +232,8 @@ The opening balance when the account was created/imported.
 
 ### Description
 
-The category/nature of the account.
+The nature. of the account.
+
  Used for UI grouping and reporting logic (Net Worth calculation).
 
 ### Return Type
@@ -261,7 +260,9 @@ The category/nature of the account.
 
 ### Description
 
-Soft Delete flag. If true, the account is hidden from the UI but kept for history.
+The soft Delete flag.
+
+ If true, the account is hidden from the UI but kept for history.
 
 ### Return Type
 `BoolColumn`
@@ -275,6 +276,7 @@ Soft Delete flag. If true, the account is hidden from the UI but kept for histor
 ### Description
 
 The day of the month (1-31) when the payment is due.
+
  Nullable: Only relevant for [type] == 'creditCard'.
 
 ### Return Type
@@ -289,6 +291,7 @@ The day of the month (1-31) when the payment is due.
 ### Description
 
 The current calculated balance.
+
  NOTE: This can be derived from [initialBalance] + Sum(Transactions).
  Optimization: We might cache this value here.
 
@@ -317,7 +320,7 @@ Determines if the balances in this account should be included in
 
 ### Description
 
-User-defined name for the account (e.g., "HDFC Bank", "Wallet").
+The user-defined name for the account (e.g., "HDFC Bank", "Wallet").
 
 ### Return Type
 `TextColumn`
@@ -331,6 +334,7 @@ User-defined name for the account (e.g., "HDFC Bank", "Wallet").
 ### Description
 
 The account money is going TO.
+
  Required for: 'income', 'transfer'.
  Null for: 'expense'.
 
@@ -397,7 +401,7 @@ Soft Delete flag.
 
 ### Description
 
-Audit timestamp.
+The audit timestamp.
 
 ### Return Type
 `DateTimeColumn`
@@ -423,8 +427,9 @@ Audit timestamp.
 
 ### Description
 
-JSON blob containing the template data (amount, accounts, category)
- to copy when generating the real transaction.
+The template data (amount, accounts, category) to copy when generating the real transaction.
+
+ Stored as a JSON blob.
 
 ### Return Type
 `TextColumn`
@@ -437,7 +442,7 @@ JSON blob containing the template data (amount, accounts, category)
 
 ### Description
 
-When this pattern starts active.
+The date when this pattern starts active.
 
 ### Return Type
 `DateTimeColumn`
@@ -450,7 +455,7 @@ When this pattern starts active.
 
 ### Description
 
-Automation type.
+The automation type.
 
 ### Return Type
 `TextColumn`
@@ -463,7 +468,7 @@ Automation type.
 
 ### Description
 
-Display name (e.g., "Food", "Salary").
+The display name (e.g., "Food", "Salary").
 
 ### Return Type
 `TextColumn`
@@ -489,7 +494,8 @@ Soft Delete flag.
 
 ### Description
 
-When this pattern stops.
+The date when this pattern stops.
+
  If null, it repeats forever.
 
 ### Return Type
@@ -503,7 +509,8 @@ When this pattern stops.
 
 ### Description
 
-Multiplier for the frequency.
+The multiplier for the frequency.
+
  Example: frequency='weekly', interval=2 implies "Every 2 weeks".
 
 ### Return Type
@@ -517,7 +524,7 @@ Multiplier for the frequency.
 
 ### Description
 
-Base frequency unit.
+The base frequency unit.
 
 ### Return Type
 `TextColumn`
@@ -583,6 +590,7 @@ The nature of the transaction.
 ### Description
 
 The absolute magnitude of the money flow.
+
  NOTE: Always stored as a positive number. Direction is determined by [type] and Accounts.
 
 ### Return Type
@@ -609,7 +617,7 @@ The direction of flow this category represents.
 
 ### Description
 
-Primary Key.
+The primary Key.
 
 ### Return Type
 `IntColumn`
@@ -622,7 +630,7 @@ Primary Key.
 
 ### Description
 
-Icon identifier (stored as string codePoint or asset path).
+The icon identifier (stored as string codePoint or asset path).
 
 ### Return Type
 `TextColumn`
@@ -648,7 +656,7 @@ Soft Delete flag.
 
 ### Description
 
-UI Color (stored as ARGB integer).
+The UI Color (stored as ARGB integer).
 
 ### Return Type
 `IntColumn`
@@ -661,7 +669,8 @@ UI Color (stored as ARGB integer).
 
 ### Description
 
-Self-referencing Foreign Key to support sub-categories.
+The self-referencing Foreign Key to support sub-categories.
+
  If null, this is a Top-Level Category.
 
 ### Return Type
@@ -675,8 +684,9 @@ Self-referencing Foreign Key to support sub-categories.
 
 ### Description
 
-Optimization field: The pre-calculated date of the next occurrence.
- The engine queries this to find what's due today.
+The pre-calculated date of the next occurrence.
+
+ Optimization field: The engine queries this to find what's due today.
 
 ### Return Type
 `DateTimeColumn`
