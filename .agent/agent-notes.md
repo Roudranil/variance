@@ -28,6 +28,7 @@
     *   **One-way Data Flow:** `includeInTotals` flag for Accounts.
     *   **Cascading Logic:** `TransactionRepository` handles complex updates by reverting old balances and applying new ones.
     *   **Auto-Adjustment:** `AccountRepository` automatically creates `adjustment` transactions when the user manually edits a balance.
+    *   **Verification:** Comprehensive Unit Test suite covering CRUD, Double-Entry Logic, and Soft Deletes (100% Pass Rate).
 
 ## 4. User Rules & Guidelines
 *   **Persona:** Expert Android Mentor pair-programming with a Data Scientist.
@@ -40,6 +41,7 @@
 
 ## 5. Conventions & "Gotchas"
 *   **Enums in Drift:** We use `textEnum<T>()` in `schema.dart`. This maps to the Enum in Dart but Text in SQLite.
+*   **Testing Database:** ALWAYS use `AppDatabase.forTesting(NativeDatabase.memory())` in unit tests to ensure isolation.
 *   **Double Entry Enforcement:** NEVER manually update `currentBalance` in `Accounts` without a corresponding `Transaction` record (or use the `updateAccount` method which handles this).
 *   **Git:** Generate conventional commit messages when asked.
 
