@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
+
 import 'package:variance/database/database.dart';
+import 'package:variance/database/enums.dart';
 
 /// **Transaction Repository**
 ///
@@ -40,7 +42,7 @@ class TransactionRepository {
   /// Throws an error if required accounts are missing for the given [type].
   Future<void> createTransaction({
     required double amount,
-    required String type, // 'expense', 'income', 'transfer'
+    required TransactionType type, // 'expense', 'income', 'transfer'
     required DateTime date,
     required int? sourceAccountId,
     required int? destinationAccountId,

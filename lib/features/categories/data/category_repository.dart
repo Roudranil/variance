@@ -1,4 +1,5 @@
 import 'package:variance/database/database.dart';
+import 'package:variance/database/enums.dart';
 
 /// **Category Repository**
 ///
@@ -19,10 +20,10 @@ class CategoryRepository {
   }
 
   /// Watches categories by type (Expense/Income).
-  Stream<List<Category>> watchCategoriesByKind(String kind) {
+  Stream<List<Category>> watchCategoriesByKind(CategoryKind kind) {
     return (_db.select(
       _db.categories,
-    )..where((tbl) => tbl.kind.equals(kind))).watch();
+    )..where((tbl) => tbl.kind.equals(kind as String))).watch();
   }
 
   /// Creates a new category.

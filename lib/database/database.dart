@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:variance/database/enums.dart';
 import 'package:variance/database/schema.dart';
 import 'package:variance/database/setup/native.dart';
 

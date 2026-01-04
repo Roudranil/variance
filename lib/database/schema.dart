@@ -1,12 +1,14 @@
 import 'package:drift/drift.dart';
 
+import 'package:variance/database/enums.dart';
+
 /// **Accounts Table**
 ///
 /// Represents the physical or digital storage of money.
 /// This is the core entity for the Double Entry system.
 ///
 /// **Constraints:**
-/// *   [type] must be one of 'cash', 'savings', 'creditCard', 'loan', 'investment'.
+/// *   [type] must be one of [AccountType] values.
 /// *   [currencyCode] defaults to 'INR'.
 class Accounts extends Table {
   /// Primary Key. Auto-incrementing integer.
@@ -17,10 +19,7 @@ class Accounts extends Table {
 
   /// The category/nature of the account.
   /// Used for UI grouping and reporting logic (Net Worth calculation).
-  ///
-  /// specific string enum.
-  /// Values: 'cash', 'savings', 'creditCard', 'loan', 'investment'
-  TextColumn get type => text()();
+  TextColumn get type => textEnum<AccountType>()();
 
   /// The opening balance when the account was created/imported.
   RealColumn get initialBalance => real().withDefault(const Constant(0.0))();
@@ -33,6 +32,11 @@ class Accounts extends Table {
   /// ISO 4217 Currency Code (e.g., 'INR', 'USD').
   /// Defaults to 'INR'.
   TextColumn get currencyCode => text().withDefault(const Constant('INR'))();
+
+  /// Determines if the balances in this account should be included in
+  /// the overall net worth calculation.
+  BoolColumn get includeInTotals =>
+      boolean().withDefault(const Constant(true))();
 
   // --- Credit Card Specific Fields ---
 
@@ -64,8 +68,7 @@ class Categories extends Table {
   TextColumn get name => text().withLength(min: 1, max: 50)();
 
   /// The direction of flow this category represents.
-  /// Values: 'expense', 'income'.
-  TextColumn get kind => text()();
+  TextColumn get kind => textEnum<CategoryKind>()();
 
   /// Self-referencing Foreign Key to support sub-categories.
   /// If null, this is a Top-Level Category.
@@ -103,8 +106,7 @@ class Transactions extends Table {
   RealColumn get amount => real()();
 
   /// The nature of the transaction.
-  /// Values: 'expense' (Outflow), 'income' (Inflow), 'transfer' (Movement).
-  TextColumn get type => text()();
+  TextColumn get type => textEnum<TransactionType>()();
 
   /// Optional user note.
   TextColumn get description => text().nullable()();
@@ -152,8 +154,7 @@ class RecurringPatterns extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// Base frequency unit.
-  /// Values: 'daily', 'weekly', 'monthly', 'yearly'.
-  TextColumn get frequency => text()();
+  TextColumn get frequency => textEnum<RecurringFrequency>()();
 
   /// Multiplier for the frequency.
   /// Example: frequency='weekly', interval=2 implies "Every 2 weeks".
@@ -171,8 +172,8 @@ class RecurringPatterns extends Table {
   DateTimeColumn get nextRunDate => dateTime()();
 
   /// Automation type.
-  /// Values: 'automatic' (create silently), 'manual_reminder' (prompt user).
-  TextColumn get type => text().withDefault(const Constant('automatic'))();
+  TextColumn get type =>
+      textEnum<RecurringType>().withDefault(const Constant('automatic'))();
 
   /// JSON blob containing the template data (amount, accounts, category)
   /// to copy when generating the real transaction.

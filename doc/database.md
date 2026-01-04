@@ -14,14 +14,14 @@ erDiagram
 
     Account {
         int id PK
-        string type "cash, savings, creditCard"
+        enum type "cash, savings, bankAccount, creditCard, loan, investment, insurance"
         double currentBalance "Cached Sum"
     }
 
     Transaction {
         int id PK
         double amount
-        string type "income, expense, transfer"
+        enum type "income, expense, transfer"
         int sourceAccountId FK "Nullable"
         int destinationAccountId FK "Nullable"
     }
@@ -54,16 +54,18 @@ Represents a physical or digital store of value.
 *   **Key Behaviors:**
     *   **Credit Cards:** You set a "Statement Day" and "Due Day". The app uses these to help you track credit cycles (Feature TBD).
     *   **Currency:** Currently fixed to INR, but ready for multi-currency.
+    *   **Net Worth:** You can choose to exclude specific accounts (e.g. Shared Account) from your total net worth.
 
 #### Technical Spec (`Accounts`)
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `Int` | PK, AutoInc | Unique ID |
 | `name` | `Text` | Max 50 chars | Display Name |
-| `type` | `Text` | Enum* | `cash`, `savings`, `creditCard`, `loan`, `investment` |
+| `type` | `Enum` | `AccountType` | `cash`, `savings`, `bankAccount`, `creditCard`, `loan`, `investment`, `insurance` |
 | `initialBalance` | `Real` | Default 0.0 | Balance at creation |
 | `currentBalance` | `Real` | Default 0.0 | `initialBalance` + Sum(Transactions) |
 | `currencyCode` | `Text` | Default 'INR' | ISO 4217 Code |
+| `includeInTotals`| `Bool` | Default `true`| Include in Net Worth calculations |
 | `statementDay` | `Int` | Nullable, 1-31 | Only for `creditCard` |
 | `paymentDueDay` | `Int` | Nullable, 1-31 | Only for `creditCard` |
 | `interestRate` | `Real` | Nullable | % for Loans/Savings |
@@ -80,7 +82,7 @@ Classifies where money comes from or goes to.
 | :--- | :--- | :--- | :--- |
 | `id` | `Int` | PK, AutoInc | Unique ID |
 | `name` | `Text` | Max 50 chars | Display Name |
-| `kind` | `Text` | `expense`/`income` | Restricts visibility in UI pickers |
+| `kind` | `Enum` | `CategoryKind` | `expense`, `income`. Restricts visibility in UI pickers |
 | `parentId` | `Int` | FK -> `Categories.id` | Null implies Top-Level Category |
 | `color` | `Int` | Nullable | ARGB Integer for UI styling |
 | `iconData` | `Text` | Nullable | Asset path or Icon CodePoint |
@@ -99,7 +101,7 @@ The central record of a financial event.
 | :--- | :--- | :--- | :--- |
 | `id` | `Int` | PK, AutoInc | Unique ID |
 | `amount` | `Real` | > 0 | Magnitude. Polarity determined by Logic. |
-| `type` | `Text` | Enum* | `expense`, `income`, `transfer` |
+| `type` | `Enum` | `TransactionType`| `expense`, `income`, `transfer` |
 | `transactionDate` | `DateTime` | Not Null | Event timestamp |
 | `sourceAccountId` | `Int` | FK -> `Accounts` | Required for Expense/Transfer |
 | `destinationAccountId` | `Int` | FK -> `Accounts` | Required for Income/Transfer |
@@ -136,7 +138,8 @@ Automation engine for repeating transactions.
 #### Technical Spec (`RecurringPatterns`)
 | Column | Type | Description |
 | :--- | :--- | :--- |
-| `frequency` | `Text` | `daily`, `weekly`, `monthly`, `yearly` |
+| `frequency` | `Enum` | `RecurringFrequency`: `daily`, `weekly`, `monthly`, `yearly` |
 | `interval` | `Int` | Multiplier (e.g., Every *2* weeks) |
 | `nextRunDate` | `DateTime` | Optimization field for query speed |
+| `type` | `Enum` | `RecurringType`: `automatic`, `manualReminder` |
 | `templateData` | `Text` | JSON blob of the transaction to clone |

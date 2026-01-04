@@ -34,15 +34,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
-  late final GeneratedColumn<String> type = GeneratedColumn<String>(
-    'type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<AccountType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AccountType>($AccountsTable.$convertertype);
   static const VerificationMeta _initialBalanceMeta = const VerificationMeta(
     'initialBalance',
   );
@@ -78,6 +78,21 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultValue: const Constant('INR'),
+  );
+  static const VerificationMeta _includeInTotalsMeta = const VerificationMeta(
+    'includeInTotals',
+  );
+  @override
+  late final GeneratedColumn<bool> includeInTotals = GeneratedColumn<bool>(
+    'include_in_totals',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("include_in_totals" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
   );
   static const VerificationMeta _statementDayMeta = const VerificationMeta(
     'statementDay',
@@ -120,6 +135,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     initialBalance,
     currentBalance,
     currencyCode,
+    includeInTotals,
     statementDay,
     paymentDueDay,
     interestRate,
@@ -147,14 +163,6 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('type')) {
-      context.handle(
-        _typeMeta,
-        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_typeMeta);
-    }
     if (data.containsKey('initial_balance')) {
       context.handle(
         _initialBalanceMeta,
@@ -179,6 +187,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         currencyCode.isAcceptableOrUnknown(
           data['currency_code']!,
           _currencyCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('include_in_totals')) {
+      context.handle(
+        _includeInTotalsMeta,
+        includeInTotals.isAcceptableOrUnknown(
+          data['include_in_totals']!,
+          _includeInTotalsMeta,
         ),
       );
     }
@@ -226,10 +243,12 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      type: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}type'],
-      )!,
+      type: $AccountsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
       initialBalance: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}initial_balance'],
@@ -241,6 +260,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
       currencyCode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}currency_code'],
+      )!,
+      includeInTotals: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_in_totals'],
       )!,
       statementDay: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -261,17 +284,48 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
   $AccountsTable createAlias(String alias) {
     return $AccountsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<AccountType, String, String> $convertertype =
+      const EnumNameConverter<AccountType>(AccountType.values);
 }
 
 class Account extends DataClass implements Insertable<Account> {
+  /// Primary Key. Auto-incrementing integer.
   final int id;
+
+  /// User-defined name for the account (e.g., "HDFC Bank", "Wallet").
   final String name;
-  final String type;
+
+  /// The category/nature of the account.
+  /// Used for UI grouping and reporting logic (Net Worth calculation).
+  final AccountType type;
+
+  /// The opening balance when the account was created/imported.
   final double initialBalance;
+
+  /// The current calculated balance.
+  /// NOTE: This can be derived from [initialBalance] + Sum(Transactions).
+  /// Optimization: We might cache this value here.
   final double currentBalance;
+
+  /// ISO 4217 Currency Code (e.g., 'INR', 'USD').
+  /// Defaults to 'INR'.
   final String currencyCode;
+
+  /// Determines if the balances in this account should be included in
+  /// the overall net worth calculation.
+  final bool includeInTotals;
+
+  /// The day of the month (1-31) when the statement is generated.
+  /// Nullable: Only relevant for [type] == 'creditCard'.
   final int? statementDay;
+
+  /// The day of the month (1-31) when the payment is due.
+  /// Nullable: Only relevant for [type] == 'creditCard'.
   final int? paymentDueDay;
+
+  /// Annual Interest Rate (percentage).
+  /// Nullable: Only relevant for loans or savings accounts.
   final double? interestRate;
   const Account({
     required this.id,
@@ -280,6 +334,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.initialBalance,
     required this.currentBalance,
     required this.currencyCode,
+    required this.includeInTotals,
     this.statementDay,
     this.paymentDueDay,
     this.interestRate,
@@ -289,10 +344,13 @@ class Account extends DataClass implements Insertable<Account> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    map['type'] = Variable<String>(type);
+    {
+      map['type'] = Variable<String>($AccountsTable.$convertertype.toSql(type));
+    }
     map['initial_balance'] = Variable<double>(initialBalance);
     map['current_balance'] = Variable<double>(currentBalance);
     map['currency_code'] = Variable<String>(currencyCode);
+    map['include_in_totals'] = Variable<bool>(includeInTotals);
     if (!nullToAbsent || statementDay != null) {
       map['statement_day'] = Variable<int>(statementDay);
     }
@@ -313,6 +371,7 @@ class Account extends DataClass implements Insertable<Account> {
       initialBalance: Value(initialBalance),
       currentBalance: Value(currentBalance),
       currencyCode: Value(currencyCode),
+      includeInTotals: Value(includeInTotals),
       statementDay: statementDay == null && nullToAbsent
           ? const Value.absent()
           : Value(statementDay),
@@ -333,10 +392,13 @@ class Account extends DataClass implements Insertable<Account> {
     return Account(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      type: serializer.fromJson<String>(json['type']),
+      type: $AccountsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
       initialBalance: serializer.fromJson<double>(json['initialBalance']),
       currentBalance: serializer.fromJson<double>(json['currentBalance']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
+      includeInTotals: serializer.fromJson<bool>(json['includeInTotals']),
       statementDay: serializer.fromJson<int?>(json['statementDay']),
       paymentDueDay: serializer.fromJson<int?>(json['paymentDueDay']),
       interestRate: serializer.fromJson<double?>(json['interestRate']),
@@ -348,10 +410,13 @@ class Account extends DataClass implements Insertable<Account> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'type': serializer.toJson<String>(type),
+      'type': serializer.toJson<String>(
+        $AccountsTable.$convertertype.toJson(type),
+      ),
       'initialBalance': serializer.toJson<double>(initialBalance),
       'currentBalance': serializer.toJson<double>(currentBalance),
       'currencyCode': serializer.toJson<String>(currencyCode),
+      'includeInTotals': serializer.toJson<bool>(includeInTotals),
       'statementDay': serializer.toJson<int?>(statementDay),
       'paymentDueDay': serializer.toJson<int?>(paymentDueDay),
       'interestRate': serializer.toJson<double?>(interestRate),
@@ -361,10 +426,11 @@ class Account extends DataClass implements Insertable<Account> {
   Account copyWith({
     int? id,
     String? name,
-    String? type,
+    AccountType? type,
     double? initialBalance,
     double? currentBalance,
     String? currencyCode,
+    bool? includeInTotals,
     Value<int?> statementDay = const Value.absent(),
     Value<int?> paymentDueDay = const Value.absent(),
     Value<double?> interestRate = const Value.absent(),
@@ -375,6 +441,7 @@ class Account extends DataClass implements Insertable<Account> {
     initialBalance: initialBalance ?? this.initialBalance,
     currentBalance: currentBalance ?? this.currentBalance,
     currencyCode: currencyCode ?? this.currencyCode,
+    includeInTotals: includeInTotals ?? this.includeInTotals,
     statementDay: statementDay.present ? statementDay.value : this.statementDay,
     paymentDueDay: paymentDueDay.present
         ? paymentDueDay.value
@@ -395,6 +462,9 @@ class Account extends DataClass implements Insertable<Account> {
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
+      includeInTotals: data.includeInTotals.present
+          ? data.includeInTotals.value
+          : this.includeInTotals,
       statementDay: data.statementDay.present
           ? data.statementDay.value
           : this.statementDay,
@@ -416,6 +486,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('initialBalance: $initialBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('includeInTotals: $includeInTotals, ')
           ..write('statementDay: $statementDay, ')
           ..write('paymentDueDay: $paymentDueDay, ')
           ..write('interestRate: $interestRate')
@@ -431,6 +502,7 @@ class Account extends DataClass implements Insertable<Account> {
     initialBalance,
     currentBalance,
     currencyCode,
+    includeInTotals,
     statementDay,
     paymentDueDay,
     interestRate,
@@ -445,6 +517,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.initialBalance == this.initialBalance &&
           other.currentBalance == this.currentBalance &&
           other.currencyCode == this.currencyCode &&
+          other.includeInTotals == this.includeInTotals &&
           other.statementDay == this.statementDay &&
           other.paymentDueDay == this.paymentDueDay &&
           other.interestRate == this.interestRate);
@@ -453,10 +526,11 @@ class Account extends DataClass implements Insertable<Account> {
 class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> id;
   final Value<String> name;
-  final Value<String> type;
+  final Value<AccountType> type;
   final Value<double> initialBalance;
   final Value<double> currentBalance;
   final Value<String> currencyCode;
+  final Value<bool> includeInTotals;
   final Value<int?> statementDay;
   final Value<int?> paymentDueDay;
   final Value<double?> interestRate;
@@ -467,6 +541,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.initialBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.includeInTotals = const Value.absent(),
     this.statementDay = const Value.absent(),
     this.paymentDueDay = const Value.absent(),
     this.interestRate = const Value.absent(),
@@ -474,10 +549,11 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   AccountsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
-    required String type,
+    required AccountType type,
     this.initialBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.includeInTotals = const Value.absent(),
     this.statementDay = const Value.absent(),
     this.paymentDueDay = const Value.absent(),
     this.interestRate = const Value.absent(),
@@ -490,6 +566,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<double>? initialBalance,
     Expression<double>? currentBalance,
     Expression<String>? currencyCode,
+    Expression<bool>? includeInTotals,
     Expression<int>? statementDay,
     Expression<int>? paymentDueDay,
     Expression<double>? interestRate,
@@ -501,6 +578,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (initialBalance != null) 'initial_balance': initialBalance,
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currencyCode != null) 'currency_code': currencyCode,
+      if (includeInTotals != null) 'include_in_totals': includeInTotals,
       if (statementDay != null) 'statement_day': statementDay,
       if (paymentDueDay != null) 'payment_due_day': paymentDueDay,
       if (interestRate != null) 'interest_rate': interestRate,
@@ -510,10 +588,11 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   AccountsCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
-    Value<String>? type,
+    Value<AccountType>? type,
     Value<double>? initialBalance,
     Value<double>? currentBalance,
     Value<String>? currencyCode,
+    Value<bool>? includeInTotals,
     Value<int?>? statementDay,
     Value<int?>? paymentDueDay,
     Value<double?>? interestRate,
@@ -525,6 +604,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       initialBalance: initialBalance ?? this.initialBalance,
       currentBalance: currentBalance ?? this.currentBalance,
       currencyCode: currencyCode ?? this.currencyCode,
+      includeInTotals: includeInTotals ?? this.includeInTotals,
       statementDay: statementDay ?? this.statementDay,
       paymentDueDay: paymentDueDay ?? this.paymentDueDay,
       interestRate: interestRate ?? this.interestRate,
@@ -541,7 +621,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       map['name'] = Variable<String>(name.value);
     }
     if (type.present) {
-      map['type'] = Variable<String>(type.value);
+      map['type'] = Variable<String>(
+        $AccountsTable.$convertertype.toSql(type.value),
+      );
     }
     if (initialBalance.present) {
       map['initial_balance'] = Variable<double>(initialBalance.value);
@@ -551,6 +633,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     }
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
+    }
+    if (includeInTotals.present) {
+      map['include_in_totals'] = Variable<bool>(includeInTotals.value);
     }
     if (statementDay.present) {
       map['statement_day'] = Variable<int>(statementDay.value);
@@ -573,6 +658,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('initialBalance: $initialBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('includeInTotals: $includeInTotals, ')
           ..write('statementDay: $statementDay, ')
           ..write('paymentDueDay: $paymentDueDay, ')
           ..write('interestRate: $interestRate')
@@ -613,15 +699,15 @@ class $CategoriesTable extends Categories
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
   @override
-  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
-    'kind',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<CategoryKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<CategoryKind>($CategoriesTable.$converterkind);
   static const VerificationMeta _parentIdMeta = const VerificationMeta(
     'parentId',
   );
@@ -688,14 +774,6 @@ class $CategoriesTable extends Categories
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('kind')) {
-      context.handle(
-        _kindMeta,
-        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_kindMeta);
-    }
     if (data.containsKey('parent_id')) {
       context.handle(
         _parentIdMeta,
@@ -731,10 +809,12 @@ class $CategoriesTable extends Categories
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      kind: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}kind'],
-      )!,
+      kind: $CategoriesTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
       parentId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}parent_id'],
@@ -754,14 +834,29 @@ class $CategoriesTable extends Categories
   $CategoriesTable createAlias(String alias) {
     return $CategoriesTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<CategoryKind, String, String> $converterkind =
+      const EnumNameConverter<CategoryKind>(CategoryKind.values);
 }
 
 class Category extends DataClass implements Insertable<Category> {
+  /// Primary Key.
   final int id;
+
+  /// Display name (e.g., "Food", "Salary").
   final String name;
-  final String kind;
+
+  /// The direction of flow this category represents.
+  final CategoryKind kind;
+
+  /// Self-referencing Foreign Key to support sub-categories.
+  /// If null, this is a Top-Level Category.
   final int? parentId;
+
+  /// Icon identifier (stored as string codePoint or asset path).
   final String? iconData;
+
+  /// UI Color (stored as ARGB integer).
   final int? color;
   const Category({
     required this.id,
@@ -776,7 +871,11 @@ class Category extends DataClass implements Insertable<Category> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    map['kind'] = Variable<String>(kind);
+    {
+      map['kind'] = Variable<String>(
+        $CategoriesTable.$converterkind.toSql(kind),
+      );
+    }
     if (!nullToAbsent || parentId != null) {
       map['parent_id'] = Variable<int>(parentId);
     }
@@ -814,7 +913,9 @@ class Category extends DataClass implements Insertable<Category> {
     return Category(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      kind: serializer.fromJson<String>(json['kind']),
+      kind: $CategoriesTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
       parentId: serializer.fromJson<int?>(json['parentId']),
       iconData: serializer.fromJson<String?>(json['iconData']),
       color: serializer.fromJson<int?>(json['color']),
@@ -826,7 +927,9 @@ class Category extends DataClass implements Insertable<Category> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'kind': serializer.toJson<String>(kind),
+      'kind': serializer.toJson<String>(
+        $CategoriesTable.$converterkind.toJson(kind),
+      ),
       'parentId': serializer.toJson<int?>(parentId),
       'iconData': serializer.toJson<String?>(iconData),
       'color': serializer.toJson<int?>(color),
@@ -836,7 +939,7 @@ class Category extends DataClass implements Insertable<Category> {
   Category copyWith({
     int? id,
     String? name,
-    String? kind,
+    CategoryKind? kind,
     Value<int?> parentId = const Value.absent(),
     Value<String?> iconData = const Value.absent(),
     Value<int?> color = const Value.absent(),
@@ -889,7 +992,7 @@ class Category extends DataClass implements Insertable<Category> {
 class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int> id;
   final Value<String> name;
-  final Value<String> kind;
+  final Value<CategoryKind> kind;
   final Value<int?> parentId;
   final Value<String?> iconData;
   final Value<int?> color;
@@ -904,7 +1007,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   CategoriesCompanion.insert({
     this.id = const Value.absent(),
     required String name,
-    required String kind,
+    required CategoryKind kind,
     this.parentId = const Value.absent(),
     this.iconData = const Value.absent(),
     this.color = const Value.absent(),
@@ -931,7 +1034,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   CategoriesCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
-    Value<String>? kind,
+    Value<CategoryKind>? kind,
     Value<int?>? parentId,
     Value<String?>? iconData,
     Value<int?>? color,
@@ -956,7 +1059,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       map['name'] = Variable<String>(name.value);
     }
     if (kind.present) {
-      map['kind'] = Variable<String>(kind.value);
+      map['kind'] = Variable<String>(
+        $CategoriesTable.$converterkind.toSql(kind.value),
+      );
     }
     if (parentId.present) {
       map['parent_id'] = Variable<int>(parentId.value);
@@ -1274,15 +1379,15 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
-  late final GeneratedColumn<String> type = GeneratedColumn<String>(
-    'type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<TransactionType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<TransactionType>($TransactionsTable.$convertertype);
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',
   );
@@ -1393,14 +1498,6 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_amountMeta);
     }
-    if (data.containsKey('type')) {
-      context.handle(
-        _typeMeta,
-        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_typeMeta);
-    }
     if (data.containsKey('description')) {
       context.handle(
         _descriptionMeta,
@@ -1461,10 +1558,12 @@ class $TransactionsTable extends Transactions
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
       )!,
-      type: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}type'],
-      )!,
+      type: $TransactionsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
@@ -1492,17 +1591,43 @@ class $TransactionsTable extends Transactions
   $TransactionsTable createAlias(String alias) {
     return $TransactionsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<TransactionType, String, String> $convertertype =
+      const EnumNameConverter<TransactionType>(TransactionType.values);
 }
 
 class Transaction extends DataClass implements Insertable<Transaction> {
   final int id;
+
+  /// The actual date and time the transaction occurred.
   final DateTime transactionDate;
+
+  /// The absolute magnitude of the money flow.
+  /// NOTE: Always stored as a positive number. Direction is determined by [type] and Accounts.
   final double amount;
-  final String type;
+
+  /// The nature of the transaction.
+  final TransactionType type;
+
+  /// Optional user note.
   final String? description;
+
+  /// The account money is coming FROM.
+  /// Required for: 'expense', 'transfer'.
+  /// Null for: 'income'.
   final int? sourceAccountId;
+
+  /// The account money is going TO.
+  /// Required for: 'income', 'transfer'.
+  /// Null for: 'expense'.
   final int? destinationAccountId;
+
+  /// The classification category.
+  /// Required for: 'expense', 'income'.
+  /// Optional/Null for: 'transfer' (Transfers usually don't need categories).
   final int? categoryId;
+
+  /// Audit timestamp.
   final DateTime createdAt;
   const Transaction({
     required this.id,
@@ -1521,7 +1646,11 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['id'] = Variable<int>(id);
     map['transaction_date'] = Variable<DateTime>(transactionDate);
     map['amount'] = Variable<double>(amount);
-    map['type'] = Variable<String>(type);
+    {
+      map['type'] = Variable<String>(
+        $TransactionsTable.$convertertype.toSql(type),
+      );
+    }
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
@@ -1569,7 +1698,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       id: serializer.fromJson<int>(json['id']),
       transactionDate: serializer.fromJson<DateTime>(json['transactionDate']),
       amount: serializer.fromJson<double>(json['amount']),
-      type: serializer.fromJson<String>(json['type']),
+      type: $TransactionsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
       description: serializer.fromJson<String?>(json['description']),
       sourceAccountId: serializer.fromJson<int?>(json['sourceAccountId']),
       destinationAccountId: serializer.fromJson<int?>(
@@ -1586,7 +1717,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'id': serializer.toJson<int>(id),
       'transactionDate': serializer.toJson<DateTime>(transactionDate),
       'amount': serializer.toJson<double>(amount),
-      'type': serializer.toJson<String>(type),
+      'type': serializer.toJson<String>(
+        $TransactionsTable.$convertertype.toJson(type),
+      ),
       'description': serializer.toJson<String?>(description),
       'sourceAccountId': serializer.toJson<int?>(sourceAccountId),
       'destinationAccountId': serializer.toJson<int?>(destinationAccountId),
@@ -1599,7 +1732,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? id,
     DateTime? transactionDate,
     double? amount,
-    String? type,
+    TransactionType? type,
     Value<String?> description = const Value.absent(),
     Value<int?> sourceAccountId = const Value.absent(),
     Value<int?> destinationAccountId = const Value.absent(),
@@ -1691,7 +1824,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> id;
   final Value<DateTime> transactionDate;
   final Value<double> amount;
-  final Value<String> type;
+  final Value<TransactionType> type;
   final Value<String?> description;
   final Value<int?> sourceAccountId;
   final Value<int?> destinationAccountId;
@@ -1712,7 +1845,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.id = const Value.absent(),
     required DateTime transactionDate,
     required double amount,
-    required String type,
+    required TransactionType type,
     this.description = const Value.absent(),
     this.sourceAccountId = const Value.absent(),
     this.destinationAccountId = const Value.absent(),
@@ -1750,7 +1883,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? id,
     Value<DateTime>? transactionDate,
     Value<double>? amount,
-    Value<String>? type,
+    Value<TransactionType>? type,
     Value<String?>? description,
     Value<int?>? sourceAccountId,
     Value<int?>? destinationAccountId,
@@ -1783,7 +1916,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       map['amount'] = Variable<double>(amount.value);
     }
     if (type.present) {
-      map['type'] = Variable<String>(type.value);
+      map['type'] = Variable<String>(
+        $TransactionsTable.$convertertype.toSql(type.value),
+      );
     }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
@@ -2065,17 +2200,18 @@ class $RecurringPatternsTable extends RecurringPatterns
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
-  static const VerificationMeta _frequencyMeta = const VerificationMeta(
-    'frequency',
-  );
   @override
-  late final GeneratedColumn<String> frequency = GeneratedColumn<String>(
-    'frequency',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<RecurringFrequency, String>
+  frequency =
+      GeneratedColumn<String>(
+        'frequency',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<RecurringFrequency>(
+        $RecurringPatternsTable.$converterfrequency,
+      );
   static const VerificationMeta _intervalMeta = const VerificationMeta(
     'interval',
   );
@@ -2121,16 +2257,16 @@ class $RecurringPatternsTable extends RecurringPatterns
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
-  late final GeneratedColumn<String> type = GeneratedColumn<String>(
-    'type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('automatic'),
-  );
+  late final GeneratedColumnWithTypeConverter<RecurringType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('automatic'),
+      ).withConverter<RecurringType>($RecurringPatternsTable.$convertertype);
   static const VerificationMeta _templateDataMeta = const VerificationMeta(
     'templateData',
   );
@@ -2168,14 +2304,6 @@ class $RecurringPatternsTable extends RecurringPatterns
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('frequency')) {
-      context.handle(
-        _frequencyMeta,
-        frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_frequencyMeta);
-    }
     if (data.containsKey('interval')) {
       context.handle(
         _intervalMeta,
@@ -2207,12 +2335,6 @@ class $RecurringPatternsTable extends RecurringPatterns
     } else if (isInserting) {
       context.missing(_nextRunDateMeta);
     }
-    if (data.containsKey('type')) {
-      context.handle(
-        _typeMeta,
-        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
-      );
-    }
     if (data.containsKey('template_data')) {
       context.handle(
         _templateDataMeta,
@@ -2237,10 +2359,12 @@ class $RecurringPatternsTable extends RecurringPatterns
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
-      frequency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}frequency'],
-      )!,
+      frequency: $RecurringPatternsTable.$converterfrequency.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}frequency'],
+        )!,
+      ),
       interval: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}interval'],
@@ -2257,10 +2381,12 @@ class $RecurringPatternsTable extends RecurringPatterns
         DriftSqlType.dateTime,
         data['${effectivePrefix}next_run_date'],
       )!,
-      type: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}type'],
-      )!,
+      type: $RecurringPatternsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
       templateData: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}template_data'],
@@ -2272,17 +2398,42 @@ class $RecurringPatternsTable extends RecurringPatterns
   $RecurringPatternsTable createAlias(String alias) {
     return $RecurringPatternsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<RecurringFrequency, String, String>
+  $converterfrequency = const EnumNameConverter<RecurringFrequency>(
+    RecurringFrequency.values,
+  );
+  static JsonTypeConverter2<RecurringType, String, String> $convertertype =
+      const EnumNameConverter<RecurringType>(RecurringType.values);
 }
 
 class RecurringPattern extends DataClass
     implements Insertable<RecurringPattern> {
   final int id;
-  final String frequency;
+
+  /// Base frequency unit.
+  final RecurringFrequency frequency;
+
+  /// Multiplier for the frequency.
+  /// Example: frequency='weekly', interval=2 implies "Every 2 weeks".
   final int interval;
+
+  /// When this pattern starts active.
   final DateTime startDate;
+
+  /// When this pattern stops.
+  /// If null, it repeats forever.
   final DateTime? endDate;
+
+  /// Optimization field: The pre-calculated date of the next occurrence.
+  /// The engine queries this to find what's due today.
   final DateTime nextRunDate;
-  final String type;
+
+  /// Automation type.
+  final RecurringType type;
+
+  /// JSON blob containing the template data (amount, accounts, category)
+  /// to copy when generating the real transaction.
   final String templateData;
   const RecurringPattern({
     required this.id,
@@ -2298,14 +2449,22 @@ class RecurringPattern extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['frequency'] = Variable<String>(frequency);
+    {
+      map['frequency'] = Variable<String>(
+        $RecurringPatternsTable.$converterfrequency.toSql(frequency),
+      );
+    }
     map['interval'] = Variable<int>(interval);
     map['start_date'] = Variable<DateTime>(startDate);
     if (!nullToAbsent || endDate != null) {
       map['end_date'] = Variable<DateTime>(endDate);
     }
     map['next_run_date'] = Variable<DateTime>(nextRunDate);
-    map['type'] = Variable<String>(type);
+    {
+      map['type'] = Variable<String>(
+        $RecurringPatternsTable.$convertertype.toSql(type),
+      );
+    }
     map['template_data'] = Variable<String>(templateData);
     return map;
   }
@@ -2332,12 +2491,16 @@ class RecurringPattern extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return RecurringPattern(
       id: serializer.fromJson<int>(json['id']),
-      frequency: serializer.fromJson<String>(json['frequency']),
+      frequency: $RecurringPatternsTable.$converterfrequency.fromJson(
+        serializer.fromJson<String>(json['frequency']),
+      ),
       interval: serializer.fromJson<int>(json['interval']),
       startDate: serializer.fromJson<DateTime>(json['startDate']),
       endDate: serializer.fromJson<DateTime?>(json['endDate']),
       nextRunDate: serializer.fromJson<DateTime>(json['nextRunDate']),
-      type: serializer.fromJson<String>(json['type']),
+      type: $RecurringPatternsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
       templateData: serializer.fromJson<String>(json['templateData']),
     );
   }
@@ -2346,24 +2509,28 @@ class RecurringPattern extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'frequency': serializer.toJson<String>(frequency),
+      'frequency': serializer.toJson<String>(
+        $RecurringPatternsTable.$converterfrequency.toJson(frequency),
+      ),
       'interval': serializer.toJson<int>(interval),
       'startDate': serializer.toJson<DateTime>(startDate),
       'endDate': serializer.toJson<DateTime?>(endDate),
       'nextRunDate': serializer.toJson<DateTime>(nextRunDate),
-      'type': serializer.toJson<String>(type),
+      'type': serializer.toJson<String>(
+        $RecurringPatternsTable.$convertertype.toJson(type),
+      ),
       'templateData': serializer.toJson<String>(templateData),
     };
   }
 
   RecurringPattern copyWith({
     int? id,
-    String? frequency,
+    RecurringFrequency? frequency,
     int? interval,
     DateTime? startDate,
     Value<DateTime?> endDate = const Value.absent(),
     DateTime? nextRunDate,
-    String? type,
+    RecurringType? type,
     String? templateData,
   }) => RecurringPattern(
     id: id ?? this.id,
@@ -2434,12 +2601,12 @@ class RecurringPattern extends DataClass
 
 class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
   final Value<int> id;
-  final Value<String> frequency;
+  final Value<RecurringFrequency> frequency;
   final Value<int> interval;
   final Value<DateTime> startDate;
   final Value<DateTime?> endDate;
   final Value<DateTime> nextRunDate;
-  final Value<String> type;
+  final Value<RecurringType> type;
   final Value<String> templateData;
   const RecurringPatternsCompanion({
     this.id = const Value.absent(),
@@ -2453,7 +2620,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
   });
   RecurringPatternsCompanion.insert({
     this.id = const Value.absent(),
-    required String frequency,
+    required RecurringFrequency frequency,
     this.interval = const Value.absent(),
     required DateTime startDate,
     this.endDate = const Value.absent(),
@@ -2488,12 +2655,12 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
 
   RecurringPatternsCompanion copyWith({
     Value<int>? id,
-    Value<String>? frequency,
+    Value<RecurringFrequency>? frequency,
     Value<int>? interval,
     Value<DateTime>? startDate,
     Value<DateTime?>? endDate,
     Value<DateTime>? nextRunDate,
-    Value<String>? type,
+    Value<RecurringType>? type,
     Value<String>? templateData,
   }) {
     return RecurringPatternsCompanion(
@@ -2515,7 +2682,9 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
       map['id'] = Variable<int>(id.value);
     }
     if (frequency.present) {
-      map['frequency'] = Variable<String>(frequency.value);
+      map['frequency'] = Variable<String>(
+        $RecurringPatternsTable.$converterfrequency.toSql(frequency.value),
+      );
     }
     if (interval.present) {
       map['interval'] = Variable<int>(interval.value);
@@ -2530,7 +2699,9 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
       map['next_run_date'] = Variable<DateTime>(nextRunDate.value);
     }
     if (type.present) {
-      map['type'] = Variable<String>(type.value);
+      map['type'] = Variable<String>(
+        $RecurringPatternsTable.$convertertype.toSql(type.value),
+      );
     }
     if (templateData.present) {
       map['template_data'] = Variable<String>(templateData.value);
@@ -2584,10 +2755,11 @@ typedef $$AccountsTableCreateCompanionBuilder =
     AccountsCompanion Function({
       Value<int> id,
       required String name,
-      required String type,
+      required AccountType type,
       Value<double> initialBalance,
       Value<double> currentBalance,
       Value<String> currencyCode,
+      Value<bool> includeInTotals,
       Value<int?> statementDay,
       Value<int?> paymentDueDay,
       Value<double?> interestRate,
@@ -2596,10 +2768,11 @@ typedef $$AccountsTableUpdateCompanionBuilder =
     AccountsCompanion Function({
       Value<int> id,
       Value<String> name,
-      Value<String> type,
+      Value<AccountType> type,
       Value<double> initialBalance,
       Value<double> currentBalance,
       Value<String> currencyCode,
+      Value<bool> includeInTotals,
       Value<int?> statementDay,
       Value<int?> paymentDueDay,
       Value<double?> interestRate,
@@ -2624,10 +2797,11 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<AccountType, AccountType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<double> get initialBalance => $composableBuilder(
     column: $table.initialBalance,
@@ -2641,6 +2815,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeInTotals => $composableBuilder(
+    column: $table.includeInTotals,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2699,6 +2878,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get includeInTotals => $composableBuilder(
+    column: $table.includeInTotals,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get statementDay => $composableBuilder(
     column: $table.statementDay,
     builder: (column) => ColumnOrderings(column),
@@ -2730,7 +2914,7 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<String> get type =>
+  GeneratedColumnWithTypeConverter<AccountType, String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
   GeneratedColumn<double> get initialBalance => $composableBuilder(
@@ -2745,6 +2929,11 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeInTotals => $composableBuilder(
+    column: $table.includeInTotals,
     builder: (column) => column,
   );
 
@@ -2794,10 +2983,11 @@ class $$AccountsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<String> type = const Value.absent(),
+                Value<AccountType> type = const Value.absent(),
                 Value<double> initialBalance = const Value.absent(),
                 Value<double> currentBalance = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
+                Value<bool> includeInTotals = const Value.absent(),
                 Value<int?> statementDay = const Value.absent(),
                 Value<int?> paymentDueDay = const Value.absent(),
                 Value<double?> interestRate = const Value.absent(),
@@ -2808,6 +2998,7 @@ class $$AccountsTableTableManager
                 initialBalance: initialBalance,
                 currentBalance: currentBalance,
                 currencyCode: currencyCode,
+                includeInTotals: includeInTotals,
                 statementDay: statementDay,
                 paymentDueDay: paymentDueDay,
                 interestRate: interestRate,
@@ -2816,10 +3007,11 @@ class $$AccountsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
-                required String type,
+                required AccountType type,
                 Value<double> initialBalance = const Value.absent(),
                 Value<double> currentBalance = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
+                Value<bool> includeInTotals = const Value.absent(),
                 Value<int?> statementDay = const Value.absent(),
                 Value<int?> paymentDueDay = const Value.absent(),
                 Value<double?> interestRate = const Value.absent(),
@@ -2830,6 +3022,7 @@ class $$AccountsTableTableManager
                 initialBalance: initialBalance,
                 currentBalance: currentBalance,
                 currencyCode: currencyCode,
+                includeInTotals: includeInTotals,
                 statementDay: statementDay,
                 paymentDueDay: paymentDueDay,
                 interestRate: interestRate,
@@ -2860,7 +3053,7 @@ typedef $$CategoriesTableCreateCompanionBuilder =
     CategoriesCompanion Function({
       Value<int> id,
       required String name,
-      required String kind,
+      required CategoryKind kind,
       Value<int?> parentId,
       Value<String?> iconData,
       Value<int?> color,
@@ -2869,7 +3062,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
     CategoriesCompanion Function({
       Value<int> id,
       Value<String> name,
-      Value<String> kind,
+      Value<CategoryKind> kind,
       Value<int?> parentId,
       Value<String?> iconData,
       Value<int?> color,
@@ -2939,10 +3132,11 @@ class $$CategoriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get kind => $composableBuilder(
-    column: $table.kind,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<CategoryKind, CategoryKind, String> get kind =>
+      $composableBuilder(
+        column: $table.kind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<String> get iconData => $composableBuilder(
     column: $table.iconData,
@@ -3076,7 +3270,7 @@ class $$CategoriesTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<String> get kind =>
+  GeneratedColumnWithTypeConverter<CategoryKind, String> get kind =>
       $composableBuilder(column: $table.kind, builder: (column) => column);
 
   GeneratedColumn<String> get iconData =>
@@ -3164,7 +3358,7 @@ class $$CategoriesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<String> kind = const Value.absent(),
+                Value<CategoryKind> kind = const Value.absent(),
                 Value<int?> parentId = const Value.absent(),
                 Value<String?> iconData = const Value.absent(),
                 Value<int?> color = const Value.absent(),
@@ -3180,7 +3374,7 @@ class $$CategoriesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
-                required String kind,
+                required CategoryKind kind,
                 Value<int?> parentId = const Value.absent(),
                 Value<String?> iconData = const Value.absent(),
                 Value<int?> color = const Value.absent(),
@@ -3534,7 +3728,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<int> id,
       required DateTime transactionDate,
       required double amount,
-      required String type,
+      required TransactionType type,
       Value<String?> description,
       Value<int?> sourceAccountId,
       Value<int?> destinationAccountId,
@@ -3546,7 +3740,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<DateTime> transactionDate,
       Value<double> amount,
-      Value<String> type,
+      Value<TransactionType> type,
       Value<String?> description,
       Value<int?> sourceAccountId,
       Value<int?> destinationAccountId,
@@ -3668,9 +3862,10 @@ class $$TransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get type => $composableBuilder(
+  ColumnWithTypeConverterFilters<TransactionType, TransactionType, String>
+  get type => $composableBuilder(
     column: $table.type,
-    builder: (column) => ColumnFilters(column),
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<String> get description => $composableBuilder(
@@ -3907,7 +4102,7 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
 
-  GeneratedColumn<String> get type =>
+  GeneratedColumnWithTypeConverter<TransactionType, String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
   GeneratedColumn<String> get description => $composableBuilder(
@@ -4049,7 +4244,7 @@ class $$TransactionsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<DateTime> transactionDate = const Value.absent(),
                 Value<double> amount = const Value.absent(),
-                Value<String> type = const Value.absent(),
+                Value<TransactionType> type = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<int?> sourceAccountId = const Value.absent(),
                 Value<int?> destinationAccountId = const Value.absent(),
@@ -4071,7 +4266,7 @@ class $$TransactionsTableTableManager
                 Value<int> id = const Value.absent(),
                 required DateTime transactionDate,
                 required double amount,
-                required String type,
+                required TransactionType type,
                 Value<String?> description = const Value.absent(),
                 Value<int?> sourceAccountId = const Value.absent(),
                 Value<int?> destinationAccountId = const Value.absent(),
@@ -4588,23 +4783,23 @@ typedef $$TransactionTagsTableProcessedTableManager =
 typedef $$RecurringPatternsTableCreateCompanionBuilder =
     RecurringPatternsCompanion Function({
       Value<int> id,
-      required String frequency,
+      required RecurringFrequency frequency,
       Value<int> interval,
       required DateTime startDate,
       Value<DateTime?> endDate,
       required DateTime nextRunDate,
-      Value<String> type,
+      Value<RecurringType> type,
       required String templateData,
     });
 typedef $$RecurringPatternsTableUpdateCompanionBuilder =
     RecurringPatternsCompanion Function({
       Value<int> id,
-      Value<String> frequency,
+      Value<RecurringFrequency> frequency,
       Value<int> interval,
       Value<DateTime> startDate,
       Value<DateTime?> endDate,
       Value<DateTime> nextRunDate,
-      Value<String> type,
+      Value<RecurringType> type,
       Value<String> templateData,
     });
 
@@ -4622,9 +4817,10 @@ class $$RecurringPatternsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get frequency => $composableBuilder(
+  ColumnWithTypeConverterFilters<RecurringFrequency, RecurringFrequency, String>
+  get frequency => $composableBuilder(
     column: $table.frequency,
-    builder: (column) => ColumnFilters(column),
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<int> get interval => $composableBuilder(
@@ -4647,9 +4843,10 @@ class $$RecurringPatternsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get type => $composableBuilder(
+  ColumnWithTypeConverterFilters<RecurringType, RecurringType, String>
+  get type => $composableBuilder(
     column: $table.type,
-    builder: (column) => ColumnFilters(column),
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<String> get templateData => $composableBuilder(
@@ -4720,7 +4917,7 @@ class $$RecurringPatternsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get frequency =>
+  GeneratedColumnWithTypeConverter<RecurringFrequency, String> get frequency =>
       $composableBuilder(column: $table.frequency, builder: (column) => column);
 
   GeneratedColumn<int> get interval =>
@@ -4737,7 +4934,7 @@ class $$RecurringPatternsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get type =>
+  GeneratedColumnWithTypeConverter<RecurringType, String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
   GeneratedColumn<String> get templateData => $composableBuilder(
@@ -4787,12 +4984,12 @@ class $$RecurringPatternsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<String> frequency = const Value.absent(),
+                Value<RecurringFrequency> frequency = const Value.absent(),
                 Value<int> interval = const Value.absent(),
                 Value<DateTime> startDate = const Value.absent(),
                 Value<DateTime?> endDate = const Value.absent(),
                 Value<DateTime> nextRunDate = const Value.absent(),
-                Value<String> type = const Value.absent(),
+                Value<RecurringType> type = const Value.absent(),
                 Value<String> templateData = const Value.absent(),
               }) => RecurringPatternsCompanion(
                 id: id,
@@ -4807,12 +5004,12 @@ class $$RecurringPatternsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required String frequency,
+                required RecurringFrequency frequency,
                 Value<int> interval = const Value.absent(),
                 required DateTime startDate,
                 Value<DateTime?> endDate = const Value.absent(),
                 required DateTime nextRunDate,
-                Value<String> type = const Value.absent(),
+                Value<RecurringType> type = const Value.absent(),
                 required String templateData,
               }) => RecurringPatternsCompanion.insert(
                 id: id,
