@@ -1,4 +1,5 @@
 /// **Enums for Type Safety**
+library;
 
 /// Represents the nature of an account.
 enum AccountType {
