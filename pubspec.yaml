@@ -18,6 +18,8 @@ dependencies:
   provider: ^6.1.5+1
   intl: ^0.20.2
   drift_dev: ^2.24.0
+  dynamic_color: ^1.8.1
+  catppuccin_flutter: ^1.0.0
 
 dev_dependencies:
   flutter_test:
