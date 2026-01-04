@@ -16,10 +16,19 @@
 ## 2. Technology Stack
 *   **Framework:** Flutter (Dart).
 *   **Database:** Drift (SQLite) with strictly typed Enums.
-*   **Architecture:** Repository Pattern. Logic resides in Repositories, not UI.
-*   **State Management:** (To be defined/confirmed, likely Provider or Riverpod simplified).
+*   **Architecture:** Repository Pattern (Data) + Provider (UI State).
+*   **Theming:** Dynamic Material 3 + Catppuccin (Latte/Mocha) fallback.
+*   **Dependencies:** `drift`, `provider`, `dynamic_color`, `catppuccin_flutter`.
 
-## 3. Work Completed (As of 2026-01-04)
+## 3. Work Completed
+### UI Foundation (New - 2026-01-04)
+*   **Theming Architecture:** Established `lib/core/theme` with `ThemeProvider` and `AppTheme`.
+*   **Extensions:**
+    *   `SemanticColorsExtension`: Maps business logic (Income/Expense) to Catppuccin colors (Green/Red).
+    *   `TextSizesExtension`: Implements proper Tailwind scale as `doubles` (e.g., `textXl`) with adjustable `scaleFactor`.
+*   **Integration:** `MultiProvider` + `DynamicColorBuilder` in `main.dart`.
+*   **Verification:** Full suite of Unit Tests covering all Extensions, Providers, and Theme Definitions.
+
 ### Database & Schema
 *   **Schema Design:** Fully defined using Drift. Tables: `Accounts`, `Categories`, `Transactions`, `Tags`, `RecurringPatterns`.
 *   **Type Safety:** Replaced raw strings with Dart Enums (`AccountType`, `CategoryKind`, `TransactionType`, `RecurringFrequency`, `RecurringType`).
@@ -39,17 +48,20 @@
     *   **Comments:** Explain *intent*, not just potential.
     *   **Simplicity:** Avoid overengineering (e.g., complex Clean Architecture overkill) unless necessary. Keep it extendable but simple.
 *   **Design:** "Wow" the user. Avoid generic flat designs. Use gradients, animations, and depth.
+*   **UI Conventions**:
+    *   **NEVER** hardcode colors. Always use `Theme.of(context).extension<SemanticColorsExtension>()` or `ColorScheme`.
+    *   **NEVER** hardcode font sizes. Always use `Theme.of(context).extension<TextSizesExtension>()`.
 
 ## 5. Conventions & "Gotchas"
 *   **Enums in Drift:** We use `textEnum<T>()` in `schema.dart`. This maps to the Enum in Dart but Text in SQLite.
 *   **Testing Database:** ALWAYS use `AppDatabase.forTesting(NativeDatabase.memory())` in unit tests to ensure isolation.
 *   **Double Entry Enforcement:** NEVER manually update `currentBalance` in `Accounts` without a corresponding `Transaction` record (or use the `updateAccount` method which handles this).
 *   **Repository API:** ALWAYS encapsulate `Drift` objects (Companions) inside the Repository. Public methods should accept named parameters with strict types.
-*   **Git:** Generate conventional commit messages when asked.
+*   **Lists:** `flutter_test` `testWidgets` is for Widgets. Use `test` for pure logic (even ChangeNotifier logic if no context is needed).
 
 ## 6. Current Status & Next Steps
-*   **Status:** Database layer is robust and verified.
+*   **Status:** Database Layer and UI Foundation are complete and verified.
 *   **Immediate Needs:**
-    *   Connect UI to the new Repository methods.
+    *   Build the Main Dashboard Shell (Bottom Nav, App Bar).
+    *   Connect UI to the Repository methods (Accounts List, Add Transaction).
     *   Implement "Recurring Transaction" engine.
-    *   Build out the "Add Transaction" screen with the new Enum-based logic.
