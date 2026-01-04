@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNotNull;
 
 import 'package:variance/database/database.dart';
 import 'package:variance/database/enums.dart';
@@ -27,8 +27,7 @@ class CategoryRepository {
   /// Excluding deleted.
   Stream<List<Category>> watchCategoriesByKind(CategoryKind kind) {
     return (_db.select(_db.categories)..where(
-          (tbl) =>
-              tbl.kind.equals(kind as String) & tbl.isDeleted.equals(false),
+          (tbl) => tbl.kind.equals(kind.name) & tbl.isDeleted.equals(false),
         ))
         .watch();
   }
