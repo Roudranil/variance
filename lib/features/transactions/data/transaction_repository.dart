@@ -3,14 +3,12 @@ import 'package:drift/drift.dart';
 import 'package:variance/database/database.dart';
 import 'package:variance/database/enums.dart';
 
-/// **Transaction Repository**
+/// Handles all business logic related to the central ledger [Transactions].
 ///
-/// Handles all business logic related to the central ledger ([Transactions]).
-///
-/// **Key Responsibilities:**
-/// *   CRUD operations for transactions.
-/// *   **Enforcing Double-Entry Integrity**: Ensures that creating a transaction
-///     automatically updates the [currentBalance] of related Accounts.
+/// Responsibilities:
+/// - CRUD operations for transactions.
+/// - Enforcing Double-Entry Integrity: Ensures that creating a transaction
+///   automatically updates the [currentBalance] of related Accounts.
 class TransactionRepository {
   final AppDatabase _db;
 
@@ -29,17 +27,25 @@ class TransactionRepository {
         .watch();
   }
 
-  /// **Core Double-Entry Operation**
+  /// Creates a new transaction record and updates the affected Account balances.
   ///
-  /// Creates a new transaction record AND updates the affected Account balances
-  /// in a single atomic database transaction.
+  /// This is the core Double-Entry operation. It executes in a single atomic database transaction.
   ///
-  /// **Logic:**
-  /// *   **Expense**: [sourceAccountId] is required. Reduces Source Balance by [amount].
-  /// *   **Income**: [destinationAccountId] is required. Increases Dest Balance by [amount].
-  /// *   **Transfer**: Both Accounts required. Reduces Source, Increases Dest.
+  /// Logic:
+  /// - Expense: [sourceAccountId] is required. Reduces Source Balance by [amount].
+  /// - Income: [destinationAccountId] is required. Increases Dest Balance by [amount].
+  /// - Transfer: Both Accounts required. Reduces Source, Increases Dest.
   ///
   /// Throws an error if required accounts are missing for the given [type].
+  ///
+  /// Parameters:
+  /// - [amount]: The transaction amount.
+  /// - [type]: The transaction type (expense, income, transfer).
+  /// - [date]: The date of transaction.
+  /// - [sourceAccountId]: ID of source account (required for expense/transfer).
+  /// - [destinationAccountId]: ID of destination account (required for income/transfer).
+  /// - [categoryId]: ID of the category.
+  /// - [description]: Optional description.
   Future<void> createTransaction({
     required double amount,
     required TransactionType type, // 'expense', 'income', 'transfer'
@@ -91,7 +97,10 @@ class TransactionRepository {
     });
   }
 
-  /// Deletes a transaction and REVERTS its effect on account balances.
+  /// Deletes a transaction and reverts its effect on account balances.
+  ///
+  /// Parameters:
+  /// - [id]: The ID of the transaction to delete.
   Future<void> deleteTransaction(int id) async {
     return _db.transaction(() async {
       final transaction = await (_db.select(
@@ -133,7 +142,11 @@ class TransactionRepository {
   }
 
   /// Updates a transaction.
+  ///
   /// Conceptually: Reverts the OLD transaction, then Applies the NEW transaction.
+  ///
+  /// Parameters:
+  /// - [updatedTransaction]: The transaction object with updated values.
   Future<void> updateTransaction(Transaction updatedTransaction) async {
     return _db.transaction(() async {
       // 1. Revert Old Transaction's effect

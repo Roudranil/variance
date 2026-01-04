@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// The entry point of the application.
 void main() {
   runApp(const MyApp());
 }
 
+/// The root widget of the application.
+///
+/// This widget initializes the [MaterialApp] with the application theme and
+/// home page.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
