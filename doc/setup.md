@@ -51,3 +51,18 @@ flutter test test/database_test.dart
 ## Troubleshooting
 *   **Build Runner Failures**: Try `flutter clean`, `flutter pub get`, then run the build command again.
 *   **Drift Versioning**: We locked Drift to `2.24.0` due to issues with `2.30`'s code generator. Do not upgrade unless you verify compatibility.
+
+## Documentation
+
+### Generating API Reference
+The project uses `dart_doc_markdown_generator` and a custom script to generate concise API documentation in Markdown format.
+
+To regenerate the documentation:
+```bash
+./scripts/generate_docs.sh
+```
+
+**Note:**
+*   The script backs up any existing `doc/api_reference` folder to `doc/api_reference.bak` before generating new files.
+*   The output is located in `doc/api_reference`.
+*   The process uses `tool/doc_merger.dart` to aggregate raw markdown files into per-library files.
