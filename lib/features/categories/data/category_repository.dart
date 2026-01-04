@@ -1,3 +1,5 @@
+import 'package:drift/drift.dart';
+
 import 'package:variance/database/database.dart';
 import 'package:variance/database/enums.dart';
 
@@ -14,16 +16,21 @@ class CategoryRepository {
   CategoryRepository(this._db);
 
   /// Watches all categories.
-  /// TODO: Add sorting or tree-traversal logic for UI display.
+  /// Excluding deleted.
   Stream<List<Category>> watchAllCategories() {
-    return _db.select(_db.categories).watch();
+    return (_db.select(
+      _db.categories,
+    )..where((tbl) => tbl.isDeleted.equals(false))).watch();
   }
 
   /// Watches categories by type (Expense/Income).
+  /// Excluding deleted.
   Stream<List<Category>> watchCategoriesByKind(CategoryKind kind) {
-    return (_db.select(
-      _db.categories,
-    )..where((tbl) => tbl.kind.equals(kind as String))).watch();
+    return (_db.select(_db.categories)..where(
+          (tbl) =>
+              tbl.kind.equals(kind as String) & tbl.isDeleted.equals(false),
+        ))
+        .watch();
   }
 
   /// Creates a new category.
@@ -31,9 +38,9 @@ class CategoryRepository {
     return _db.into(_db.categories).insert(category);
   }
 
-  /// Deletes a category.
-  /// TODO: Add logic to prevent deleting if it has children or transactions.
-  Future<int> deleteCategory(int id) {
-    return (_db.delete(_db.categories)..where((tbl) => tbl.id.equals(id))).go();
+  /// Soft deletes a category.
+  Future<void> deleteCategory(int id) {
+    return (_db.update(_db.categories)..where((tbl) => tbl.id.equals(id)))
+        .write(CategoriesCompanion(isDeleted: const Value(true)));
   }
 }

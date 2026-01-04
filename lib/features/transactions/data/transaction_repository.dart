@@ -90,4 +90,120 @@ class TransactionRepository {
       }
     });
   }
+
+  /// Deletes a transaction and REVERTS its effect on account balances.
+  Future<void> deleteTransaction(int id) async {
+    return _db.transaction(() async {
+      final transaction = await (_db.select(
+        _db.transactions,
+      )..where((t) => t.id.equals(id))).getSingle();
+
+      // Revert Balance Logic
+      if (transaction.sourceAccountId != null) {
+        final account = await (_db.select(
+          _db.accounts,
+        )..where((a) => a.id.equals(transaction.sourceAccountId!))).getSingle();
+        await _db
+            .update(_db.accounts)
+            .replace(
+              account.copyWith(
+                currentBalance: account.currentBalance + transaction.amount,
+              ),
+            );
+      }
+
+      if (transaction.destinationAccountId != null) {
+        final account =
+            await (_db.select(
+                  _db.accounts,
+                )..where((a) => a.id.equals(transaction.destinationAccountId!)))
+                .getSingle();
+        await _db
+            .update(_db.accounts)
+            .replace(
+              account.copyWith(
+                currentBalance: account.currentBalance - transaction.amount,
+              ),
+            );
+      }
+
+      // Hard Delete the transaction row
+      await (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
+    });
+  }
+
+  /// Updates a transaction.
+  /// Conceptually: Reverts the OLD transaction, then Applies the NEW transaction.
+  Future<void> updateTransaction(Transaction updatedTransaction) async {
+    return _db.transaction(() async {
+      // 1. Revert Old Transaction's effect
+      final oldTransaction = await (_db.select(
+        _db.transactions,
+      )..where((t) => t.id.equals(updatedTransaction.id))).getSingle();
+
+      // Revert Old
+      if (oldTransaction.sourceAccountId != null) {
+        final account =
+            await (_db.select(_db.accounts)
+                  ..where((a) => a.id.equals(oldTransaction.sourceAccountId!)))
+                .getSingle();
+        await _db
+            .update(_db.accounts)
+            .replace(
+              account.copyWith(
+                currentBalance: account.currentBalance + oldTransaction.amount,
+              ),
+            );
+      }
+      if (oldTransaction.destinationAccountId != null) {
+        final account =
+            await (_db.select(_db.accounts)..where(
+                  (a) => a.id.equals(oldTransaction.destinationAccountId!),
+                ))
+                .getSingle();
+        await _db
+            .update(_db.accounts)
+            .replace(
+              account.copyWith(
+                currentBalance: account.currentBalance - oldTransaction.amount,
+              ),
+            );
+      }
+
+      // 2. Apply New Transaction's effect
+      if (updatedTransaction.sourceAccountId != null) {
+        final account =
+            await (_db.select(_db.accounts)..where(
+                  (a) => a.id.equals(updatedTransaction.sourceAccountId!),
+                ))
+                .getSingle();
+        await _db
+            .update(_db.accounts)
+            .replace(
+              account.copyWith(
+                currentBalance:
+                    account.currentBalance - updatedTransaction.amount,
+              ),
+            );
+      }
+      if (updatedTransaction.destinationAccountId != null) {
+        final account =
+            await (_db.select(_db.accounts)..where(
+                  (a) => a.id.equals(updatedTransaction.destinationAccountId!),
+                ))
+                .getSingle();
+        await _db
+            .update(_db.accounts)
+            .replace(
+              account.copyWith(
+                currentBalance:
+                    account.currentBalance + updatedTransaction.amount,
+              ),
+            );
+      }
+
+      // 3. Update the Transaction Row
+      await _db.update(_db.transactions).replace(updatedTransaction);
+    });
+  }
 }
