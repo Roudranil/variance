@@ -51,6 +51,8 @@
 *   **UI Conventions**:
     *   **NEVER** hardcode colors. Always use `Theme.of(context).extension<SemanticColorsExtension>()` or `ColorScheme`.
     *   **NEVER** hardcode font sizes. Always use `Theme.of(context).extension<TextSizesExtension>()`.
+    *   **Logging:** STRICTLY usage of `VarianceLogger` from `lib/core/utils/logger.dart` is enforced across the entire codebase. Do not use `print` or other logging packages.
+
 
 ## 5. Conventions & "Gotchas"
 *   **Enums in Drift:** We use `textEnum<T>()` in `schema.dart`. This maps to the Enum in Dart but Text in SQLite.
