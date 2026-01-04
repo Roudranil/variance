@@ -94,6 +94,21 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _statementDayMeta = const VerificationMeta(
     'statementDay',
   );
@@ -136,6 +151,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     currentBalance,
     currencyCode,
     includeInTotals,
+    isDeleted,
     statementDay,
     paymentDueDay,
     interestRate,
@@ -197,6 +213,12 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
           data['include_in_totals']!,
           _includeInTotalsMeta,
         ),
+      );
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
       );
     }
     if (data.containsKey('statement_day')) {
@@ -265,6 +287,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}include_in_totals'],
       )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
       statementDay: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}statement_day'],
@@ -316,6 +342,9 @@ class Account extends DataClass implements Insertable<Account> {
   /// the overall net worth calculation.
   final bool includeInTotals;
 
+  /// Soft Delete flag. If true, the account is hidden from the UI but kept for history.
+  final bool isDeleted;
+
   /// The day of the month (1-31) when the statement is generated.
   /// Nullable: Only relevant for [type] == 'creditCard'.
   final int? statementDay;
@@ -335,6 +364,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.currentBalance,
     required this.currencyCode,
     required this.includeInTotals,
+    required this.isDeleted,
     this.statementDay,
     this.paymentDueDay,
     this.interestRate,
@@ -351,6 +381,7 @@ class Account extends DataClass implements Insertable<Account> {
     map['current_balance'] = Variable<double>(currentBalance);
     map['currency_code'] = Variable<String>(currencyCode);
     map['include_in_totals'] = Variable<bool>(includeInTotals);
+    map['is_deleted'] = Variable<bool>(isDeleted);
     if (!nullToAbsent || statementDay != null) {
       map['statement_day'] = Variable<int>(statementDay);
     }
@@ -372,6 +403,7 @@ class Account extends DataClass implements Insertable<Account> {
       currentBalance: Value(currentBalance),
       currencyCode: Value(currencyCode),
       includeInTotals: Value(includeInTotals),
+      isDeleted: Value(isDeleted),
       statementDay: statementDay == null && nullToAbsent
           ? const Value.absent()
           : Value(statementDay),
@@ -399,6 +431,7 @@ class Account extends DataClass implements Insertable<Account> {
       currentBalance: serializer.fromJson<double>(json['currentBalance']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
       includeInTotals: serializer.fromJson<bool>(json['includeInTotals']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
       statementDay: serializer.fromJson<int?>(json['statementDay']),
       paymentDueDay: serializer.fromJson<int?>(json['paymentDueDay']),
       interestRate: serializer.fromJson<double?>(json['interestRate']),
@@ -417,6 +450,7 @@ class Account extends DataClass implements Insertable<Account> {
       'currentBalance': serializer.toJson<double>(currentBalance),
       'currencyCode': serializer.toJson<String>(currencyCode),
       'includeInTotals': serializer.toJson<bool>(includeInTotals),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
       'statementDay': serializer.toJson<int?>(statementDay),
       'paymentDueDay': serializer.toJson<int?>(paymentDueDay),
       'interestRate': serializer.toJson<double?>(interestRate),
@@ -431,6 +465,7 @@ class Account extends DataClass implements Insertable<Account> {
     double? currentBalance,
     String? currencyCode,
     bool? includeInTotals,
+    bool? isDeleted,
     Value<int?> statementDay = const Value.absent(),
     Value<int?> paymentDueDay = const Value.absent(),
     Value<double?> interestRate = const Value.absent(),
@@ -442,6 +477,7 @@ class Account extends DataClass implements Insertable<Account> {
     currentBalance: currentBalance ?? this.currentBalance,
     currencyCode: currencyCode ?? this.currencyCode,
     includeInTotals: includeInTotals ?? this.includeInTotals,
+    isDeleted: isDeleted ?? this.isDeleted,
     statementDay: statementDay.present ? statementDay.value : this.statementDay,
     paymentDueDay: paymentDueDay.present
         ? paymentDueDay.value
@@ -465,6 +501,7 @@ class Account extends DataClass implements Insertable<Account> {
       includeInTotals: data.includeInTotals.present
           ? data.includeInTotals.value
           : this.includeInTotals,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
       statementDay: data.statementDay.present
           ? data.statementDay.value
           : this.statementDay,
@@ -487,6 +524,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('currentBalance: $currentBalance, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('includeInTotals: $includeInTotals, ')
+          ..write('isDeleted: $isDeleted, ')
           ..write('statementDay: $statementDay, ')
           ..write('paymentDueDay: $paymentDueDay, ')
           ..write('interestRate: $interestRate')
@@ -503,6 +541,7 @@ class Account extends DataClass implements Insertable<Account> {
     currentBalance,
     currencyCode,
     includeInTotals,
+    isDeleted,
     statementDay,
     paymentDueDay,
     interestRate,
@@ -518,6 +557,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.currentBalance == this.currentBalance &&
           other.currencyCode == this.currencyCode &&
           other.includeInTotals == this.includeInTotals &&
+          other.isDeleted == this.isDeleted &&
           other.statementDay == this.statementDay &&
           other.paymentDueDay == this.paymentDueDay &&
           other.interestRate == this.interestRate);
@@ -531,6 +571,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<double> currentBalance;
   final Value<String> currencyCode;
   final Value<bool> includeInTotals;
+  final Value<bool> isDeleted;
   final Value<int?> statementDay;
   final Value<int?> paymentDueDay;
   final Value<double?> interestRate;
@@ -542,6 +583,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.currentBalance = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.includeInTotals = const Value.absent(),
+    this.isDeleted = const Value.absent(),
     this.statementDay = const Value.absent(),
     this.paymentDueDay = const Value.absent(),
     this.interestRate = const Value.absent(),
@@ -554,6 +596,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.currentBalance = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.includeInTotals = const Value.absent(),
+    this.isDeleted = const Value.absent(),
     this.statementDay = const Value.absent(),
     this.paymentDueDay = const Value.absent(),
     this.interestRate = const Value.absent(),
@@ -567,6 +610,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<double>? currentBalance,
     Expression<String>? currencyCode,
     Expression<bool>? includeInTotals,
+    Expression<bool>? isDeleted,
     Expression<int>? statementDay,
     Expression<int>? paymentDueDay,
     Expression<double>? interestRate,
@@ -579,6 +623,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currencyCode != null) 'currency_code': currencyCode,
       if (includeInTotals != null) 'include_in_totals': includeInTotals,
+      if (isDeleted != null) 'is_deleted': isDeleted,
       if (statementDay != null) 'statement_day': statementDay,
       if (paymentDueDay != null) 'payment_due_day': paymentDueDay,
       if (interestRate != null) 'interest_rate': interestRate,
@@ -593,6 +638,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<double>? currentBalance,
     Value<String>? currencyCode,
     Value<bool>? includeInTotals,
+    Value<bool>? isDeleted,
     Value<int?>? statementDay,
     Value<int?>? paymentDueDay,
     Value<double?>? interestRate,
@@ -605,6 +651,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       currentBalance: currentBalance ?? this.currentBalance,
       currencyCode: currencyCode ?? this.currencyCode,
       includeInTotals: includeInTotals ?? this.includeInTotals,
+      isDeleted: isDeleted ?? this.isDeleted,
       statementDay: statementDay ?? this.statementDay,
       paymentDueDay: paymentDueDay ?? this.paymentDueDay,
       interestRate: interestRate ?? this.interestRate,
@@ -637,6 +684,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (includeInTotals.present) {
       map['include_in_totals'] = Variable<bool>(includeInTotals.value);
     }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
     if (statementDay.present) {
       map['statement_day'] = Variable<int>(statementDay.value);
     }
@@ -659,6 +709,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('currentBalance: $currentBalance, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('includeInTotals: $includeInTotals, ')
+          ..write('isDeleted: $isDeleted, ')
           ..write('statementDay: $statementDay, ')
           ..write('paymentDueDay: $paymentDueDay, ')
           ..write('interestRate: $interestRate')
@@ -742,6 +793,21 @@ class $CategoriesTable extends Categories
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -750,6 +816,7 @@ class $CategoriesTable extends Categories
     parentId,
     iconData,
     color,
+    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -792,6 +859,12 @@ class $CategoriesTable extends Categories
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
     }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
     return context;
   }
 
@@ -827,6 +900,10 @@ class $CategoriesTable extends Categories
         DriftSqlType.int,
         data['${effectivePrefix}color'],
       ),
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
     );
   }
 
@@ -858,6 +935,9 @@ class Category extends DataClass implements Insertable<Category> {
 
   /// UI Color (stored as ARGB integer).
   final int? color;
+
+  /// Soft Delete flag.
+  final bool isDeleted;
   const Category({
     required this.id,
     required this.name,
@@ -865,6 +945,7 @@ class Category extends DataClass implements Insertable<Category> {
     this.parentId,
     this.iconData,
     this.color,
+    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -885,6 +966,7 @@ class Category extends DataClass implements Insertable<Category> {
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<int>(color);
     }
+    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -902,6 +984,7 @@ class Category extends DataClass implements Insertable<Category> {
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
+      isDeleted: Value(isDeleted),
     );
   }
 
@@ -919,6 +1002,7 @@ class Category extends DataClass implements Insertable<Category> {
       parentId: serializer.fromJson<int?>(json['parentId']),
       iconData: serializer.fromJson<String?>(json['iconData']),
       color: serializer.fromJson<int?>(json['color']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -933,6 +1017,7 @@ class Category extends DataClass implements Insertable<Category> {
       'parentId': serializer.toJson<int?>(parentId),
       'iconData': serializer.toJson<String?>(iconData),
       'color': serializer.toJson<int?>(color),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -943,6 +1028,7 @@ class Category extends DataClass implements Insertable<Category> {
     Value<int?> parentId = const Value.absent(),
     Value<String?> iconData = const Value.absent(),
     Value<int?> color = const Value.absent(),
+    bool? isDeleted,
   }) => Category(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -950,6 +1036,7 @@ class Category extends DataClass implements Insertable<Category> {
     parentId: parentId.present ? parentId.value : this.parentId,
     iconData: iconData.present ? iconData.value : this.iconData,
     color: color.present ? color.value : this.color,
+    isDeleted: isDeleted ?? this.isDeleted,
   );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -959,6 +1046,7 @@ class Category extends DataClass implements Insertable<Category> {
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
       iconData: data.iconData.present ? data.iconData.value : this.iconData,
       color: data.color.present ? data.color.value : this.color,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -970,13 +1058,15 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('kind: $kind, ')
           ..write('parentId: $parentId, ')
           ..write('iconData: $iconData, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, kind, parentId, iconData, color);
+  int get hashCode =>
+      Object.hash(id, name, kind, parentId, iconData, color, isDeleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -986,7 +1076,8 @@ class Category extends DataClass implements Insertable<Category> {
           other.kind == this.kind &&
           other.parentId == this.parentId &&
           other.iconData == this.iconData &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.isDeleted == this.isDeleted);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -996,6 +1087,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int?> parentId;
   final Value<String?> iconData;
   final Value<int?> color;
+  final Value<bool> isDeleted;
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1003,6 +1095,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.parentId = const Value.absent(),
     this.iconData = const Value.absent(),
     this.color = const Value.absent(),
+    this.isDeleted = const Value.absent(),
   });
   CategoriesCompanion.insert({
     this.id = const Value.absent(),
@@ -1011,6 +1104,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.parentId = const Value.absent(),
     this.iconData = const Value.absent(),
     this.color = const Value.absent(),
+    this.isDeleted = const Value.absent(),
   }) : name = Value(name),
        kind = Value(kind);
   static Insertable<Category> custom({
@@ -1020,6 +1114,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<int>? parentId,
     Expression<String>? iconData,
     Expression<int>? color,
+    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1028,6 +1123,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (parentId != null) 'parent_id': parentId,
       if (iconData != null) 'icon_data': iconData,
       if (color != null) 'color': color,
+      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -1038,6 +1134,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<int?>? parentId,
     Value<String?>? iconData,
     Value<int?>? color,
+    Value<bool>? isDeleted,
   }) {
     return CategoriesCompanion(
       id: id ?? this.id,
@@ -1046,6 +1143,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       parentId: parentId ?? this.parentId,
       iconData: iconData ?? this.iconData,
       color: color ?? this.color,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -1072,6 +1170,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (color.present) {
       map['color'] = Variable<int>(color.value);
     }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
     return map;
   }
 
@@ -1083,7 +1184,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('kind: $kind, ')
           ..write('parentId: $parentId, ')
           ..write('iconData: $iconData, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
@@ -1129,8 +1231,23 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, name, color];
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, isDeleted];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1160,6 +1277,12 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
     }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
     return context;
   }
 
@@ -1181,6 +1304,10 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
         DriftSqlType.int,
         data['${effectivePrefix}color'],
       ),
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
     );
   }
 
@@ -1194,7 +1321,15 @@ class Tag extends DataClass implements Insertable<Tag> {
   final int id;
   final String name;
   final int? color;
-  const Tag({required this.id, required this.name, this.color});
+
+  /// Soft Delete flag.
+  final bool isDeleted;
+  const Tag({
+    required this.id,
+    required this.name,
+    this.color,
+    required this.isDeleted,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1203,6 +1338,7 @@ class Tag extends DataClass implements Insertable<Tag> {
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<int>(color);
     }
+    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -1213,6 +1349,7 @@ class Tag extends DataClass implements Insertable<Tag> {
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
+      isDeleted: Value(isDeleted),
     );
   }
 
@@ -1225,6 +1362,7 @@ class Tag extends DataClass implements Insertable<Tag> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<int?>(json['color']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -1234,6 +1372,7 @@ class Tag extends DataClass implements Insertable<Tag> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'color': serializer.toJson<int?>(color),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -1241,16 +1380,19 @@ class Tag extends DataClass implements Insertable<Tag> {
     int? id,
     String? name,
     Value<int?> color = const Value.absent(),
+    bool? isDeleted,
   }) => Tag(
     id: id ?? this.id,
     name: name ?? this.name,
     color: color.present ? color.value : this.color,
+    isDeleted: isDeleted ?? this.isDeleted,
   );
   Tag copyWithCompanion(TagsCompanion data) {
     return Tag(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -1259,45 +1401,52 @@ class Tag extends DataClass implements Insertable<Tag> {
     return (StringBuffer('Tag(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, color);
+  int get hashCode => Object.hash(id, name, color, isDeleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Tag &&
           other.id == this.id &&
           other.name == this.name &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.isDeleted == this.isDeleted);
 }
 
 class TagsCompanion extends UpdateCompanion<Tag> {
   final Value<int> id;
   final Value<String> name;
   final Value<int?> color;
+  final Value<bool> isDeleted;
   const TagsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.color = const Value.absent(),
+    this.isDeleted = const Value.absent(),
   });
   TagsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     this.color = const Value.absent(),
+    this.isDeleted = const Value.absent(),
   }) : name = Value(name);
   static Insertable<Tag> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<int>? color,
+    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (color != null) 'color': color,
+      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -1305,11 +1454,13 @@ class TagsCompanion extends UpdateCompanion<Tag> {
     Value<int>? id,
     Value<String>? name,
     Value<int?>? color,
+    Value<bool>? isDeleted,
   }) {
     return TagsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       color: color ?? this.color,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -1325,6 +1476,9 @@ class TagsCompanion extends UpdateCompanion<Tag> {
     if (color.present) {
       map['color'] = Variable<int>(color.value);
     }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
     return map;
   }
 
@@ -1333,7 +1487,8 @@ class TagsCompanion extends UpdateCompanion<Tag> {
     return (StringBuffer('TagsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
@@ -2278,6 +2433,21 @@ class $RecurringPatternsTable extends RecurringPatterns
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2288,6 +2458,7 @@ class $RecurringPatternsTable extends RecurringPatterns
     nextRunDate,
     type,
     templateData,
+    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2346,6 +2517,12 @@ class $RecurringPatternsTable extends RecurringPatterns
     } else if (isInserting) {
       context.missing(_templateDataMeta);
     }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
     return context;
   }
 
@@ -2391,6 +2568,10 @@ class $RecurringPatternsTable extends RecurringPatterns
         DriftSqlType.string,
         data['${effectivePrefix}template_data'],
       )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
     );
   }
 
@@ -2435,6 +2616,9 @@ class RecurringPattern extends DataClass
   /// JSON blob containing the template data (amount, accounts, category)
   /// to copy when generating the real transaction.
   final String templateData;
+
+  /// Soft Delete flag.
+  final bool isDeleted;
   const RecurringPattern({
     required this.id,
     required this.frequency,
@@ -2444,6 +2628,7 @@ class RecurringPattern extends DataClass
     required this.nextRunDate,
     required this.type,
     required this.templateData,
+    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2466,6 +2651,7 @@ class RecurringPattern extends DataClass
       );
     }
     map['template_data'] = Variable<String>(templateData);
+    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -2481,6 +2667,7 @@ class RecurringPattern extends DataClass
       nextRunDate: Value(nextRunDate),
       type: Value(type),
       templateData: Value(templateData),
+      isDeleted: Value(isDeleted),
     );
   }
 
@@ -2502,6 +2689,7 @@ class RecurringPattern extends DataClass
         serializer.fromJson<String>(json['type']),
       ),
       templateData: serializer.fromJson<String>(json['templateData']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -2520,6 +2708,7 @@ class RecurringPattern extends DataClass
         $RecurringPatternsTable.$convertertype.toJson(type),
       ),
       'templateData': serializer.toJson<String>(templateData),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -2532,6 +2721,7 @@ class RecurringPattern extends DataClass
     DateTime? nextRunDate,
     RecurringType? type,
     String? templateData,
+    bool? isDeleted,
   }) => RecurringPattern(
     id: id ?? this.id,
     frequency: frequency ?? this.frequency,
@@ -2541,6 +2731,7 @@ class RecurringPattern extends DataClass
     nextRunDate: nextRunDate ?? this.nextRunDate,
     type: type ?? this.type,
     templateData: templateData ?? this.templateData,
+    isDeleted: isDeleted ?? this.isDeleted,
   );
   RecurringPattern copyWithCompanion(RecurringPatternsCompanion data) {
     return RecurringPattern(
@@ -2556,6 +2747,7 @@ class RecurringPattern extends DataClass
       templateData: data.templateData.present
           ? data.templateData.value
           : this.templateData,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -2569,7 +2761,8 @@ class RecurringPattern extends DataClass
           ..write('endDate: $endDate, ')
           ..write('nextRunDate: $nextRunDate, ')
           ..write('type: $type, ')
-          ..write('templateData: $templateData')
+          ..write('templateData: $templateData, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
@@ -2584,6 +2777,7 @@ class RecurringPattern extends DataClass
     nextRunDate,
     type,
     templateData,
+    isDeleted,
   );
   @override
   bool operator ==(Object other) =>
@@ -2596,7 +2790,8 @@ class RecurringPattern extends DataClass
           other.endDate == this.endDate &&
           other.nextRunDate == this.nextRunDate &&
           other.type == this.type &&
-          other.templateData == this.templateData);
+          other.templateData == this.templateData &&
+          other.isDeleted == this.isDeleted);
 }
 
 class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
@@ -2608,6 +2803,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
   final Value<DateTime> nextRunDate;
   final Value<RecurringType> type;
   final Value<String> templateData;
+  final Value<bool> isDeleted;
   const RecurringPatternsCompanion({
     this.id = const Value.absent(),
     this.frequency = const Value.absent(),
@@ -2617,6 +2813,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     this.nextRunDate = const Value.absent(),
     this.type = const Value.absent(),
     this.templateData = const Value.absent(),
+    this.isDeleted = const Value.absent(),
   });
   RecurringPatternsCompanion.insert({
     this.id = const Value.absent(),
@@ -2627,6 +2824,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     required DateTime nextRunDate,
     this.type = const Value.absent(),
     required String templateData,
+    this.isDeleted = const Value.absent(),
   }) : frequency = Value(frequency),
        startDate = Value(startDate),
        nextRunDate = Value(nextRunDate),
@@ -2640,6 +2838,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     Expression<DateTime>? nextRunDate,
     Expression<String>? type,
     Expression<String>? templateData,
+    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2650,6 +2849,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
       if (nextRunDate != null) 'next_run_date': nextRunDate,
       if (type != null) 'type': type,
       if (templateData != null) 'template_data': templateData,
+      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -2662,6 +2862,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     Value<DateTime>? nextRunDate,
     Value<RecurringType>? type,
     Value<String>? templateData,
+    Value<bool>? isDeleted,
   }) {
     return RecurringPatternsCompanion(
       id: id ?? this.id,
@@ -2672,6 +2873,7 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
       nextRunDate: nextRunDate ?? this.nextRunDate,
       type: type ?? this.type,
       templateData: templateData ?? this.templateData,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -2706,6 +2908,9 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     if (templateData.present) {
       map['template_data'] = Variable<String>(templateData.value);
     }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
     return map;
   }
 
@@ -2719,7 +2924,8 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
           ..write('endDate: $endDate, ')
           ..write('nextRunDate: $nextRunDate, ')
           ..write('type: $type, ')
-          ..write('templateData: $templateData')
+          ..write('templateData: $templateData, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
@@ -2760,6 +2966,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<double> currentBalance,
       Value<String> currencyCode,
       Value<bool> includeInTotals,
+      Value<bool> isDeleted,
       Value<int?> statementDay,
       Value<int?> paymentDueDay,
       Value<double?> interestRate,
@@ -2773,6 +2980,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<double> currentBalance,
       Value<String> currencyCode,
       Value<bool> includeInTotals,
+      Value<bool> isDeleted,
       Value<int?> statementDay,
       Value<int?> paymentDueDay,
       Value<double?> interestRate,
@@ -2820,6 +3028,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<bool> get includeInTotals => $composableBuilder(
     column: $table.includeInTotals,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2883,6 +3096,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get statementDay => $composableBuilder(
     column: $table.statementDay,
     builder: (column) => ColumnOrderings(column),
@@ -2937,6 +3155,9 @@ class $$AccountsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
   GeneratedColumn<int> get statementDay => $composableBuilder(
     column: $table.statementDay,
     builder: (column) => column,
@@ -2988,6 +3209,7 @@ class $$AccountsTableTableManager
                 Value<double> currentBalance = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<bool> includeInTotals = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
                 Value<int?> statementDay = const Value.absent(),
                 Value<int?> paymentDueDay = const Value.absent(),
                 Value<double?> interestRate = const Value.absent(),
@@ -2999,6 +3221,7 @@ class $$AccountsTableTableManager
                 currentBalance: currentBalance,
                 currencyCode: currencyCode,
                 includeInTotals: includeInTotals,
+                isDeleted: isDeleted,
                 statementDay: statementDay,
                 paymentDueDay: paymentDueDay,
                 interestRate: interestRate,
@@ -3012,6 +3235,7 @@ class $$AccountsTableTableManager
                 Value<double> currentBalance = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<bool> includeInTotals = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
                 Value<int?> statementDay = const Value.absent(),
                 Value<int?> paymentDueDay = const Value.absent(),
                 Value<double?> interestRate = const Value.absent(),
@@ -3023,6 +3247,7 @@ class $$AccountsTableTableManager
                 currentBalance: currentBalance,
                 currencyCode: currencyCode,
                 includeInTotals: includeInTotals,
+                isDeleted: isDeleted,
                 statementDay: statementDay,
                 paymentDueDay: paymentDueDay,
                 interestRate: interestRate,
@@ -3057,6 +3282,7 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       Value<int?> parentId,
       Value<String?> iconData,
       Value<int?> color,
+      Value<bool> isDeleted,
     });
 typedef $$CategoriesTableUpdateCompanionBuilder =
     CategoriesCompanion Function({
@@ -3066,6 +3292,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<int?> parentId,
       Value<String?> iconData,
       Value<int?> color,
+      Value<bool> isDeleted,
     });
 
 final class $$CategoriesTableReferences
@@ -3145,6 +3372,11 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<int> get color => $composableBuilder(
     column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3231,6 +3463,11 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get parentId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3278,6 +3515,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<int> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   $$CategoriesTableAnnotationComposer get parentId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -3362,6 +3602,7 @@ class $$CategoriesTableTableManager
                 Value<int?> parentId = const Value.absent(),
                 Value<String?> iconData = const Value.absent(),
                 Value<int?> color = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
               }) => CategoriesCompanion(
                 id: id,
                 name: name,
@@ -3369,6 +3610,7 @@ class $$CategoriesTableTableManager
                 parentId: parentId,
                 iconData: iconData,
                 color: color,
+                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -3378,6 +3620,7 @@ class $$CategoriesTableTableManager
                 Value<int?> parentId = const Value.absent(),
                 Value<String?> iconData = const Value.absent(),
                 Value<int?> color = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
               }) => CategoriesCompanion.insert(
                 id: id,
                 name: name,
@@ -3385,6 +3628,7 @@ class $$CategoriesTableTableManager
                 parentId: parentId,
                 iconData: iconData,
                 color: color,
+                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3484,12 +3728,14 @@ typedef $$TagsTableCreateCompanionBuilder =
       Value<int> id,
       required String name,
       Value<int?> color,
+      Value<bool> isDeleted,
     });
 typedef $$TagsTableUpdateCompanionBuilder =
     TagsCompanion Function({
       Value<int> id,
       Value<String> name,
       Value<int?> color,
+      Value<bool> isDeleted,
     });
 
 final class $$TagsTableReferences
@@ -3537,6 +3783,11 @@ class $$TagsTableFilterComposer extends Composer<_$AppDatabase, $TagsTable> {
 
   ColumnFilters<int> get color => $composableBuilder(
     column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3588,6 +3839,11 @@ class $$TagsTableOrderingComposer extends Composer<_$AppDatabase, $TagsTable> {
     column: $table.color,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TagsTableAnnotationComposer
@@ -3607,6 +3863,9 @@ class $$TagsTableAnnotationComposer
 
   GeneratedColumn<int> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   Expression<T> transactionTagsRefs<T extends Object>(
     Expression<T> Function($$TransactionTagsTableAnnotationComposer a) f,
@@ -3665,13 +3924,25 @@ class $$TagsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int?> color = const Value.absent(),
-              }) => TagsCompanion(id: id, name: name, color: color),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => TagsCompanion(
+                id: id,
+                name: name,
+                color: color,
+                isDeleted: isDeleted,
+              ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
                 Value<int?> color = const Value.absent(),
-              }) => TagsCompanion.insert(id: id, name: name, color: color),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => TagsCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                isDeleted: isDeleted,
+              ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) =>
@@ -4790,6 +5061,7 @@ typedef $$RecurringPatternsTableCreateCompanionBuilder =
       required DateTime nextRunDate,
       Value<RecurringType> type,
       required String templateData,
+      Value<bool> isDeleted,
     });
 typedef $$RecurringPatternsTableUpdateCompanionBuilder =
     RecurringPatternsCompanion Function({
@@ -4801,6 +5073,7 @@ typedef $$RecurringPatternsTableUpdateCompanionBuilder =
       Value<DateTime> nextRunDate,
       Value<RecurringType> type,
       Value<String> templateData,
+      Value<bool> isDeleted,
     });
 
 class $$RecurringPatternsTableFilterComposer
@@ -4853,6 +5126,11 @@ class $$RecurringPatternsTableFilterComposer
     column: $table.templateData,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$RecurringPatternsTableOrderingComposer
@@ -4903,6 +5181,11 @@ class $$RecurringPatternsTableOrderingComposer
     column: $table.templateData,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RecurringPatternsTableAnnotationComposer
@@ -4941,6 +5224,9 @@ class $$RecurringPatternsTableAnnotationComposer
     column: $table.templateData,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 }
 
 class $$RecurringPatternsTableTableManager
@@ -4991,6 +5277,7 @@ class $$RecurringPatternsTableTableManager
                 Value<DateTime> nextRunDate = const Value.absent(),
                 Value<RecurringType> type = const Value.absent(),
                 Value<String> templateData = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
               }) => RecurringPatternsCompanion(
                 id: id,
                 frequency: frequency,
@@ -5000,6 +5287,7 @@ class $$RecurringPatternsTableTableManager
                 nextRunDate: nextRunDate,
                 type: type,
                 templateData: templateData,
+                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -5011,6 +5299,7 @@ class $$RecurringPatternsTableTableManager
                 required DateTime nextRunDate,
                 Value<RecurringType> type = const Value.absent(),
                 required String templateData,
+                Value<bool> isDeleted = const Value.absent(),
               }) => RecurringPatternsCompanion.insert(
                 id: id,
                 frequency: frequency,
@@ -5020,6 +5309,7 @@ class $$RecurringPatternsTableTableManager
                 nextRunDate: nextRunDate,
                 type: type,
                 templateData: templateData,
+                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

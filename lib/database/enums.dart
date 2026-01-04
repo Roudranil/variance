@@ -1,4 +1,5 @@
 /// **Enums for Type Safety**
+
 /// Represents the nature of an account.
 enum AccountType {
   cash,
@@ -14,7 +15,7 @@ enum AccountType {
 enum CategoryKind { expense, income }
 
 /// Represents the type of a transaction.
-enum TransactionType { expense, income, transfer }
+enum TransactionType { expense, income, transfer, adjustment }
 
 /// Represents the frequency for recurring patterns.
 enum RecurringFrequency { daily, weekly, monthly, yearly }

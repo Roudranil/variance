@@ -38,6 +38,9 @@ class Accounts extends Table {
   BoolColumn get includeInTotals =>
       boolean().withDefault(const Constant(true))();
 
+  /// Soft Delete flag. If true, the account is hidden from the UI but kept for history.
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+
   // --- Credit Card Specific Fields ---
 
   /// The day of the month (1-31) when the statement is generated.
@@ -79,6 +82,9 @@ class Categories extends Table {
 
   /// UI Color (stored as ARGB integer).
   IntColumn get color => integer().nullable()();
+
+  /// Soft Delete flag.
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 /// **Tags Table**
@@ -89,6 +95,9 @@ class Tags extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 50)();
   IntColumn get color => integer().nullable()();
+
+  /// Soft Delete flag.
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 /// **Transactions Table**
@@ -178,4 +187,7 @@ class RecurringPatterns extends Table {
   /// JSON blob containing the template data (amount, accounts, category)
   /// to copy when generating the real transaction.
   TextColumn get templateData => text()();
+
+  /// Soft Delete flag.
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
