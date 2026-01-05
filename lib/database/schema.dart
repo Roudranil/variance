@@ -2,202 +2,306 @@ import 'package:drift/drift.dart';
 
 import 'package:variance/database/enums.dart';
 
-/// Represents the physical or digital storage of money.
 ///
-/// This is the core entity for the Double Entry system.
+/// This includes user-visible accounts (cash, bank, credit cards) and hidden
+/// system accounts (category-linked nominal accounts, equity accounts).
 ///
 /// Constraints:
-/// - [type] must be one of [AccountType] values.
-/// - [currencyCode] defaults to 'INR'.
+/// - [nature] determines debit/credit behavior per accounting rules.
+/// - [type] is nullable for system accounts (categories, equity).
+/// - [isUserVisible] controls whether the account appears in the user-facing
+///   account list.
 class Accounts extends Table {
-  /// The primary Key. Auto-incrementing integer.
+  /// Primary key. Auto-incrementing integer.
   IntColumn get id => integer().autoIncrement()();
 
-  /// The user-defined name for the account (e.g., "HDFC Bank", "Wallet").
-  TextColumn get name => text().withLength(min: 1, max: 50)();
+  /// The user-defined name for the account.
+  TextColumn get name => text().withLength(min: 1, max: 100)();
 
-  /// The nature. of the account.
+  /// The user-facing type for UI grouping.
   ///
-  /// Used for UI grouping and reporting logic (Net Worth calculation).
-  TextColumn get type => textEnum<AccountType>()();
+  /// Nullable for system accounts (category-linked accounts, equity accounts).
+  TextColumn get type => textEnum<AccountType>().nullable()();
 
-  /// The opening balance when the account was created/imported.
-  RealColumn get initialBalance => real().withDefault(const Constant(0.0))();
-
-  /// The current calculated balance.
+  /// The fundamental accounting nature.
   ///
-  /// NOTE: This can be derived from [initialBalance] + Sum(Transactions).
-  /// Optimization: We might cache this value here.
-  RealColumn get currentBalance => real().withDefault(const Constant(0.0))();
+  /// Determines whether debits increase or decrease the balance.
+  TextColumn get nature => textEnum<AccountNature>()();
 
-  /// The ISO 4217 Currency Code (e.g., 'INR', 'USD').
+  /// Whether this account is visible in the user-facing account list.
+  ///
+  /// False for category-linked accounts and system equity accounts.
+  BoolColumn get isUserVisible => boolean().withDefault(const Constant(true))();
+
+  /// ISO 4217 currency code.
   ///
   /// Defaults to 'INR'.
   TextColumn get currencyCode => text().withDefault(const Constant('INR'))();
 
-  /// Determines if the balances in this account should be included in
-  /// the overall net worth calculation.
+  /// Whether to include this account in net worth calculations.
+  ///
+  /// Defaults to true.
   BoolColumn get includeInTotals =>
       boolean().withDefault(const Constant(true))();
 
-  /// The soft Delete flag.
+  /// Soft delete flag.
   ///
-  /// If true, the account is hidden from the UI but kept for history.
+  /// If true, the account is hidden from the UI but kept for historical
+  /// integrity.
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 
-  // --- Credit Card Specific Fields ---
+  /// Audit timestamp for record creation.
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// The day of the month (1-31) when the statement is generated.
+  /// Audit timestamp for last update.
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  // --- Credit Card Metadata (nullable) ---
+
+  /// Statement generation day (1-31).
   ///
-  /// Nullable: Only relevant for [type] == 'creditCard'.
+  /// Applicable only to credit card accounts.
   IntColumn get statementDay => integer().nullable()();
 
-  /// The day of the month (1-31) when the payment is due.
+  /// Payment due day (1-31).
   ///
-  /// Nullable: Only relevant for [type] == 'creditCard'.
+  /// Applicable only to credit card accounts.
   IntColumn get paymentDueDay => integer().nullable()();
 
-  // --- Loan/Savings Specific Fields ---
-
-  /// The annual Interest Rate (percentage).
+  /// Credit limit amount.
   ///
-  /// Nullable: Only relevant for loans or savings accounts.
+  /// Applicable only to credit card accounts.
+  RealColumn get creditLimit => real().nullable()();
+
+  // --- Loan/Savings Metadata (nullable) ---
+
+  /// Annual interest rate (as a percentage).
+  ///
+  /// Applicable to loans and savings accounts.
   RealColumn get interestRate => real().nullable()();
+
+  /// Original principal amount.
+  ///
+  /// Applicable only to loan accounts.
+  RealColumn get principal => real().nullable()();
+
+  /// Monthly installment amount (EMI).
+  ///
+  /// Applicable only to loan accounts.
+  RealColumn get installmentAmount => real().nullable()();
+
+  /// Next payment due date.
+  ///
+  /// Applicable only to loan accounts.
+  DateTimeColumn get nextDueDate => dateTime().nullable()();
+
+  /// Maturity date.
+  ///
+  /// Applicable to fixed deposits and savings accounts.
+  DateTimeColumn get maturityDate => dateTime().nullable()();
 }
 
-/// Classifies the nature of a transaction (Flow).
+/// Classifies the nature of a transaction (expense or income).
 ///
-/// Technically acts as Nominal Accounts in a strict ledger, but here treated as tagging.
+/// In double-entry bookkeeping, each category is linked to a hidden nominal
+/// account. When a user selects a category for a transaction, the system uses
+/// the [linkedAccountId] to create the corresponding ledger entry.
+///
 /// Supports infinite hierarchy via [parentId].
 class Categories extends Table {
-  /// The primary Key.
+  /// Primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// The display name (e.g., "Food", "Salary").
-  TextColumn get name => text().withLength(min: 1, max: 50)();
+  /// Display name (e.g., "Food", "Salary").
+  TextColumn get name => text().withLength(min: 1, max: 100)();
 
   /// The direction of flow this category represents.
   TextColumn get kind => textEnum<CategoryKind>()();
 
-  /// The self-referencing Foreign Key to support sub-categories.
+  /// Self-referencing foreign key for sub-categories.
   ///
-  /// If null, this is a Top-Level Category.
+  /// If null, this is a top-level category.
   IntColumn get parentId => integer().nullable().references(Categories, #id)();
 
-  /// The icon identifier (stored as string codePoint or asset path).
+  /// Foreign key to the hidden nominal account for DEB.
+  ///
+  /// This account is created automatically when the category is created.
+  IntColumn get linkedAccountId => integer().references(Accounts, #id)();
+
+  /// Icon identifier (codePoint or asset path).
   TextColumn get iconData => text().nullable()();
 
-  /// The UI Color (stored as ARGB integer).
+  /// UI color (ARGB integer).
   IntColumn get color => integer().nullable()();
 
-  /// Soft Delete flag.
+  /// Soft delete flag.
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+
+  /// Audit timestamp for record creation.
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// Audit timestamp for last update.
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Defines cross-cutting labels for grouping transactions across categories.
+/// Cross-cutting labels for grouping transactions.
 ///
-/// Example: "Trip 2025" tag on Food, Flight, and Hotel transactions.
+/// Example: Tag multiple transactions with "Hawaii Trip" to see the total trip
+/// cost, regardless of whether they are Food, Travel, or Lodging expenses.
 class Tags extends Table {
+  /// Primary key.
   IntColumn get id => integer().autoIncrement()();
+
+  /// Display name.
   TextColumn get name => text().withLength(min: 1, max: 50)();
+
+  /// UI color (ARGB integer).
   IntColumn get color => integer().nullable()();
 
-  /// Soft Delete flag.
+  /// Soft delete flag.
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
-/// Represents the central ledger of the application.
+/// Represents the header of a financial event (immutable).
 ///
-/// Records money moving between accounts (Transfer) or in/out of an account (Income/Expense).
+/// The actual money movement is recorded in [LedgerEntries]. A transaction is
+/// never deleted; instead, it is marked as void via [isVoid].
 class Transactions extends Table {
+  /// Primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// The actual date and time the transaction occurred.
+  /// The date and time the transaction occurred.
   DateTimeColumn get transactionDate => dateTime()();
 
-  /// The absolute magnitude of the money flow.
-  ///
-  /// NOTE: Always stored as a positive number. Direction is determined by [type] and Accounts.
-  RealColumn get amount => real()();
-
-  /// The nature of the transaction.
+  /// The type of transaction.
   TextColumn get type => textEnum<TransactionType>()();
 
-  /// The optional user-defined note.
-  TextColumn get description => text().nullable()();
+  /// Optional user-defined note.
+  TextColumn get userNote => text().nullable()();
 
-  // --- Foreign Keys (Double Entry Enforcers) ---
+  /// External reference (e.g., SMS ID, bank reference number).
+  TextColumn get externalReference => text().nullable()();
 
-  /// The account money is coming FROM.
+  /// Soft-delete flag for immutable ledger.
   ///
-  /// Required for: 'expense', 'transfer'.
-  /// Null for: 'income'.
-  IntColumn get sourceAccountId =>
-      integer().nullable().references(Accounts, #id)();
+  /// True = voided transaction (hidden from UI, excluded from balance
+  /// calculations).
+  BoolColumn get isVoid => boolean().withDefault(const Constant(false))();
 
-  /// The account money is going TO.
-  ///
-  /// Required for: 'income', 'transfer'.
-  /// Null for: 'expense'.
-  IntColumn get destinationAccountId =>
-      integer().nullable().references(Accounts, #id)();
+  /// Audit timestamp for record creation.
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  /// The classification category.
-  ///
-  /// Required for: 'expense', 'income'.
-  /// Optional/Null for: 'transfer' (Transfers usually don't need categories).
-  IntColumn get categoryId =>
-      integer().nullable().references(Categories, #id)();
+  /// Audit timestamp for last update.
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
 
-  /// The audit timestamp.
+/// Immutable journal line items for double-entry bookkeeping.
+///
+/// Each transaction creates 2 or more ledger entries such that:
+/// - sum(debits) = sum(credits) for the transaction.
+///
+/// Entries are never modified or deleted. To "undo" a transaction, the parent
+/// [Transactions] record is marked as void.
+class LedgerEntries extends Table {
+  /// Primary key.
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Foreign key to the parent transaction.
+  IntColumn get transactionId => integer().references(Transactions, #id)();
+
+  /// Foreign key to the account affected.
+  IntColumn get accountId => integer().references(Accounts, #id)();
+
+  /// The amount (always stored as a positive number).
+  RealColumn get amount => real()();
+
+  /// The side of the entry (DEBIT or CREDIT).
+  TextColumn get side => textEnum<LedgerSide>()();
+
+  /// Audit timestamp for record creation.
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// Defines the Many-to-Many relationship between [Transactions] and [Tags].
+/// Many-to-many join between [Transactions] and [Tags].
 class TransactionTags extends Table {
+  /// Foreign key to the transaction.
   IntColumn get transactionId => integer().references(Transactions, #id)();
+
+  /// Foreign key to the tag.
   IntColumn get tagId => integer().references(Tags, #id)();
 
   @override
   Set<Column> get primaryKey => {transactionId, tagId};
 }
 
-/// Represents definitions for transactions that repeat over time.
+/// Definitions for transactions that repeat over time.
 ///
-/// Used by the generator engine to create actual [Transactions] entries.
+/// The system checks [nextRunDate] and creates actual [Transactions] entries
+/// based on the template fields when due.
 class RecurringPatterns extends Table {
+  /// Primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// The base frequency unit.
+  /// Base frequency unit.
   TextColumn get frequency => textEnum<RecurringFrequency>()();
 
-  /// The multiplier for the frequency.
+  /// Multiplier for the frequency.
   ///
-  /// Example: frequency='weekly', interval=2 implies "Every 2 weeks".
+  /// Example: frequency = weekly, interval = 2 means "every 2 weeks".
   IntColumn get interval => integer().withDefault(const Constant(1))();
 
-  /// The date when this pattern starts active.
+  /// When this pattern starts.
   DateTimeColumn get startDate => dateTime()();
 
-  /// The date when this pattern stops.
+  /// When this pattern ends.
   ///
-  /// If null, it repeats forever.
+  /// If null, repeats forever.
   DateTimeColumn get endDate => dateTime().nullable()();
 
-  /// The pre-calculated date of the next occurrence.
+  /// Pre-calculated next occurrence date.
   ///
-  /// Optimization field: The engine queries this to find what's due today.
+  /// Optimization field for efficient querying.
   DateTimeColumn get nextRunDate => dateTime()();
 
-  /// The automation type.
-  TextColumn get type =>
+  /// Automation type.
+  ///
+  /// Defaults to 'automatic'.
+  TextColumn get automationType =>
       textEnum<RecurringType>().withDefault(const Constant('automatic'))();
 
-  /// The template data (amount, accounts, category) to copy when generating the real transaction.
-  ///
-  /// Stored as a JSON blob.
-  TextColumn get templateData => text()();
+  // --- Template Fields (DEB-compatible) ---
 
-  /// Soft Delete flag.
+  /// Transaction type for the generated transaction.
+  TextColumn get templateTransactionType => textEnum<TransactionType>()();
+
+  /// Amount to use when creating the transaction.
+  RealColumn get templateAmount => real()();
+
+  /// Primary account for the transaction.
+  ///
+  /// For expense: the source account (money leaves).
+  /// For income: the destination account (money enters).
+  /// For transfer: the source account.
+  @ReferenceName('recurringPatternsPrimaryAccount')
+  IntColumn get templateAccountId => integer().references(Accounts, #id)();
+
+  /// Category for the transaction.
+  ///
+  /// Required for expense/income. Null for transfers.
+  IntColumn get templateCategoryId =>
+      integer().nullable().references(Categories, #id)();
+
+  /// Secondary account for transfers.
+  ///
+  /// The destination account for transfer transactions. Null for
+  /// expense/income.
+  @ReferenceName('recurringPatternsSecondaryAccount')
+  IntColumn get templateSecondaryAccountId =>
+      integer().nullable().references(Accounts, #id)();
+
+  /// Optional note for the generated transaction.
+  TextColumn get templateNote => text().nullable()();
+
+  /// Soft delete flag.
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }

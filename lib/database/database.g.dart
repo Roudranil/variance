@@ -29,43 +29,43 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     false,
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 1,
-      maxTextLength: 50,
+      maxTextLength: 100,
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
   @override
-  late final GeneratedColumnWithTypeConverter<AccountType, String> type =
+  late final GeneratedColumnWithTypeConverter<AccountType?, String> type =
       GeneratedColumn<String>(
         'type',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<AccountType?>($AccountsTable.$convertertypen);
+  @override
+  late final GeneratedColumnWithTypeConverter<AccountNature, String> nature =
+      GeneratedColumn<String>(
+        'nature',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<AccountType>($AccountsTable.$convertertype);
-  static const VerificationMeta _initialBalanceMeta = const VerificationMeta(
-    'initialBalance',
+      ).withConverter<AccountNature>($AccountsTable.$converternature);
+  static const VerificationMeta _isUserVisibleMeta = const VerificationMeta(
+    'isUserVisible',
   );
   @override
-  late final GeneratedColumn<double> initialBalance = GeneratedColumn<double>(
-    'initial_balance',
+  late final GeneratedColumn<bool> isUserVisible = GeneratedColumn<bool>(
+    'is_user_visible',
     aliasedName,
     false,
-    type: DriftSqlType.double,
+    type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0.0),
-  );
-  static const VerificationMeta _currentBalanceMeta = const VerificationMeta(
-    'currentBalance',
-  );
-  @override
-  late final GeneratedColumn<double> currentBalance = GeneratedColumn<double>(
-    'current_balance',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0.0),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_user_visible" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
   );
   static const VerificationMeta _currencyCodeMeta = const VerificationMeta(
     'currencyCode',
@@ -109,6 +109,30 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   static const VerificationMeta _statementDayMeta = const VerificationMeta(
     'statementDay',
   );
@@ -131,6 +155,17 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _creditLimitMeta = const VerificationMeta(
+    'creditLimit',
+  );
+  @override
+  late final GeneratedColumn<double> creditLimit = GeneratedColumn<double>(
+    'credit_limit',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _interestRateMeta = const VerificationMeta(
     'interestRate',
   );
@@ -142,19 +177,71 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _principalMeta = const VerificationMeta(
+    'principal',
+  );
+  @override
+  late final GeneratedColumn<double> principal = GeneratedColumn<double>(
+    'principal',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _installmentAmountMeta = const VerificationMeta(
+    'installmentAmount',
+  );
+  @override
+  late final GeneratedColumn<double> installmentAmount =
+      GeneratedColumn<double>(
+        'installment_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _nextDueDateMeta = const VerificationMeta(
+    'nextDueDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextDueDate = GeneratedColumn<DateTime>(
+    'next_due_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _maturityDateMeta = const VerificationMeta(
+    'maturityDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> maturityDate = GeneratedColumn<DateTime>(
+    'maturity_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     name,
     type,
-    initialBalance,
-    currentBalance,
+    nature,
+    isUserVisible,
     currencyCode,
     includeInTotals,
     isDeleted,
+    createdAt,
+    updatedAt,
     statementDay,
     paymentDueDay,
+    creditLimit,
     interestRate,
+    principal,
+    installmentAmount,
+    nextDueDate,
+    maturityDate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -179,21 +266,12 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('initial_balance')) {
+    if (data.containsKey('is_user_visible')) {
       context.handle(
-        _initialBalanceMeta,
-        initialBalance.isAcceptableOrUnknown(
-          data['initial_balance']!,
-          _initialBalanceMeta,
-        ),
-      );
-    }
-    if (data.containsKey('current_balance')) {
-      context.handle(
-        _currentBalanceMeta,
-        currentBalance.isAcceptableOrUnknown(
-          data['current_balance']!,
-          _currentBalanceMeta,
+        _isUserVisibleMeta,
+        isUserVisible.isAcceptableOrUnknown(
+          data['is_user_visible']!,
+          _isUserVisibleMeta,
         ),
       );
     }
@@ -221,6 +299,18 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
       );
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     if (data.containsKey('statement_day')) {
       context.handle(
         _statementDayMeta,
@@ -239,12 +329,54 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         ),
       );
     }
+    if (data.containsKey('credit_limit')) {
+      context.handle(
+        _creditLimitMeta,
+        creditLimit.isAcceptableOrUnknown(
+          data['credit_limit']!,
+          _creditLimitMeta,
+        ),
+      );
+    }
     if (data.containsKey('interest_rate')) {
       context.handle(
         _interestRateMeta,
         interestRate.isAcceptableOrUnknown(
           data['interest_rate']!,
           _interestRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('principal')) {
+      context.handle(
+        _principalMeta,
+        principal.isAcceptableOrUnknown(data['principal']!, _principalMeta),
+      );
+    }
+    if (data.containsKey('installment_amount')) {
+      context.handle(
+        _installmentAmountMeta,
+        installmentAmount.isAcceptableOrUnknown(
+          data['installment_amount']!,
+          _installmentAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_due_date')) {
+      context.handle(
+        _nextDueDateMeta,
+        nextDueDate.isAcceptableOrUnknown(
+          data['next_due_date']!,
+          _nextDueDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('maturity_date')) {
+      context.handle(
+        _maturityDateMeta,
+        maturityDate.isAcceptableOrUnknown(
+          data['maturity_date']!,
+          _maturityDateMeta,
         ),
       );
     }
@@ -265,19 +397,21 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      type: $AccountsTable.$convertertype.fromSql(
+      type: $AccountsTable.$convertertypen.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}type'],
+        ),
+      ),
+      nature: $AccountsTable.$converternature.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}nature'],
         )!,
       ),
-      initialBalance: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}initial_balance'],
-      )!,
-      currentBalance: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}current_balance'],
+      isUserVisible: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_user_visible'],
       )!,
       currencyCode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -291,6 +425,14 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_deleted'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
       statementDay: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}statement_day'],
@@ -299,9 +441,29 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.int,
         data['${effectivePrefix}payment_due_day'],
       ),
+      creditLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}credit_limit'],
+      ),
       interestRate: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}interest_rate'],
+      ),
+      principal: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}principal'],
+      ),
+      installmentAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}installment_amount'],
+      ),
+      nextDueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_due_date'],
+      ),
+      maturityDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}maturity_date'],
       ),
     );
   }
@@ -313,83 +475,159 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
 
   static JsonTypeConverter2<AccountType, String, String> $convertertype =
       const EnumNameConverter<AccountType>(AccountType.values);
+  static JsonTypeConverter2<AccountType?, String?, String?> $convertertypen =
+      JsonTypeConverter2.asNullable($convertertype);
+  static JsonTypeConverter2<AccountNature, String, String> $converternature =
+      const EnumNameConverter<AccountNature>(AccountNature.values);
 }
 
 class Account extends DataClass implements Insertable<Account> {
-  /// Primary Key. Auto-incrementing integer.
+  /// Primary key. Auto-incrementing integer.
   final int id;
 
-  /// User-defined name for the account (e.g., "HDFC Bank", "Wallet").
+  /// The user-defined name for the account.
   final String name;
 
-  /// The category/nature of the account.
-  /// Used for UI grouping and reporting logic (Net Worth calculation).
-  final AccountType type;
+  /// The user-facing type for UI grouping.
+  ///
+  /// Nullable for system accounts (category-linked accounts, equity accounts).
+  final AccountType? type;
 
-  /// The opening balance when the account was created/imported.
-  final double initialBalance;
+  /// The fundamental accounting nature.
+  ///
+  /// Determines whether debits increase or decrease the balance.
+  final AccountNature nature;
 
-  /// The current calculated balance.
-  /// NOTE: This can be derived from [initialBalance] + Sum(Transactions).
-  /// Optimization: We might cache this value here.
-  final double currentBalance;
+  /// Whether this account is visible in the user-facing account list.
+  ///
+  /// False for category-linked accounts and system equity accounts.
+  final bool isUserVisible;
 
-  /// ISO 4217 Currency Code (e.g., 'INR', 'USD').
+  /// ISO 4217 currency code.
+  ///
   /// Defaults to 'INR'.
   final String currencyCode;
 
-  /// Determines if the balances in this account should be included in
-  /// the overall net worth calculation.
+  /// Whether to include this account in net worth calculations.
+  ///
+  /// Defaults to true.
   final bool includeInTotals;
 
-  /// Soft Delete flag. If true, the account is hidden from the UI but kept for history.
+  /// Soft delete flag.
+  ///
+  /// If true, the account is hidden from the UI but kept for historical
+  /// integrity.
   final bool isDeleted;
 
-  /// The day of the month (1-31) when the statement is generated.
-  /// Nullable: Only relevant for [type] == 'creditCard'.
+  /// Audit timestamp for record creation.
+  final DateTime createdAt;
+
+  /// Audit timestamp for last update.
+  final DateTime updatedAt;
+
+  /// Statement generation day (1-31).
+  ///
+  /// Applicable only to credit card accounts.
   final int? statementDay;
 
-  /// The day of the month (1-31) when the payment is due.
-  /// Nullable: Only relevant for [type] == 'creditCard'.
+  /// Payment due day (1-31).
+  ///
+  /// Applicable only to credit card accounts.
   final int? paymentDueDay;
 
-  /// Annual Interest Rate (percentage).
-  /// Nullable: Only relevant for loans or savings accounts.
+  /// Credit limit amount.
+  ///
+  /// Applicable only to credit card accounts.
+  final double? creditLimit;
+
+  /// Annual interest rate (as a percentage).
+  ///
+  /// Applicable to loans and savings accounts.
   final double? interestRate;
+
+  /// Original principal amount.
+  ///
+  /// Applicable only to loan accounts.
+  final double? principal;
+
+  /// Monthly installment amount (EMI).
+  ///
+  /// Applicable only to loan accounts.
+  final double? installmentAmount;
+
+  /// Next payment due date.
+  ///
+  /// Applicable only to loan accounts.
+  final DateTime? nextDueDate;
+
+  /// Maturity date.
+  ///
+  /// Applicable to fixed deposits and savings accounts.
+  final DateTime? maturityDate;
   const Account({
     required this.id,
     required this.name,
-    required this.type,
-    required this.initialBalance,
-    required this.currentBalance,
+    this.type,
+    required this.nature,
+    required this.isUserVisible,
     required this.currencyCode,
     required this.includeInTotals,
     required this.isDeleted,
+    required this.createdAt,
+    required this.updatedAt,
     this.statementDay,
     this.paymentDueDay,
+    this.creditLimit,
     this.interestRate,
+    this.principal,
+    this.installmentAmount,
+    this.nextDueDate,
+    this.maturityDate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    {
-      map['type'] = Variable<String>($AccountsTable.$convertertype.toSql(type));
+    if (!nullToAbsent || type != null) {
+      map['type'] = Variable<String>(
+        $AccountsTable.$convertertypen.toSql(type),
+      );
     }
-    map['initial_balance'] = Variable<double>(initialBalance);
-    map['current_balance'] = Variable<double>(currentBalance);
+    {
+      map['nature'] = Variable<String>(
+        $AccountsTable.$converternature.toSql(nature),
+      );
+    }
+    map['is_user_visible'] = Variable<bool>(isUserVisible);
     map['currency_code'] = Variable<String>(currencyCode);
     map['include_in_totals'] = Variable<bool>(includeInTotals);
     map['is_deleted'] = Variable<bool>(isDeleted);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     if (!nullToAbsent || statementDay != null) {
       map['statement_day'] = Variable<int>(statementDay);
     }
     if (!nullToAbsent || paymentDueDay != null) {
       map['payment_due_day'] = Variable<int>(paymentDueDay);
     }
+    if (!nullToAbsent || creditLimit != null) {
+      map['credit_limit'] = Variable<double>(creditLimit);
+    }
     if (!nullToAbsent || interestRate != null) {
       map['interest_rate'] = Variable<double>(interestRate);
+    }
+    if (!nullToAbsent || principal != null) {
+      map['principal'] = Variable<double>(principal);
+    }
+    if (!nullToAbsent || installmentAmount != null) {
+      map['installment_amount'] = Variable<double>(installmentAmount);
+    }
+    if (!nullToAbsent || nextDueDate != null) {
+      map['next_due_date'] = Variable<DateTime>(nextDueDate);
+    }
+    if (!nullToAbsent || maturityDate != null) {
+      map['maturity_date'] = Variable<DateTime>(maturityDate);
     }
     return map;
   }
@@ -398,21 +636,38 @@ class Account extends DataClass implements Insertable<Account> {
     return AccountsCompanion(
       id: Value(id),
       name: Value(name),
-      type: Value(type),
-      initialBalance: Value(initialBalance),
-      currentBalance: Value(currentBalance),
+      type: type == null && nullToAbsent ? const Value.absent() : Value(type),
+      nature: Value(nature),
+      isUserVisible: Value(isUserVisible),
       currencyCode: Value(currencyCode),
       includeInTotals: Value(includeInTotals),
       isDeleted: Value(isDeleted),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
       statementDay: statementDay == null && nullToAbsent
           ? const Value.absent()
           : Value(statementDay),
       paymentDueDay: paymentDueDay == null && nullToAbsent
           ? const Value.absent()
           : Value(paymentDueDay),
+      creditLimit: creditLimit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(creditLimit),
       interestRate: interestRate == null && nullToAbsent
           ? const Value.absent()
           : Value(interestRate),
+      principal: principal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(principal),
+      installmentAmount: installmentAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(installmentAmount),
+      nextDueDate: nextDueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextDueDate),
+      maturityDate: maturityDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maturityDate),
     );
   }
 
@@ -424,17 +679,28 @@ class Account extends DataClass implements Insertable<Account> {
     return Account(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      type: $AccountsTable.$convertertype.fromJson(
-        serializer.fromJson<String>(json['type']),
+      type: $AccountsTable.$convertertypen.fromJson(
+        serializer.fromJson<String?>(json['type']),
       ),
-      initialBalance: serializer.fromJson<double>(json['initialBalance']),
-      currentBalance: serializer.fromJson<double>(json['currentBalance']),
+      nature: $AccountsTable.$converternature.fromJson(
+        serializer.fromJson<String>(json['nature']),
+      ),
+      isUserVisible: serializer.fromJson<bool>(json['isUserVisible']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
       includeInTotals: serializer.fromJson<bool>(json['includeInTotals']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       statementDay: serializer.fromJson<int?>(json['statementDay']),
       paymentDueDay: serializer.fromJson<int?>(json['paymentDueDay']),
+      creditLimit: serializer.fromJson<double?>(json['creditLimit']),
       interestRate: serializer.fromJson<double?>(json['interestRate']),
+      principal: serializer.fromJson<double?>(json['principal']),
+      installmentAmount: serializer.fromJson<double?>(
+        json['installmentAmount'],
+      ),
+      nextDueDate: serializer.fromJson<DateTime?>(json['nextDueDate']),
+      maturityDate: serializer.fromJson<DateTime?>(json['maturityDate']),
     );
   }
   @override
@@ -443,58 +709,81 @@ class Account extends DataClass implements Insertable<Account> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'type': serializer.toJson<String>(
-        $AccountsTable.$convertertype.toJson(type),
+      'type': serializer.toJson<String?>(
+        $AccountsTable.$convertertypen.toJson(type),
       ),
-      'initialBalance': serializer.toJson<double>(initialBalance),
-      'currentBalance': serializer.toJson<double>(currentBalance),
+      'nature': serializer.toJson<String>(
+        $AccountsTable.$converternature.toJson(nature),
+      ),
+      'isUserVisible': serializer.toJson<bool>(isUserVisible),
       'currencyCode': serializer.toJson<String>(currencyCode),
       'includeInTotals': serializer.toJson<bool>(includeInTotals),
       'isDeleted': serializer.toJson<bool>(isDeleted),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'statementDay': serializer.toJson<int?>(statementDay),
       'paymentDueDay': serializer.toJson<int?>(paymentDueDay),
+      'creditLimit': serializer.toJson<double?>(creditLimit),
       'interestRate': serializer.toJson<double?>(interestRate),
+      'principal': serializer.toJson<double?>(principal),
+      'installmentAmount': serializer.toJson<double?>(installmentAmount),
+      'nextDueDate': serializer.toJson<DateTime?>(nextDueDate),
+      'maturityDate': serializer.toJson<DateTime?>(maturityDate),
     };
   }
 
   Account copyWith({
     int? id,
     String? name,
-    AccountType? type,
-    double? initialBalance,
-    double? currentBalance,
+    Value<AccountType?> type = const Value.absent(),
+    AccountNature? nature,
+    bool? isUserVisible,
     String? currencyCode,
     bool? includeInTotals,
     bool? isDeleted,
+    DateTime? createdAt,
+    DateTime? updatedAt,
     Value<int?> statementDay = const Value.absent(),
     Value<int?> paymentDueDay = const Value.absent(),
+    Value<double?> creditLimit = const Value.absent(),
     Value<double?> interestRate = const Value.absent(),
+    Value<double?> principal = const Value.absent(),
+    Value<double?> installmentAmount = const Value.absent(),
+    Value<DateTime?> nextDueDate = const Value.absent(),
+    Value<DateTime?> maturityDate = const Value.absent(),
   }) => Account(
     id: id ?? this.id,
     name: name ?? this.name,
-    type: type ?? this.type,
-    initialBalance: initialBalance ?? this.initialBalance,
-    currentBalance: currentBalance ?? this.currentBalance,
+    type: type.present ? type.value : this.type,
+    nature: nature ?? this.nature,
+    isUserVisible: isUserVisible ?? this.isUserVisible,
     currencyCode: currencyCode ?? this.currencyCode,
     includeInTotals: includeInTotals ?? this.includeInTotals,
     isDeleted: isDeleted ?? this.isDeleted,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
     statementDay: statementDay.present ? statementDay.value : this.statementDay,
     paymentDueDay: paymentDueDay.present
         ? paymentDueDay.value
         : this.paymentDueDay,
+    creditLimit: creditLimit.present ? creditLimit.value : this.creditLimit,
     interestRate: interestRate.present ? interestRate.value : this.interestRate,
+    principal: principal.present ? principal.value : this.principal,
+    installmentAmount: installmentAmount.present
+        ? installmentAmount.value
+        : this.installmentAmount,
+    nextDueDate: nextDueDate.present ? nextDueDate.value : this.nextDueDate,
+    maturityDate: maturityDate.present ? maturityDate.value : this.maturityDate,
   );
   Account copyWithCompanion(AccountsCompanion data) {
     return Account(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       type: data.type.present ? data.type.value : this.type,
-      initialBalance: data.initialBalance.present
-          ? data.initialBalance.value
-          : this.initialBalance,
-      currentBalance: data.currentBalance.present
-          ? data.currentBalance.value
-          : this.currentBalance,
+      nature: data.nature.present ? data.nature.value : this.nature,
+      isUserVisible: data.isUserVisible.present
+          ? data.isUserVisible.value
+          : this.isUserVisible,
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
@@ -502,15 +791,30 @@ class Account extends DataClass implements Insertable<Account> {
           ? data.includeInTotals.value
           : this.includeInTotals,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       statementDay: data.statementDay.present
           ? data.statementDay.value
           : this.statementDay,
       paymentDueDay: data.paymentDueDay.present
           ? data.paymentDueDay.value
           : this.paymentDueDay,
+      creditLimit: data.creditLimit.present
+          ? data.creditLimit.value
+          : this.creditLimit,
       interestRate: data.interestRate.present
           ? data.interestRate.value
           : this.interestRate,
+      principal: data.principal.present ? data.principal.value : this.principal,
+      installmentAmount: data.installmentAmount.present
+          ? data.installmentAmount.value
+          : this.installmentAmount,
+      nextDueDate: data.nextDueDate.present
+          ? data.nextDueDate.value
+          : this.nextDueDate,
+      maturityDate: data.maturityDate.present
+          ? data.maturityDate.value
+          : this.maturityDate,
     );
   }
 
@@ -520,14 +824,21 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
-          ..write('initialBalance: $initialBalance, ')
-          ..write('currentBalance: $currentBalance, ')
+          ..write('nature: $nature, ')
+          ..write('isUserVisible: $isUserVisible, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('includeInTotals: $includeInTotals, ')
           ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('statementDay: $statementDay, ')
           ..write('paymentDueDay: $paymentDueDay, ')
-          ..write('interestRate: $interestRate')
+          ..write('creditLimit: $creditLimit, ')
+          ..write('interestRate: $interestRate, ')
+          ..write('principal: $principal, ')
+          ..write('installmentAmount: $installmentAmount, ')
+          ..write('nextDueDate: $nextDueDate, ')
+          ..write('maturityDate: $maturityDate')
           ..write(')'))
         .toString();
   }
@@ -537,14 +848,21 @@ class Account extends DataClass implements Insertable<Account> {
     id,
     name,
     type,
-    initialBalance,
-    currentBalance,
+    nature,
+    isUserVisible,
     currencyCode,
     includeInTotals,
     isDeleted,
+    createdAt,
+    updatedAt,
     statementDay,
     paymentDueDay,
+    creditLimit,
     interestRate,
+    principal,
+    installmentAmount,
+    nextDueDate,
+    maturityDate,
   );
   @override
   bool operator ==(Object other) =>
@@ -553,108 +871,164 @@ class Account extends DataClass implements Insertable<Account> {
           other.id == this.id &&
           other.name == this.name &&
           other.type == this.type &&
-          other.initialBalance == this.initialBalance &&
-          other.currentBalance == this.currentBalance &&
+          other.nature == this.nature &&
+          other.isUserVisible == this.isUserVisible &&
           other.currencyCode == this.currencyCode &&
           other.includeInTotals == this.includeInTotals &&
           other.isDeleted == this.isDeleted &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
           other.statementDay == this.statementDay &&
           other.paymentDueDay == this.paymentDueDay &&
-          other.interestRate == this.interestRate);
+          other.creditLimit == this.creditLimit &&
+          other.interestRate == this.interestRate &&
+          other.principal == this.principal &&
+          other.installmentAmount == this.installmentAmount &&
+          other.nextDueDate == this.nextDueDate &&
+          other.maturityDate == this.maturityDate);
 }
 
 class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> id;
   final Value<String> name;
-  final Value<AccountType> type;
-  final Value<double> initialBalance;
-  final Value<double> currentBalance;
+  final Value<AccountType?> type;
+  final Value<AccountNature> nature;
+  final Value<bool> isUserVisible;
   final Value<String> currencyCode;
   final Value<bool> includeInTotals;
   final Value<bool> isDeleted;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   final Value<int?> statementDay;
   final Value<int?> paymentDueDay;
+  final Value<double?> creditLimit;
   final Value<double?> interestRate;
+  final Value<double?> principal;
+  final Value<double?> installmentAmount;
+  final Value<DateTime?> nextDueDate;
+  final Value<DateTime?> maturityDate;
   const AccountsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.type = const Value.absent(),
-    this.initialBalance = const Value.absent(),
-    this.currentBalance = const Value.absent(),
+    this.nature = const Value.absent(),
+    this.isUserVisible = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.includeInTotals = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.statementDay = const Value.absent(),
     this.paymentDueDay = const Value.absent(),
+    this.creditLimit = const Value.absent(),
     this.interestRate = const Value.absent(),
+    this.principal = const Value.absent(),
+    this.installmentAmount = const Value.absent(),
+    this.nextDueDate = const Value.absent(),
+    this.maturityDate = const Value.absent(),
   });
   AccountsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
-    required AccountType type,
-    this.initialBalance = const Value.absent(),
-    this.currentBalance = const Value.absent(),
+    this.type = const Value.absent(),
+    required AccountNature nature,
+    this.isUserVisible = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.includeInTotals = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.statementDay = const Value.absent(),
     this.paymentDueDay = const Value.absent(),
+    this.creditLimit = const Value.absent(),
     this.interestRate = const Value.absent(),
+    this.principal = const Value.absent(),
+    this.installmentAmount = const Value.absent(),
+    this.nextDueDate = const Value.absent(),
+    this.maturityDate = const Value.absent(),
   }) : name = Value(name),
-       type = Value(type);
+       nature = Value(nature);
   static Insertable<Account> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? type,
-    Expression<double>? initialBalance,
-    Expression<double>? currentBalance,
+    Expression<String>? nature,
+    Expression<bool>? isUserVisible,
     Expression<String>? currencyCode,
     Expression<bool>? includeInTotals,
     Expression<bool>? isDeleted,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
     Expression<int>? statementDay,
     Expression<int>? paymentDueDay,
+    Expression<double>? creditLimit,
     Expression<double>? interestRate,
+    Expression<double>? principal,
+    Expression<double>? installmentAmount,
+    Expression<DateTime>? nextDueDate,
+    Expression<DateTime>? maturityDate,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (type != null) 'type': type,
-      if (initialBalance != null) 'initial_balance': initialBalance,
-      if (currentBalance != null) 'current_balance': currentBalance,
+      if (nature != null) 'nature': nature,
+      if (isUserVisible != null) 'is_user_visible': isUserVisible,
       if (currencyCode != null) 'currency_code': currencyCode,
       if (includeInTotals != null) 'include_in_totals': includeInTotals,
       if (isDeleted != null) 'is_deleted': isDeleted,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (statementDay != null) 'statement_day': statementDay,
       if (paymentDueDay != null) 'payment_due_day': paymentDueDay,
+      if (creditLimit != null) 'credit_limit': creditLimit,
       if (interestRate != null) 'interest_rate': interestRate,
+      if (principal != null) 'principal': principal,
+      if (installmentAmount != null) 'installment_amount': installmentAmount,
+      if (nextDueDate != null) 'next_due_date': nextDueDate,
+      if (maturityDate != null) 'maturity_date': maturityDate,
     });
   }
 
   AccountsCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
-    Value<AccountType>? type,
-    Value<double>? initialBalance,
-    Value<double>? currentBalance,
+    Value<AccountType?>? type,
+    Value<AccountNature>? nature,
+    Value<bool>? isUserVisible,
     Value<String>? currencyCode,
     Value<bool>? includeInTotals,
     Value<bool>? isDeleted,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
     Value<int?>? statementDay,
     Value<int?>? paymentDueDay,
+    Value<double?>? creditLimit,
     Value<double?>? interestRate,
+    Value<double?>? principal,
+    Value<double?>? installmentAmount,
+    Value<DateTime?>? nextDueDate,
+    Value<DateTime?>? maturityDate,
   }) {
     return AccountsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
-      initialBalance: initialBalance ?? this.initialBalance,
-      currentBalance: currentBalance ?? this.currentBalance,
+      nature: nature ?? this.nature,
+      isUserVisible: isUserVisible ?? this.isUserVisible,
       currencyCode: currencyCode ?? this.currencyCode,
       includeInTotals: includeInTotals ?? this.includeInTotals,
       isDeleted: isDeleted ?? this.isDeleted,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       statementDay: statementDay ?? this.statementDay,
       paymentDueDay: paymentDueDay ?? this.paymentDueDay,
+      creditLimit: creditLimit ?? this.creditLimit,
       interestRate: interestRate ?? this.interestRate,
+      principal: principal ?? this.principal,
+      installmentAmount: installmentAmount ?? this.installmentAmount,
+      nextDueDate: nextDueDate ?? this.nextDueDate,
+      maturityDate: maturityDate ?? this.maturityDate,
     );
   }
 
@@ -669,14 +1043,16 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     }
     if (type.present) {
       map['type'] = Variable<String>(
-        $AccountsTable.$convertertype.toSql(type.value),
+        $AccountsTable.$convertertypen.toSql(type.value),
       );
     }
-    if (initialBalance.present) {
-      map['initial_balance'] = Variable<double>(initialBalance.value);
+    if (nature.present) {
+      map['nature'] = Variable<String>(
+        $AccountsTable.$converternature.toSql(nature.value),
+      );
     }
-    if (currentBalance.present) {
-      map['current_balance'] = Variable<double>(currentBalance.value);
+    if (isUserVisible.present) {
+      map['is_user_visible'] = Variable<bool>(isUserVisible.value);
     }
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
@@ -687,14 +1063,35 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     if (statementDay.present) {
       map['statement_day'] = Variable<int>(statementDay.value);
     }
     if (paymentDueDay.present) {
       map['payment_due_day'] = Variable<int>(paymentDueDay.value);
     }
+    if (creditLimit.present) {
+      map['credit_limit'] = Variable<double>(creditLimit.value);
+    }
     if (interestRate.present) {
       map['interest_rate'] = Variable<double>(interestRate.value);
+    }
+    if (principal.present) {
+      map['principal'] = Variable<double>(principal.value);
+    }
+    if (installmentAmount.present) {
+      map['installment_amount'] = Variable<double>(installmentAmount.value);
+    }
+    if (nextDueDate.present) {
+      map['next_due_date'] = Variable<DateTime>(nextDueDate.value);
+    }
+    if (maturityDate.present) {
+      map['maturity_date'] = Variable<DateTime>(maturityDate.value);
     }
     return map;
   }
@@ -705,14 +1102,21 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
-          ..write('initialBalance: $initialBalance, ')
-          ..write('currentBalance: $currentBalance, ')
+          ..write('nature: $nature, ')
+          ..write('isUserVisible: $isUserVisible, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('includeInTotals: $includeInTotals, ')
           ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('statementDay: $statementDay, ')
           ..write('paymentDueDay: $paymentDueDay, ')
-          ..write('interestRate: $interestRate')
+          ..write('creditLimit: $creditLimit, ')
+          ..write('interestRate: $interestRate, ')
+          ..write('principal: $principal, ')
+          ..write('installmentAmount: $installmentAmount, ')
+          ..write('nextDueDate: $nextDueDate, ')
+          ..write('maturityDate: $maturityDate')
           ..write(')'))
         .toString();
   }
@@ -745,7 +1149,7 @@ class $CategoriesTable extends Categories
     false,
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 1,
-      maxTextLength: 50,
+      maxTextLength: 100,
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
@@ -771,6 +1175,20 @@ class $CategoriesTable extends Categories
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES categories (id)',
+    ),
+  );
+  static const VerificationMeta _linkedAccountIdMeta = const VerificationMeta(
+    'linkedAccountId',
+  );
+  @override
+  late final GeneratedColumn<int> linkedAccountId = GeneratedColumn<int>(
+    'linked_account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id)',
     ),
   );
   static const VerificationMeta _iconDataMeta = const VerificationMeta(
@@ -808,15 +1226,42 @@ class $CategoriesTable extends Categories
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     name,
     kind,
     parentId,
+    linkedAccountId,
     iconData,
     color,
     isDeleted,
+    createdAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -847,6 +1292,17 @@ class $CategoriesTable extends Categories
         parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
       );
     }
+    if (data.containsKey('linked_account_id')) {
+      context.handle(
+        _linkedAccountIdMeta,
+        linkedAccountId.isAcceptableOrUnknown(
+          data['linked_account_id']!,
+          _linkedAccountIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_linkedAccountIdMeta);
+    }
     if (data.containsKey('icon_data')) {
       context.handle(
         _iconDataMeta,
@@ -863,6 +1319,18 @@ class $CategoriesTable extends Categories
       context.handle(
         _isDeletedMeta,
         isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
       );
     }
     return context;
@@ -892,6 +1360,10 @@ class $CategoriesTable extends Categories
         DriftSqlType.int,
         data['${effectivePrefix}parent_id'],
       ),
+      linkedAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}linked_account_id'],
+      )!,
       iconData: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}icon_data'],
@@ -903,6 +1375,14 @@ class $CategoriesTable extends Categories
       isDeleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_deleted'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
       )!,
     );
   }
@@ -917,7 +1397,7 @@ class $CategoriesTable extends Categories
 }
 
 class Category extends DataClass implements Insertable<Category> {
-  /// Primary Key.
+  /// Primary key.
   final int id;
 
   /// Display name (e.g., "Food", "Salary").
@@ -926,26 +1406,41 @@ class Category extends DataClass implements Insertable<Category> {
   /// The direction of flow this category represents.
   final CategoryKind kind;
 
-  /// Self-referencing Foreign Key to support sub-categories.
-  /// If null, this is a Top-Level Category.
+  /// Self-referencing foreign key for sub-categories.
+  ///
+  /// If null, this is a top-level category.
   final int? parentId;
 
-  /// Icon identifier (stored as string codePoint or asset path).
+  /// Foreign key to the hidden nominal account for DEB.
+  ///
+  /// This account is created automatically when the category is created.
+  final int linkedAccountId;
+
+  /// Icon identifier (codePoint or asset path).
   final String? iconData;
 
-  /// UI Color (stored as ARGB integer).
+  /// UI color (ARGB integer).
   final int? color;
 
-  /// Soft Delete flag.
+  /// Soft delete flag.
   final bool isDeleted;
+
+  /// Audit timestamp for record creation.
+  final DateTime createdAt;
+
+  /// Audit timestamp for last update.
+  final DateTime updatedAt;
   const Category({
     required this.id,
     required this.name,
     required this.kind,
     this.parentId,
+    required this.linkedAccountId,
     this.iconData,
     this.color,
     required this.isDeleted,
+    required this.createdAt,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -960,6 +1455,7 @@ class Category extends DataClass implements Insertable<Category> {
     if (!nullToAbsent || parentId != null) {
       map['parent_id'] = Variable<int>(parentId);
     }
+    map['linked_account_id'] = Variable<int>(linkedAccountId);
     if (!nullToAbsent || iconData != null) {
       map['icon_data'] = Variable<String>(iconData);
     }
@@ -967,6 +1463,8 @@ class Category extends DataClass implements Insertable<Category> {
       map['color'] = Variable<int>(color);
     }
     map['is_deleted'] = Variable<bool>(isDeleted);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -978,6 +1476,7 @@ class Category extends DataClass implements Insertable<Category> {
       parentId: parentId == null && nullToAbsent
           ? const Value.absent()
           : Value(parentId),
+      linkedAccountId: Value(linkedAccountId),
       iconData: iconData == null && nullToAbsent
           ? const Value.absent()
           : Value(iconData),
@@ -985,6 +1484,8 @@ class Category extends DataClass implements Insertable<Category> {
           ? const Value.absent()
           : Value(color),
       isDeleted: Value(isDeleted),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -1000,9 +1501,12 @@ class Category extends DataClass implements Insertable<Category> {
         serializer.fromJson<String>(json['kind']),
       ),
       parentId: serializer.fromJson<int?>(json['parentId']),
+      linkedAccountId: serializer.fromJson<int>(json['linkedAccountId']),
       iconData: serializer.fromJson<String?>(json['iconData']),
       color: serializer.fromJson<int?>(json['color']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -1015,9 +1519,12 @@ class Category extends DataClass implements Insertable<Category> {
         $CategoriesTable.$converterkind.toJson(kind),
       ),
       'parentId': serializer.toJson<int?>(parentId),
+      'linkedAccountId': serializer.toJson<int>(linkedAccountId),
       'iconData': serializer.toJson<String?>(iconData),
       'color': serializer.toJson<int?>(color),
       'isDeleted': serializer.toJson<bool>(isDeleted),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -1026,17 +1533,23 @@ class Category extends DataClass implements Insertable<Category> {
     String? name,
     CategoryKind? kind,
     Value<int?> parentId = const Value.absent(),
+    int? linkedAccountId,
     Value<String?> iconData = const Value.absent(),
     Value<int?> color = const Value.absent(),
     bool? isDeleted,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) => Category(
     id: id ?? this.id,
     name: name ?? this.name,
     kind: kind ?? this.kind,
     parentId: parentId.present ? parentId.value : this.parentId,
+    linkedAccountId: linkedAccountId ?? this.linkedAccountId,
     iconData: iconData.present ? iconData.value : this.iconData,
     color: color.present ? color.value : this.color,
     isDeleted: isDeleted ?? this.isDeleted,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -1044,9 +1557,14 @@ class Category extends DataClass implements Insertable<Category> {
       name: data.name.present ? data.name.value : this.name,
       kind: data.kind.present ? data.kind.value : this.kind,
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      linkedAccountId: data.linkedAccountId.present
+          ? data.linkedAccountId.value
+          : this.linkedAccountId,
       iconData: data.iconData.present ? data.iconData.value : this.iconData,
       color: data.color.present ? data.color.value : this.color,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1057,16 +1575,29 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('name: $name, ')
           ..write('kind: $kind, ')
           ..write('parentId: $parentId, ')
+          ..write('linkedAccountId: $linkedAccountId, ')
           ..write('iconData: $iconData, ')
           ..write('color: $color, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, kind, parentId, iconData, color, isDeleted);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    kind,
+    parentId,
+    linkedAccountId,
+    iconData,
+    color,
+    isDeleted,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1075,9 +1606,12 @@ class Category extends DataClass implements Insertable<Category> {
           other.name == this.name &&
           other.kind == this.kind &&
           other.parentId == this.parentId &&
+          other.linkedAccountId == this.linkedAccountId &&
           other.iconData == this.iconData &&
           other.color == this.color &&
-          other.isDeleted == this.isDeleted);
+          other.isDeleted == this.isDeleted &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -1085,45 +1619,61 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<String> name;
   final Value<CategoryKind> kind;
   final Value<int?> parentId;
+  final Value<int> linkedAccountId;
   final Value<String?> iconData;
   final Value<int?> color;
   final Value<bool> isDeleted;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.kind = const Value.absent(),
     this.parentId = const Value.absent(),
+    this.linkedAccountId = const Value.absent(),
     this.iconData = const Value.absent(),
     this.color = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   CategoriesCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required CategoryKind kind,
     this.parentId = const Value.absent(),
+    required int linkedAccountId,
     this.iconData = const Value.absent(),
     this.color = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : name = Value(name),
-       kind = Value(kind);
+       kind = Value(kind),
+       linkedAccountId = Value(linkedAccountId);
   static Insertable<Category> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? kind,
     Expression<int>? parentId,
+    Expression<int>? linkedAccountId,
     Expression<String>? iconData,
     Expression<int>? color,
     Expression<bool>? isDeleted,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (kind != null) 'kind': kind,
       if (parentId != null) 'parent_id': parentId,
+      if (linkedAccountId != null) 'linked_account_id': linkedAccountId,
       if (iconData != null) 'icon_data': iconData,
       if (color != null) 'color': color,
       if (isDeleted != null) 'is_deleted': isDeleted,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -1132,18 +1682,24 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<String>? name,
     Value<CategoryKind>? kind,
     Value<int?>? parentId,
+    Value<int>? linkedAccountId,
     Value<String?>? iconData,
     Value<int?>? color,
     Value<bool>? isDeleted,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
   }) {
     return CategoriesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       kind: kind ?? this.kind,
       parentId: parentId ?? this.parentId,
+      linkedAccountId: linkedAccountId ?? this.linkedAccountId,
       iconData: iconData ?? this.iconData,
       color: color ?? this.color,
       isDeleted: isDeleted ?? this.isDeleted,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -1164,6 +1720,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (parentId.present) {
       map['parent_id'] = Variable<int>(parentId.value);
     }
+    if (linkedAccountId.present) {
+      map['linked_account_id'] = Variable<int>(linkedAccountId.value);
+    }
     if (iconData.present) {
       map['icon_data'] = Variable<String>(iconData.value);
     }
@@ -1172,6 +1731,12 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
     return map;
   }
@@ -1183,9 +1748,12 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('name: $name, ')
           ..write('kind: $kind, ')
           ..write('parentId: $parentId, ')
+          ..write('linkedAccountId: $linkedAccountId, ')
           ..write('iconData: $iconData, ')
           ..write('color: $color, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1318,11 +1886,16 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
 }
 
 class Tag extends DataClass implements Insertable<Tag> {
+  /// Primary key.
   final int id;
+
+  /// Display name.
   final String name;
+
+  /// UI color (ARGB integer).
   final int? color;
 
-  /// Soft Delete flag.
+  /// Soft delete flag.
   final bool isDeleted;
   const Tag({
     required this.id,
@@ -1525,15 +2098,6 @@ class $TransactionsTable extends Transactions
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
-    'amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
   @override
   late final GeneratedColumnWithTypeConverter<TransactionType, String> type =
       GeneratedColumn<String>(
@@ -1543,57 +2107,41 @@ class $TransactionsTable extends Transactions
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<TransactionType>($TransactionsTable.$convertertype);
-  static const VerificationMeta _descriptionMeta = const VerificationMeta(
-    'description',
+  static const VerificationMeta _userNoteMeta = const VerificationMeta(
+    'userNote',
   );
   @override
-  late final GeneratedColumn<String> description = GeneratedColumn<String>(
-    'description',
+  late final GeneratedColumn<String> userNote = GeneratedColumn<String>(
+    'user_note',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _sourceAccountIdMeta = const VerificationMeta(
-    'sourceAccountId',
+  static const VerificationMeta _externalReferenceMeta = const VerificationMeta(
+    'externalReference',
   );
   @override
-  late final GeneratedColumn<int> sourceAccountId = GeneratedColumn<int>(
-    'source_account_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES accounts (id)',
-    ),
-  );
-  static const VerificationMeta _destinationAccountIdMeta =
-      const VerificationMeta('destinationAccountId');
+  late final GeneratedColumn<String> externalReference =
+      GeneratedColumn<String>(
+        'external_reference',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _isVoidMeta = const VerificationMeta('isVoid');
   @override
-  late final GeneratedColumn<int> destinationAccountId = GeneratedColumn<int>(
-    'destination_account_id',
+  late final GeneratedColumn<bool> isVoid = GeneratedColumn<bool>(
+    'is_void',
     aliasedName,
-    true,
-    type: DriftSqlType.int,
+    false,
+    type: DriftSqlType.bool,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES accounts (id)',
+      'CHECK ("is_void" IN (0, 1))',
     ),
-  );
-  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
-    'categoryId',
-  );
-  @override
-  late final GeneratedColumn<int> categoryId = GeneratedColumn<int>(
-    'category_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES categories (id)',
-    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -1607,17 +2155,28 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     transactionDate,
-    amount,
     type,
-    description,
-    sourceAccountId,
-    destinationAccountId,
-    categoryId,
+    userNote,
+    externalReference,
+    isVoid,
     createdAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1645,51 +2204,37 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_transactionDateMeta);
     }
-    if (data.containsKey('amount')) {
+    if (data.containsKey('user_note')) {
       context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+        _userNoteMeta,
+        userNote.isAcceptableOrUnknown(data['user_note']!, _userNoteMeta),
       );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
     }
-    if (data.containsKey('description')) {
+    if (data.containsKey('external_reference')) {
       context.handle(
-        _descriptionMeta,
-        description.isAcceptableOrUnknown(
-          data['description']!,
-          _descriptionMeta,
+        _externalReferenceMeta,
+        externalReference.isAcceptableOrUnknown(
+          data['external_reference']!,
+          _externalReferenceMeta,
         ),
       );
     }
-    if (data.containsKey('source_account_id')) {
+    if (data.containsKey('is_void')) {
       context.handle(
-        _sourceAccountIdMeta,
-        sourceAccountId.isAcceptableOrUnknown(
-          data['source_account_id']!,
-          _sourceAccountIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('destination_account_id')) {
-      context.handle(
-        _destinationAccountIdMeta,
-        destinationAccountId.isAcceptableOrUnknown(
-          data['destination_account_id']!,
-          _destinationAccountIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('category_id')) {
-      context.handle(
-        _categoryIdMeta,
-        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+        _isVoidMeta,
+        isVoid.isAcceptableOrUnknown(data['is_void']!, _isVoidMeta),
       );
     }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
       );
     }
     return context;
@@ -1709,35 +2254,31 @@ class $TransactionsTable extends Transactions
         DriftSqlType.dateTime,
         data['${effectivePrefix}transaction_date'],
       )!,
-      amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amount'],
-      )!,
       type: $TransactionsTable.$convertertype.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}type'],
         )!,
       ),
-      description: attachedDatabase.typeMapping.read(
+      userNote: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}description'],
+        data['${effectivePrefix}user_note'],
       ),
-      sourceAccountId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}source_account_id'],
+      externalReference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}external_reference'],
       ),
-      destinationAccountId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}destination_account_id'],
-      ),
-      categoryId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}category_id'],
-      ),
+      isVoid: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_void'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
       )!,
     );
   }
@@ -1752,73 +2293,61 @@ class $TransactionsTable extends Transactions
 }
 
 class Transaction extends DataClass implements Insertable<Transaction> {
+  /// Primary key.
   final int id;
 
-  /// The actual date and time the transaction occurred.
+  /// The date and time the transaction occurred.
   final DateTime transactionDate;
 
-  /// The absolute magnitude of the money flow.
-  /// NOTE: Always stored as a positive number. Direction is determined by [type] and Accounts.
-  final double amount;
-
-  /// The nature of the transaction.
+  /// The type of transaction.
   final TransactionType type;
 
-  /// Optional user note.
-  final String? description;
+  /// Optional user-defined note.
+  final String? userNote;
 
-  /// The account money is coming FROM.
-  /// Required for: 'expense', 'transfer'.
-  /// Null for: 'income'.
-  final int? sourceAccountId;
+  /// External reference (e.g., SMS ID, bank reference number).
+  final String? externalReference;
 
-  /// The account money is going TO.
-  /// Required for: 'income', 'transfer'.
-  /// Null for: 'expense'.
-  final int? destinationAccountId;
+  /// Soft-delete flag for immutable ledger.
+  ///
+  /// True = voided transaction (hidden from UI, excluded from balance
+  /// calculations).
+  final bool isVoid;
 
-  /// The classification category.
-  /// Required for: 'expense', 'income'.
-  /// Optional/Null for: 'transfer' (Transfers usually don't need categories).
-  final int? categoryId;
-
-  /// Audit timestamp.
+  /// Audit timestamp for record creation.
   final DateTime createdAt;
+
+  /// Audit timestamp for last update.
+  final DateTime updatedAt;
   const Transaction({
     required this.id,
     required this.transactionDate,
-    required this.amount,
     required this.type,
-    this.description,
-    this.sourceAccountId,
-    this.destinationAccountId,
-    this.categoryId,
+    this.userNote,
+    this.externalReference,
+    required this.isVoid,
     required this.createdAt,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['transaction_date'] = Variable<DateTime>(transactionDate);
-    map['amount'] = Variable<double>(amount);
     {
       map['type'] = Variable<String>(
         $TransactionsTable.$convertertype.toSql(type),
       );
     }
-    if (!nullToAbsent || description != null) {
-      map['description'] = Variable<String>(description);
+    if (!nullToAbsent || userNote != null) {
+      map['user_note'] = Variable<String>(userNote);
     }
-    if (!nullToAbsent || sourceAccountId != null) {
-      map['source_account_id'] = Variable<int>(sourceAccountId);
+    if (!nullToAbsent || externalReference != null) {
+      map['external_reference'] = Variable<String>(externalReference);
     }
-    if (!nullToAbsent || destinationAccountId != null) {
-      map['destination_account_id'] = Variable<int>(destinationAccountId);
-    }
-    if (!nullToAbsent || categoryId != null) {
-      map['category_id'] = Variable<int>(categoryId);
-    }
+    map['is_void'] = Variable<bool>(isVoid);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -1826,21 +2355,16 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     return TransactionsCompanion(
       id: Value(id),
       transactionDate: Value(transactionDate),
-      amount: Value(amount),
       type: Value(type),
-      description: description == null && nullToAbsent
+      userNote: userNote == null && nullToAbsent
           ? const Value.absent()
-          : Value(description),
-      sourceAccountId: sourceAccountId == null && nullToAbsent
+          : Value(userNote),
+      externalReference: externalReference == null && nullToAbsent
           ? const Value.absent()
-          : Value(sourceAccountId),
-      destinationAccountId: destinationAccountId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(destinationAccountId),
-      categoryId: categoryId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(categoryId),
+          : Value(externalReference),
+      isVoid: Value(isVoid),
       createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -1852,17 +2376,16 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     return Transaction(
       id: serializer.fromJson<int>(json['id']),
       transactionDate: serializer.fromJson<DateTime>(json['transactionDate']),
-      amount: serializer.fromJson<double>(json['amount']),
       type: $TransactionsTable.$convertertype.fromJson(
         serializer.fromJson<String>(json['type']),
       ),
-      description: serializer.fromJson<String?>(json['description']),
-      sourceAccountId: serializer.fromJson<int?>(json['sourceAccountId']),
-      destinationAccountId: serializer.fromJson<int?>(
-        json['destinationAccountId'],
+      userNote: serializer.fromJson<String?>(json['userNote']),
+      externalReference: serializer.fromJson<String?>(
+        json['externalReference'],
       ),
-      categoryId: serializer.fromJson<int?>(json['categoryId']),
+      isVoid: serializer.fromJson<bool>(json['isVoid']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -1871,42 +2394,37 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'transactionDate': serializer.toJson<DateTime>(transactionDate),
-      'amount': serializer.toJson<double>(amount),
       'type': serializer.toJson<String>(
         $TransactionsTable.$convertertype.toJson(type),
       ),
-      'description': serializer.toJson<String?>(description),
-      'sourceAccountId': serializer.toJson<int?>(sourceAccountId),
-      'destinationAccountId': serializer.toJson<int?>(destinationAccountId),
-      'categoryId': serializer.toJson<int?>(categoryId),
+      'userNote': serializer.toJson<String?>(userNote),
+      'externalReference': serializer.toJson<String?>(externalReference),
+      'isVoid': serializer.toJson<bool>(isVoid),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
   Transaction copyWith({
     int? id,
     DateTime? transactionDate,
-    double? amount,
     TransactionType? type,
-    Value<String?> description = const Value.absent(),
-    Value<int?> sourceAccountId = const Value.absent(),
-    Value<int?> destinationAccountId = const Value.absent(),
-    Value<int?> categoryId = const Value.absent(),
+    Value<String?> userNote = const Value.absent(),
+    Value<String?> externalReference = const Value.absent(),
+    bool? isVoid,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) => Transaction(
     id: id ?? this.id,
     transactionDate: transactionDate ?? this.transactionDate,
-    amount: amount ?? this.amount,
     type: type ?? this.type,
-    description: description.present ? description.value : this.description,
-    sourceAccountId: sourceAccountId.present
-        ? sourceAccountId.value
-        : this.sourceAccountId,
-    destinationAccountId: destinationAccountId.present
-        ? destinationAccountId.value
-        : this.destinationAccountId,
-    categoryId: categoryId.present ? categoryId.value : this.categoryId,
+    userNote: userNote.present ? userNote.value : this.userNote,
+    externalReference: externalReference.present
+        ? externalReference.value
+        : this.externalReference,
+    isVoid: isVoid ?? this.isVoid,
     createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -1914,21 +2432,14 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       transactionDate: data.transactionDate.present
           ? data.transactionDate.value
           : this.transactionDate,
-      amount: data.amount.present ? data.amount.value : this.amount,
       type: data.type.present ? data.type.value : this.type,
-      description: data.description.present
-          ? data.description.value
-          : this.description,
-      sourceAccountId: data.sourceAccountId.present
-          ? data.sourceAccountId.value
-          : this.sourceAccountId,
-      destinationAccountId: data.destinationAccountId.present
-          ? data.destinationAccountId.value
-          : this.destinationAccountId,
-      categoryId: data.categoryId.present
-          ? data.categoryId.value
-          : this.categoryId,
+      userNote: data.userNote.present ? data.userNote.value : this.userNote,
+      externalReference: data.externalReference.present
+          ? data.externalReference.value
+          : this.externalReference,
+      isVoid: data.isVoid.present ? data.isVoid.value : this.isVoid,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1937,13 +2448,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     return (StringBuffer('Transaction(')
           ..write('id: $id, ')
           ..write('transactionDate: $transactionDate, ')
-          ..write('amount: $amount, ')
           ..write('type: $type, ')
-          ..write('description: $description, ')
-          ..write('sourceAccountId: $sourceAccountId, ')
-          ..write('destinationAccountId: $destinationAccountId, ')
-          ..write('categoryId: $categoryId, ')
-          ..write('createdAt: $createdAt')
+          ..write('userNote: $userNote, ')
+          ..write('externalReference: $externalReference, ')
+          ..write('isVoid: $isVoid, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1952,13 +2462,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   int get hashCode => Object.hash(
     id,
     transactionDate,
-    amount,
     type,
-    description,
-    sourceAccountId,
-    destinationAccountId,
-    categoryId,
+    userNote,
+    externalReference,
+    isVoid,
     createdAt,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1966,95 +2475,85 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       (other is Transaction &&
           other.id == this.id &&
           other.transactionDate == this.transactionDate &&
-          other.amount == this.amount &&
           other.type == this.type &&
-          other.description == this.description &&
-          other.sourceAccountId == this.sourceAccountId &&
-          other.destinationAccountId == this.destinationAccountId &&
-          other.categoryId == this.categoryId &&
-          other.createdAt == this.createdAt);
+          other.userNote == this.userNote &&
+          other.externalReference == this.externalReference &&
+          other.isVoid == this.isVoid &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> id;
   final Value<DateTime> transactionDate;
-  final Value<double> amount;
   final Value<TransactionType> type;
-  final Value<String?> description;
-  final Value<int?> sourceAccountId;
-  final Value<int?> destinationAccountId;
-  final Value<int?> categoryId;
+  final Value<String?> userNote;
+  final Value<String?> externalReference;
+  final Value<bool> isVoid;
   final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.transactionDate = const Value.absent(),
-    this.amount = const Value.absent(),
     this.type = const Value.absent(),
-    this.description = const Value.absent(),
-    this.sourceAccountId = const Value.absent(),
-    this.destinationAccountId = const Value.absent(),
-    this.categoryId = const Value.absent(),
+    this.userNote = const Value.absent(),
+    this.externalReference = const Value.absent(),
+    this.isVoid = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   TransactionsCompanion.insert({
     this.id = const Value.absent(),
     required DateTime transactionDate,
-    required double amount,
     required TransactionType type,
-    this.description = const Value.absent(),
-    this.sourceAccountId = const Value.absent(),
-    this.destinationAccountId = const Value.absent(),
-    this.categoryId = const Value.absent(),
+    this.userNote = const Value.absent(),
+    this.externalReference = const Value.absent(),
+    this.isVoid = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : transactionDate = Value(transactionDate),
-       amount = Value(amount),
        type = Value(type);
   static Insertable<Transaction> custom({
     Expression<int>? id,
     Expression<DateTime>? transactionDate,
-    Expression<double>? amount,
     Expression<String>? type,
-    Expression<String>? description,
-    Expression<int>? sourceAccountId,
-    Expression<int>? destinationAccountId,
-    Expression<int>? categoryId,
+    Expression<String>? userNote,
+    Expression<String>? externalReference,
+    Expression<bool>? isVoid,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (transactionDate != null) 'transaction_date': transactionDate,
-      if (amount != null) 'amount': amount,
       if (type != null) 'type': type,
-      if (description != null) 'description': description,
-      if (sourceAccountId != null) 'source_account_id': sourceAccountId,
-      if (destinationAccountId != null)
-        'destination_account_id': destinationAccountId,
-      if (categoryId != null) 'category_id': categoryId,
+      if (userNote != null) 'user_note': userNote,
+      if (externalReference != null) 'external_reference': externalReference,
+      if (isVoid != null) 'is_void': isVoid,
       if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
   TransactionsCompanion copyWith({
     Value<int>? id,
     Value<DateTime>? transactionDate,
-    Value<double>? amount,
     Value<TransactionType>? type,
-    Value<String?>? description,
-    Value<int?>? sourceAccountId,
-    Value<int?>? destinationAccountId,
-    Value<int?>? categoryId,
+    Value<String?>? userNote,
+    Value<String?>? externalReference,
+    Value<bool>? isVoid,
     Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
   }) {
     return TransactionsCompanion(
       id: id ?? this.id,
       transactionDate: transactionDate ?? this.transactionDate,
-      amount: amount ?? this.amount,
       type: type ?? this.type,
-      description: description ?? this.description,
-      sourceAccountId: sourceAccountId ?? this.sourceAccountId,
-      destinationAccountId: destinationAccountId ?? this.destinationAccountId,
-      categoryId: categoryId ?? this.categoryId,
+      userNote: userNote ?? this.userNote,
+      externalReference: externalReference ?? this.externalReference,
+      isVoid: isVoid ?? this.isVoid,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -2067,28 +2566,25 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (transactionDate.present) {
       map['transaction_date'] = Variable<DateTime>(transactionDate.value);
     }
-    if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
-    }
     if (type.present) {
       map['type'] = Variable<String>(
         $TransactionsTable.$convertertype.toSql(type.value),
       );
     }
-    if (description.present) {
-      map['description'] = Variable<String>(description.value);
+    if (userNote.present) {
+      map['user_note'] = Variable<String>(userNote.value);
     }
-    if (sourceAccountId.present) {
-      map['source_account_id'] = Variable<int>(sourceAccountId.value);
+    if (externalReference.present) {
+      map['external_reference'] = Variable<String>(externalReference.value);
     }
-    if (destinationAccountId.present) {
-      map['destination_account_id'] = Variable<int>(destinationAccountId.value);
-    }
-    if (categoryId.present) {
-      map['category_id'] = Variable<int>(categoryId.value);
+    if (isVoid.present) {
+      map['is_void'] = Variable<bool>(isVoid.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
     return map;
   }
@@ -2098,12 +2594,434 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     return (StringBuffer('TransactionsCompanion(')
           ..write('id: $id, ')
           ..write('transactionDate: $transactionDate, ')
-          ..write('amount: $amount, ')
           ..write('type: $type, ')
-          ..write('description: $description, ')
-          ..write('sourceAccountId: $sourceAccountId, ')
-          ..write('destinationAccountId: $destinationAccountId, ')
-          ..write('categoryId: $categoryId, ')
+          ..write('userNote: $userNote, ')
+          ..write('externalReference: $externalReference, ')
+          ..write('isVoid: $isVoid, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LedgerEntriesTable extends LedgerEntries
+    with TableInfo<$LedgerEntriesTable, LedgerEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LedgerEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<int> transactionId = GeneratedColumn<int>(
+    'transaction_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES transactions (id)',
+    ),
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<int> accountId = GeneratedColumn<int>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id)',
+    ),
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LedgerSide, String> side =
+      GeneratedColumn<String>(
+        'side',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LedgerSide>($LedgerEntriesTable.$converterside);
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    transactionId,
+    accountId,
+    amount,
+    side,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ledger_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LedgerEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transactionIdMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LedgerEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LedgerEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}transaction_id'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}account_id'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+      side: $LedgerEntriesTable.$converterside.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}side'],
+        )!,
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LedgerEntriesTable createAlias(String alias) {
+    return $LedgerEntriesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<LedgerSide, String, String> $converterside =
+      const EnumNameConverter<LedgerSide>(LedgerSide.values);
+}
+
+class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
+  /// Primary key.
+  final int id;
+
+  /// Foreign key to the parent transaction.
+  final int transactionId;
+
+  /// Foreign key to the account affected.
+  final int accountId;
+
+  /// The amount (always stored as a positive number).
+  final double amount;
+
+  /// The side of the entry (DEBIT or CREDIT).
+  final LedgerSide side;
+
+  /// Audit timestamp for record creation.
+  final DateTime createdAt;
+  const LedgerEntry({
+    required this.id,
+    required this.transactionId,
+    required this.accountId,
+    required this.amount,
+    required this.side,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['transaction_id'] = Variable<int>(transactionId);
+    map['account_id'] = Variable<int>(accountId);
+    map['amount'] = Variable<double>(amount);
+    {
+      map['side'] = Variable<String>(
+        $LedgerEntriesTable.$converterside.toSql(side),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  LedgerEntriesCompanion toCompanion(bool nullToAbsent) {
+    return LedgerEntriesCompanion(
+      id: Value(id),
+      transactionId: Value(transactionId),
+      accountId: Value(accountId),
+      amount: Value(amount),
+      side: Value(side),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory LedgerEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LedgerEntry(
+      id: serializer.fromJson<int>(json['id']),
+      transactionId: serializer.fromJson<int>(json['transactionId']),
+      accountId: serializer.fromJson<int>(json['accountId']),
+      amount: serializer.fromJson<double>(json['amount']),
+      side: $LedgerEntriesTable.$converterside.fromJson(
+        serializer.fromJson<String>(json['side']),
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'transactionId': serializer.toJson<int>(transactionId),
+      'accountId': serializer.toJson<int>(accountId),
+      'amount': serializer.toJson<double>(amount),
+      'side': serializer.toJson<String>(
+        $LedgerEntriesTable.$converterside.toJson(side),
+      ),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  LedgerEntry copyWith({
+    int? id,
+    int? transactionId,
+    int? accountId,
+    double? amount,
+    LedgerSide? side,
+    DateTime? createdAt,
+  }) => LedgerEntry(
+    id: id ?? this.id,
+    transactionId: transactionId ?? this.transactionId,
+    accountId: accountId ?? this.accountId,
+    amount: amount ?? this.amount,
+    side: side ?? this.side,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  LedgerEntry copyWithCompanion(LedgerEntriesCompanion data) {
+    return LedgerEntry(
+      id: data.id.present ? data.id.value : this.id,
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      side: data.side.present ? data.side.value : this.side,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LedgerEntry(')
+          ..write('id: $id, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('accountId: $accountId, ')
+          ..write('amount: $amount, ')
+          ..write('side: $side, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, transactionId, accountId, amount, side, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LedgerEntry &&
+          other.id == this.id &&
+          other.transactionId == this.transactionId &&
+          other.accountId == this.accountId &&
+          other.amount == this.amount &&
+          other.side == this.side &&
+          other.createdAt == this.createdAt);
+}
+
+class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
+  final Value<int> id;
+  final Value<int> transactionId;
+  final Value<int> accountId;
+  final Value<double> amount;
+  final Value<LedgerSide> side;
+  final Value<DateTime> createdAt;
+  const LedgerEntriesCompanion({
+    this.id = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.side = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  LedgerEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required int transactionId,
+    required int accountId,
+    required double amount,
+    required LedgerSide side,
+    this.createdAt = const Value.absent(),
+  }) : transactionId = Value(transactionId),
+       accountId = Value(accountId),
+       amount = Value(amount),
+       side = Value(side);
+  static Insertable<LedgerEntry> custom({
+    Expression<int>? id,
+    Expression<int>? transactionId,
+    Expression<int>? accountId,
+    Expression<double>? amount,
+    Expression<String>? side,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (accountId != null) 'account_id': accountId,
+      if (amount != null) 'amount': amount,
+      if (side != null) 'side': side,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  LedgerEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? transactionId,
+    Value<int>? accountId,
+    Value<double>? amount,
+    Value<LedgerSide>? side,
+    Value<DateTime>? createdAt,
+  }) {
+    return LedgerEntriesCompanion(
+      id: id ?? this.id,
+      transactionId: transactionId ?? this.transactionId,
+      accountId: accountId ?? this.accountId,
+      amount: amount ?? this.amount,
+      side: side ?? this.side,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<int>(transactionId.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<int>(accountId.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (side.present) {
+      map['side'] = Variable<String>(
+        $LedgerEntriesTable.$converterside.toSql(side.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LedgerEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('accountId: $accountId, ')
+          ..write('amount: $amount, ')
+          ..write('side: $side, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -2202,7 +3120,10 @@ class $TransactionTagsTable extends TransactionTags
 }
 
 class TransactionTag extends DataClass implements Insertable<TransactionTag> {
+  /// Foreign key to the transaction.
   final int transactionId;
+
+  /// Foreign key to the tag.
   final int tagId;
   const TransactionTag({required this.transactionId, required this.tagId});
   @override
@@ -2413,25 +3334,92 @@ class $RecurringPatternsTable extends RecurringPatterns
     requiredDuringInsert: true,
   );
   @override
-  late final GeneratedColumnWithTypeConverter<RecurringType, String> type =
+  late final GeneratedColumnWithTypeConverter<RecurringType, String>
+  automationType =
       GeneratedColumn<String>(
-        'type',
+        'automation_type',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
         defaultValue: const Constant('automatic'),
-      ).withConverter<RecurringType>($RecurringPatternsTable.$convertertype);
-  static const VerificationMeta _templateDataMeta = const VerificationMeta(
-    'templateData',
+      ).withConverter<RecurringType>(
+        $RecurringPatternsTable.$converterautomationType,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<TransactionType, String>
+  templateTransactionType =
+      GeneratedColumn<String>(
+        'template_transaction_type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<TransactionType>(
+        $RecurringPatternsTable.$convertertemplateTransactionType,
+      );
+  static const VerificationMeta _templateAmountMeta = const VerificationMeta(
+    'templateAmount',
   );
   @override
-  late final GeneratedColumn<String> templateData = GeneratedColumn<String>(
-    'template_data',
+  late final GeneratedColumn<double> templateAmount = GeneratedColumn<double>(
+    'template_amount',
     aliasedName,
     false,
-    type: DriftSqlType.string,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _templateAccountIdMeta = const VerificationMeta(
+    'templateAccountId',
+  );
+  @override
+  late final GeneratedColumn<int> templateAccountId = GeneratedColumn<int>(
+    'template_account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id)',
+    ),
+  );
+  static const VerificationMeta _templateCategoryIdMeta =
+      const VerificationMeta('templateCategoryId');
+  @override
+  late final GeneratedColumn<int> templateCategoryId = GeneratedColumn<int>(
+    'template_category_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES categories (id)',
+    ),
+  );
+  static const VerificationMeta _templateSecondaryAccountIdMeta =
+      const VerificationMeta('templateSecondaryAccountId');
+  @override
+  late final GeneratedColumn<int> templateSecondaryAccountId =
+      GeneratedColumn<int>(
+        'template_secondary_account_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES accounts (id)',
+        ),
+      );
+  static const VerificationMeta _templateNoteMeta = const VerificationMeta(
+    'templateNote',
+  );
+  @override
+  late final GeneratedColumn<String> templateNote = GeneratedColumn<String>(
+    'template_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _isDeletedMeta = const VerificationMeta(
     'isDeleted',
@@ -2456,8 +3444,13 @@ class $RecurringPatternsTable extends RecurringPatterns
     startDate,
     endDate,
     nextRunDate,
-    type,
-    templateData,
+    automationType,
+    templateTransactionType,
+    templateAmount,
+    templateAccountId,
+    templateCategoryId,
+    templateSecondaryAccountId,
+    templateNote,
     isDeleted,
   ];
   @override
@@ -2506,16 +3499,54 @@ class $RecurringPatternsTable extends RecurringPatterns
     } else if (isInserting) {
       context.missing(_nextRunDateMeta);
     }
-    if (data.containsKey('template_data')) {
+    if (data.containsKey('template_amount')) {
       context.handle(
-        _templateDataMeta,
-        templateData.isAcceptableOrUnknown(
-          data['template_data']!,
-          _templateDataMeta,
+        _templateAmountMeta,
+        templateAmount.isAcceptableOrUnknown(
+          data['template_amount']!,
+          _templateAmountMeta,
         ),
       );
     } else if (isInserting) {
-      context.missing(_templateDataMeta);
+      context.missing(_templateAmountMeta);
+    }
+    if (data.containsKey('template_account_id')) {
+      context.handle(
+        _templateAccountIdMeta,
+        templateAccountId.isAcceptableOrUnknown(
+          data['template_account_id']!,
+          _templateAccountIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_templateAccountIdMeta);
+    }
+    if (data.containsKey('template_category_id')) {
+      context.handle(
+        _templateCategoryIdMeta,
+        templateCategoryId.isAcceptableOrUnknown(
+          data['template_category_id']!,
+          _templateCategoryIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('template_secondary_account_id')) {
+      context.handle(
+        _templateSecondaryAccountIdMeta,
+        templateSecondaryAccountId.isAcceptableOrUnknown(
+          data['template_secondary_account_id']!,
+          _templateSecondaryAccountIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('template_note')) {
+      context.handle(
+        _templateNoteMeta,
+        templateNote.isAcceptableOrUnknown(
+          data['template_note']!,
+          _templateNoteMeta,
+        ),
+      );
     }
     if (data.containsKey('is_deleted')) {
       context.handle(
@@ -2558,16 +3589,40 @@ class $RecurringPatternsTable extends RecurringPatterns
         DriftSqlType.dateTime,
         data['${effectivePrefix}next_run_date'],
       )!,
-      type: $RecurringPatternsTable.$convertertype.fromSql(
+      automationType: $RecurringPatternsTable.$converterautomationType.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
-          data['${effectivePrefix}type'],
+          data['${effectivePrefix}automation_type'],
         )!,
       ),
-      templateData: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}template_data'],
+      templateTransactionType: $RecurringPatternsTable
+          .$convertertemplateTransactionType
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}template_transaction_type'],
+            )!,
+          ),
+      templateAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}template_amount'],
       )!,
+      templateAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}template_account_id'],
+      )!,
+      templateCategoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}template_category_id'],
+      ),
+      templateSecondaryAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}template_secondary_account_id'],
+      ),
+      templateNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template_note'],
+      ),
       isDeleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_deleted'],
@@ -2584,40 +3639,75 @@ class $RecurringPatternsTable extends RecurringPatterns
   $converterfrequency = const EnumNameConverter<RecurringFrequency>(
     RecurringFrequency.values,
   );
-  static JsonTypeConverter2<RecurringType, String, String> $convertertype =
-      const EnumNameConverter<RecurringType>(RecurringType.values);
+  static JsonTypeConverter2<RecurringType, String, String>
+  $converterautomationType = const EnumNameConverter<RecurringType>(
+    RecurringType.values,
+  );
+  static JsonTypeConverter2<TransactionType, String, String>
+  $convertertemplateTransactionType = const EnumNameConverter<TransactionType>(
+    TransactionType.values,
+  );
 }
 
 class RecurringPattern extends DataClass
     implements Insertable<RecurringPattern> {
+  /// Primary key.
   final int id;
 
   /// Base frequency unit.
   final RecurringFrequency frequency;
 
   /// Multiplier for the frequency.
-  /// Example: frequency='weekly', interval=2 implies "Every 2 weeks".
+  ///
+  /// Example: frequency = weekly, interval = 2 means "every 2 weeks".
   final int interval;
 
-  /// When this pattern starts active.
+  /// When this pattern starts.
   final DateTime startDate;
 
-  /// When this pattern stops.
-  /// If null, it repeats forever.
+  /// When this pattern ends.
+  ///
+  /// If null, repeats forever.
   final DateTime? endDate;
 
-  /// Optimization field: The pre-calculated date of the next occurrence.
-  /// The engine queries this to find what's due today.
+  /// Pre-calculated next occurrence date.
+  ///
+  /// Optimization field for efficient querying.
   final DateTime nextRunDate;
 
   /// Automation type.
-  final RecurringType type;
+  ///
+  /// Defaults to 'automatic'.
+  final RecurringType automationType;
 
-  /// JSON blob containing the template data (amount, accounts, category)
-  /// to copy when generating the real transaction.
-  final String templateData;
+  /// Transaction type for the generated transaction.
+  final TransactionType templateTransactionType;
 
-  /// Soft Delete flag.
+  /// Amount to use when creating the transaction.
+  final double templateAmount;
+
+  /// Primary account for the transaction.
+  ///
+  /// For expense: the source account (money leaves).
+  /// For income: the destination account (money enters).
+  /// For transfer: the source account.
+  final int templateAccountId;
+
+  /// Category for the transaction.
+  ///
+  /// Required for expense/income. Null for transfers.
+  final int? templateCategoryId;
+
+  /// Secondary account for transfers.
+  ///
+  /// The destination account for transfer transactions. Null for
+  /// expense/income.
+  final int? templateSecondaryAccountId;
+
+  /// Optional note for the generated transaction.
+  final String? templateNote;
+
+  /// Soft delete flag.
   final bool isDeleted;
   const RecurringPattern({
     required this.id,
@@ -2626,8 +3716,13 @@ class RecurringPattern extends DataClass
     required this.startDate,
     this.endDate,
     required this.nextRunDate,
-    required this.type,
-    required this.templateData,
+    required this.automationType,
+    required this.templateTransactionType,
+    required this.templateAmount,
+    required this.templateAccountId,
+    this.templateCategoryId,
+    this.templateSecondaryAccountId,
+    this.templateNote,
     required this.isDeleted,
   });
   @override
@@ -2646,11 +3741,30 @@ class RecurringPattern extends DataClass
     }
     map['next_run_date'] = Variable<DateTime>(nextRunDate);
     {
-      map['type'] = Variable<String>(
-        $RecurringPatternsTable.$convertertype.toSql(type),
+      map['automation_type'] = Variable<String>(
+        $RecurringPatternsTable.$converterautomationType.toSql(automationType),
       );
     }
-    map['template_data'] = Variable<String>(templateData);
+    {
+      map['template_transaction_type'] = Variable<String>(
+        $RecurringPatternsTable.$convertertemplateTransactionType.toSql(
+          templateTransactionType,
+        ),
+      );
+    }
+    map['template_amount'] = Variable<double>(templateAmount);
+    map['template_account_id'] = Variable<int>(templateAccountId);
+    if (!nullToAbsent || templateCategoryId != null) {
+      map['template_category_id'] = Variable<int>(templateCategoryId);
+    }
+    if (!nullToAbsent || templateSecondaryAccountId != null) {
+      map['template_secondary_account_id'] = Variable<int>(
+        templateSecondaryAccountId,
+      );
+    }
+    if (!nullToAbsent || templateNote != null) {
+      map['template_note'] = Variable<String>(templateNote);
+    }
     map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
@@ -2665,8 +3779,20 @@ class RecurringPattern extends DataClass
           ? const Value.absent()
           : Value(endDate),
       nextRunDate: Value(nextRunDate),
-      type: Value(type),
-      templateData: Value(templateData),
+      automationType: Value(automationType),
+      templateTransactionType: Value(templateTransactionType),
+      templateAmount: Value(templateAmount),
+      templateAccountId: Value(templateAccountId),
+      templateCategoryId: templateCategoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(templateCategoryId),
+      templateSecondaryAccountId:
+          templateSecondaryAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(templateSecondaryAccountId),
+      templateNote: templateNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(templateNote),
       isDeleted: Value(isDeleted),
     );
   }
@@ -2685,10 +3811,21 @@ class RecurringPattern extends DataClass
       startDate: serializer.fromJson<DateTime>(json['startDate']),
       endDate: serializer.fromJson<DateTime?>(json['endDate']),
       nextRunDate: serializer.fromJson<DateTime>(json['nextRunDate']),
-      type: $RecurringPatternsTable.$convertertype.fromJson(
-        serializer.fromJson<String>(json['type']),
+      automationType: $RecurringPatternsTable.$converterautomationType.fromJson(
+        serializer.fromJson<String>(json['automationType']),
       ),
-      templateData: serializer.fromJson<String>(json['templateData']),
+      templateTransactionType: $RecurringPatternsTable
+          .$convertertemplateTransactionType
+          .fromJson(
+            serializer.fromJson<String>(json['templateTransactionType']),
+          ),
+      templateAmount: serializer.fromJson<double>(json['templateAmount']),
+      templateAccountId: serializer.fromJson<int>(json['templateAccountId']),
+      templateCategoryId: serializer.fromJson<int?>(json['templateCategoryId']),
+      templateSecondaryAccountId: serializer.fromJson<int?>(
+        json['templateSecondaryAccountId'],
+      ),
+      templateNote: serializer.fromJson<String?>(json['templateNote']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
@@ -2704,10 +3841,21 @@ class RecurringPattern extends DataClass
       'startDate': serializer.toJson<DateTime>(startDate),
       'endDate': serializer.toJson<DateTime?>(endDate),
       'nextRunDate': serializer.toJson<DateTime>(nextRunDate),
-      'type': serializer.toJson<String>(
-        $RecurringPatternsTable.$convertertype.toJson(type),
+      'automationType': serializer.toJson<String>(
+        $RecurringPatternsTable.$converterautomationType.toJson(automationType),
       ),
-      'templateData': serializer.toJson<String>(templateData),
+      'templateTransactionType': serializer.toJson<String>(
+        $RecurringPatternsTable.$convertertemplateTransactionType.toJson(
+          templateTransactionType,
+        ),
+      ),
+      'templateAmount': serializer.toJson<double>(templateAmount),
+      'templateAccountId': serializer.toJson<int>(templateAccountId),
+      'templateCategoryId': serializer.toJson<int?>(templateCategoryId),
+      'templateSecondaryAccountId': serializer.toJson<int?>(
+        templateSecondaryAccountId,
+      ),
+      'templateNote': serializer.toJson<String?>(templateNote),
       'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
@@ -2719,8 +3867,13 @@ class RecurringPattern extends DataClass
     DateTime? startDate,
     Value<DateTime?> endDate = const Value.absent(),
     DateTime? nextRunDate,
-    RecurringType? type,
-    String? templateData,
+    RecurringType? automationType,
+    TransactionType? templateTransactionType,
+    double? templateAmount,
+    int? templateAccountId,
+    Value<int?> templateCategoryId = const Value.absent(),
+    Value<int?> templateSecondaryAccountId = const Value.absent(),
+    Value<String?> templateNote = const Value.absent(),
     bool? isDeleted,
   }) => RecurringPattern(
     id: id ?? this.id,
@@ -2729,8 +3882,18 @@ class RecurringPattern extends DataClass
     startDate: startDate ?? this.startDate,
     endDate: endDate.present ? endDate.value : this.endDate,
     nextRunDate: nextRunDate ?? this.nextRunDate,
-    type: type ?? this.type,
-    templateData: templateData ?? this.templateData,
+    automationType: automationType ?? this.automationType,
+    templateTransactionType:
+        templateTransactionType ?? this.templateTransactionType,
+    templateAmount: templateAmount ?? this.templateAmount,
+    templateAccountId: templateAccountId ?? this.templateAccountId,
+    templateCategoryId: templateCategoryId.present
+        ? templateCategoryId.value
+        : this.templateCategoryId,
+    templateSecondaryAccountId: templateSecondaryAccountId.present
+        ? templateSecondaryAccountId.value
+        : this.templateSecondaryAccountId,
+    templateNote: templateNote.present ? templateNote.value : this.templateNote,
     isDeleted: isDeleted ?? this.isDeleted,
   );
   RecurringPattern copyWithCompanion(RecurringPatternsCompanion data) {
@@ -2743,10 +3906,27 @@ class RecurringPattern extends DataClass
       nextRunDate: data.nextRunDate.present
           ? data.nextRunDate.value
           : this.nextRunDate,
-      type: data.type.present ? data.type.value : this.type,
-      templateData: data.templateData.present
-          ? data.templateData.value
-          : this.templateData,
+      automationType: data.automationType.present
+          ? data.automationType.value
+          : this.automationType,
+      templateTransactionType: data.templateTransactionType.present
+          ? data.templateTransactionType.value
+          : this.templateTransactionType,
+      templateAmount: data.templateAmount.present
+          ? data.templateAmount.value
+          : this.templateAmount,
+      templateAccountId: data.templateAccountId.present
+          ? data.templateAccountId.value
+          : this.templateAccountId,
+      templateCategoryId: data.templateCategoryId.present
+          ? data.templateCategoryId.value
+          : this.templateCategoryId,
+      templateSecondaryAccountId: data.templateSecondaryAccountId.present
+          ? data.templateSecondaryAccountId.value
+          : this.templateSecondaryAccountId,
+      templateNote: data.templateNote.present
+          ? data.templateNote.value
+          : this.templateNote,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
@@ -2760,8 +3940,13 @@ class RecurringPattern extends DataClass
           ..write('startDate: $startDate, ')
           ..write('endDate: $endDate, ')
           ..write('nextRunDate: $nextRunDate, ')
-          ..write('type: $type, ')
-          ..write('templateData: $templateData, ')
+          ..write('automationType: $automationType, ')
+          ..write('templateTransactionType: $templateTransactionType, ')
+          ..write('templateAmount: $templateAmount, ')
+          ..write('templateAccountId: $templateAccountId, ')
+          ..write('templateCategoryId: $templateCategoryId, ')
+          ..write('templateSecondaryAccountId: $templateSecondaryAccountId, ')
+          ..write('templateNote: $templateNote, ')
           ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
@@ -2775,8 +3960,13 @@ class RecurringPattern extends DataClass
     startDate,
     endDate,
     nextRunDate,
-    type,
-    templateData,
+    automationType,
+    templateTransactionType,
+    templateAmount,
+    templateAccountId,
+    templateCategoryId,
+    templateSecondaryAccountId,
+    templateNote,
     isDeleted,
   );
   @override
@@ -2789,8 +3979,13 @@ class RecurringPattern extends DataClass
           other.startDate == this.startDate &&
           other.endDate == this.endDate &&
           other.nextRunDate == this.nextRunDate &&
-          other.type == this.type &&
-          other.templateData == this.templateData &&
+          other.automationType == this.automationType &&
+          other.templateTransactionType == this.templateTransactionType &&
+          other.templateAmount == this.templateAmount &&
+          other.templateAccountId == this.templateAccountId &&
+          other.templateCategoryId == this.templateCategoryId &&
+          other.templateSecondaryAccountId == this.templateSecondaryAccountId &&
+          other.templateNote == this.templateNote &&
           other.isDeleted == this.isDeleted);
 }
 
@@ -2801,8 +3996,13 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
   final Value<DateTime> startDate;
   final Value<DateTime?> endDate;
   final Value<DateTime> nextRunDate;
-  final Value<RecurringType> type;
-  final Value<String> templateData;
+  final Value<RecurringType> automationType;
+  final Value<TransactionType> templateTransactionType;
+  final Value<double> templateAmount;
+  final Value<int> templateAccountId;
+  final Value<int?> templateCategoryId;
+  final Value<int?> templateSecondaryAccountId;
+  final Value<String?> templateNote;
   final Value<bool> isDeleted;
   const RecurringPatternsCompanion({
     this.id = const Value.absent(),
@@ -2811,8 +4011,13 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     this.startDate = const Value.absent(),
     this.endDate = const Value.absent(),
     this.nextRunDate = const Value.absent(),
-    this.type = const Value.absent(),
-    this.templateData = const Value.absent(),
+    this.automationType = const Value.absent(),
+    this.templateTransactionType = const Value.absent(),
+    this.templateAmount = const Value.absent(),
+    this.templateAccountId = const Value.absent(),
+    this.templateCategoryId = const Value.absent(),
+    this.templateSecondaryAccountId = const Value.absent(),
+    this.templateNote = const Value.absent(),
     this.isDeleted = const Value.absent(),
   });
   RecurringPatternsCompanion.insert({
@@ -2822,13 +4027,20 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     required DateTime startDate,
     this.endDate = const Value.absent(),
     required DateTime nextRunDate,
-    this.type = const Value.absent(),
-    required String templateData,
+    this.automationType = const Value.absent(),
+    required TransactionType templateTransactionType,
+    required double templateAmount,
+    required int templateAccountId,
+    this.templateCategoryId = const Value.absent(),
+    this.templateSecondaryAccountId = const Value.absent(),
+    this.templateNote = const Value.absent(),
     this.isDeleted = const Value.absent(),
   }) : frequency = Value(frequency),
        startDate = Value(startDate),
        nextRunDate = Value(nextRunDate),
-       templateData = Value(templateData);
+       templateTransactionType = Value(templateTransactionType),
+       templateAmount = Value(templateAmount),
+       templateAccountId = Value(templateAccountId);
   static Insertable<RecurringPattern> custom({
     Expression<int>? id,
     Expression<String>? frequency,
@@ -2836,8 +4048,13 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     Expression<DateTime>? startDate,
     Expression<DateTime>? endDate,
     Expression<DateTime>? nextRunDate,
-    Expression<String>? type,
-    Expression<String>? templateData,
+    Expression<String>? automationType,
+    Expression<String>? templateTransactionType,
+    Expression<double>? templateAmount,
+    Expression<int>? templateAccountId,
+    Expression<int>? templateCategoryId,
+    Expression<int>? templateSecondaryAccountId,
+    Expression<String>? templateNote,
     Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
@@ -2847,8 +4064,16 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
       if (startDate != null) 'start_date': startDate,
       if (endDate != null) 'end_date': endDate,
       if (nextRunDate != null) 'next_run_date': nextRunDate,
-      if (type != null) 'type': type,
-      if (templateData != null) 'template_data': templateData,
+      if (automationType != null) 'automation_type': automationType,
+      if (templateTransactionType != null)
+        'template_transaction_type': templateTransactionType,
+      if (templateAmount != null) 'template_amount': templateAmount,
+      if (templateAccountId != null) 'template_account_id': templateAccountId,
+      if (templateCategoryId != null)
+        'template_category_id': templateCategoryId,
+      if (templateSecondaryAccountId != null)
+        'template_secondary_account_id': templateSecondaryAccountId,
+      if (templateNote != null) 'template_note': templateNote,
       if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
@@ -2860,8 +4085,13 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     Value<DateTime>? startDate,
     Value<DateTime?>? endDate,
     Value<DateTime>? nextRunDate,
-    Value<RecurringType>? type,
-    Value<String>? templateData,
+    Value<RecurringType>? automationType,
+    Value<TransactionType>? templateTransactionType,
+    Value<double>? templateAmount,
+    Value<int>? templateAccountId,
+    Value<int?>? templateCategoryId,
+    Value<int?>? templateSecondaryAccountId,
+    Value<String?>? templateNote,
     Value<bool>? isDeleted,
   }) {
     return RecurringPatternsCompanion(
@@ -2871,8 +4101,15 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       nextRunDate: nextRunDate ?? this.nextRunDate,
-      type: type ?? this.type,
-      templateData: templateData ?? this.templateData,
+      automationType: automationType ?? this.automationType,
+      templateTransactionType:
+          templateTransactionType ?? this.templateTransactionType,
+      templateAmount: templateAmount ?? this.templateAmount,
+      templateAccountId: templateAccountId ?? this.templateAccountId,
+      templateCategoryId: templateCategoryId ?? this.templateCategoryId,
+      templateSecondaryAccountId:
+          templateSecondaryAccountId ?? this.templateSecondaryAccountId,
+      templateNote: templateNote ?? this.templateNote,
       isDeleted: isDeleted ?? this.isDeleted,
     );
   }
@@ -2900,13 +4137,36 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
     if (nextRunDate.present) {
       map['next_run_date'] = Variable<DateTime>(nextRunDate.value);
     }
-    if (type.present) {
-      map['type'] = Variable<String>(
-        $RecurringPatternsTable.$convertertype.toSql(type.value),
+    if (automationType.present) {
+      map['automation_type'] = Variable<String>(
+        $RecurringPatternsTable.$converterautomationType.toSql(
+          automationType.value,
+        ),
       );
     }
-    if (templateData.present) {
-      map['template_data'] = Variable<String>(templateData.value);
+    if (templateTransactionType.present) {
+      map['template_transaction_type'] = Variable<String>(
+        $RecurringPatternsTable.$convertertemplateTransactionType.toSql(
+          templateTransactionType.value,
+        ),
+      );
+    }
+    if (templateAmount.present) {
+      map['template_amount'] = Variable<double>(templateAmount.value);
+    }
+    if (templateAccountId.present) {
+      map['template_account_id'] = Variable<int>(templateAccountId.value);
+    }
+    if (templateCategoryId.present) {
+      map['template_category_id'] = Variable<int>(templateCategoryId.value);
+    }
+    if (templateSecondaryAccountId.present) {
+      map['template_secondary_account_id'] = Variable<int>(
+        templateSecondaryAccountId.value,
+      );
+    }
+    if (templateNote.present) {
+      map['template_note'] = Variable<String>(templateNote.value);
     }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
@@ -2923,8 +4183,13 @@ class RecurringPatternsCompanion extends UpdateCompanion<RecurringPattern> {
           ..write('startDate: $startDate, ')
           ..write('endDate: $endDate, ')
           ..write('nextRunDate: $nextRunDate, ')
-          ..write('type: $type, ')
-          ..write('templateData: $templateData, ')
+          ..write('automationType: $automationType, ')
+          ..write('templateTransactionType: $templateTransactionType, ')
+          ..write('templateAmount: $templateAmount, ')
+          ..write('templateAccountId: $templateAccountId, ')
+          ..write('templateCategoryId: $templateCategoryId, ')
+          ..write('templateSecondaryAccountId: $templateSecondaryAccountId, ')
+          ..write('templateNote: $templateNote, ')
           ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
@@ -2938,6 +4203,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $TagsTable tags = $TagsTable(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
+  late final $LedgerEntriesTable ledgerEntries = $LedgerEntriesTable(this);
   late final $TransactionTagsTable transactionTags = $TransactionTagsTable(
     this,
   );
@@ -2952,6 +4218,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     categories,
     tags,
     transactions,
+    ledgerEntries,
     transactionTags,
     recurringPatterns,
   ];
@@ -2961,30 +4228,143 @@ typedef $$AccountsTableCreateCompanionBuilder =
     AccountsCompanion Function({
       Value<int> id,
       required String name,
-      required AccountType type,
-      Value<double> initialBalance,
-      Value<double> currentBalance,
+      Value<AccountType?> type,
+      required AccountNature nature,
+      Value<bool> isUserVisible,
       Value<String> currencyCode,
       Value<bool> includeInTotals,
       Value<bool> isDeleted,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
       Value<int?> statementDay,
       Value<int?> paymentDueDay,
+      Value<double?> creditLimit,
       Value<double?> interestRate,
+      Value<double?> principal,
+      Value<double?> installmentAmount,
+      Value<DateTime?> nextDueDate,
+      Value<DateTime?> maturityDate,
     });
 typedef $$AccountsTableUpdateCompanionBuilder =
     AccountsCompanion Function({
       Value<int> id,
       Value<String> name,
-      Value<AccountType> type,
-      Value<double> initialBalance,
-      Value<double> currentBalance,
+      Value<AccountType?> type,
+      Value<AccountNature> nature,
+      Value<bool> isUserVisible,
       Value<String> currencyCode,
       Value<bool> includeInTotals,
       Value<bool> isDeleted,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
       Value<int?> statementDay,
       Value<int?> paymentDueDay,
+      Value<double?> creditLimit,
       Value<double?> interestRate,
+      Value<double?> principal,
+      Value<double?> installmentAmount,
+      Value<DateTime?> nextDueDate,
+      Value<DateTime?> maturityDate,
     });
+
+final class $$AccountsTableReferences
+    extends BaseReferences<_$AppDatabase, $AccountsTable, Account> {
+  $$AccountsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$CategoriesTable, List<Category>>
+  _categoriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.categories,
+    aliasName: $_aliasNameGenerator(
+      db.accounts.id,
+      db.categories.linkedAccountId,
+    ),
+  );
+
+  $$CategoriesTableProcessedTableManager get categoriesRefs {
+    final manager = $$CategoriesTableTableManager(
+      $_db,
+      $_db.categories,
+    ).filter((f) => f.linkedAccountId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_categoriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$LedgerEntriesTable, List<LedgerEntry>>
+  _ledgerEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ledgerEntries,
+    aliasName: $_aliasNameGenerator(db.accounts.id, db.ledgerEntries.accountId),
+  );
+
+  $$LedgerEntriesTableProcessedTableManager get ledgerEntriesRefs {
+    final manager = $$LedgerEntriesTableTableManager(
+      $_db,
+      $_db.ledgerEntries,
+    ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ledgerEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RecurringPatternsTable, List<RecurringPattern>>
+  _recurringPatternsPrimaryAccountTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.recurringPatterns,
+        aliasName: $_aliasNameGenerator(
+          db.accounts.id,
+          db.recurringPatterns.templateAccountId,
+        ),
+      );
+
+  $$RecurringPatternsTableProcessedTableManager
+  get recurringPatternsPrimaryAccount {
+    final manager = $$RecurringPatternsTableTableManager(
+      $_db,
+      $_db.recurringPatterns,
+    ).filter((f) => f.templateAccountId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _recurringPatternsPrimaryAccountTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RecurringPatternsTable, List<RecurringPattern>>
+  _recurringPatternsSecondaryAccountTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.recurringPatterns,
+        aliasName: $_aliasNameGenerator(
+          db.accounts.id,
+          db.recurringPatterns.templateSecondaryAccountId,
+        ),
+      );
+
+  $$RecurringPatternsTableProcessedTableManager
+  get recurringPatternsSecondaryAccount {
+    final manager =
+        $$RecurringPatternsTableTableManager(
+          $_db,
+          $_db.recurringPatterns,
+        ).filter(
+          (f) => f.templateSecondaryAccountId.id.sqlEquals(
+            $_itemColumn<int>('id')!,
+          ),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _recurringPatternsSecondaryAccountTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$AccountsTableFilterComposer
     extends Composer<_$AppDatabase, $AccountsTable> {
@@ -3005,19 +4385,20 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<AccountType, AccountType, String> get type =>
+  ColumnWithTypeConverterFilters<AccountType?, AccountType, String> get type =>
       $composableBuilder(
         column: $table.type,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
 
-  ColumnFilters<double> get initialBalance => $composableBuilder(
-    column: $table.initialBalance,
-    builder: (column) => ColumnFilters(column),
+  ColumnWithTypeConverterFilters<AccountNature, AccountNature, String>
+  get nature => $composableBuilder(
+    column: $table.nature,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
-  ColumnFilters<double> get currentBalance => $composableBuilder(
-    column: $table.currentBalance,
+  ColumnFilters<bool> get isUserVisible => $composableBuilder(
+    column: $table.isUserVisible,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3036,6 +4417,16 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get statementDay => $composableBuilder(
     column: $table.statementDay,
     builder: (column) => ColumnFilters(column),
@@ -3046,10 +4437,135 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get interestRate => $composableBuilder(
     column: $table.interestRate,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<double> get principal => $composableBuilder(
+    column: $table.principal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get installmentAmount => $composableBuilder(
+    column: $table.installmentAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextDueDate => $composableBuilder(
+    column: $table.nextDueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get maturityDate => $composableBuilder(
+    column: $table.maturityDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> categoriesRefs(
+    Expression<bool> Function($$CategoriesTableFilterComposer f) f,
+  ) {
+    final $$CategoriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.linkedAccountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableFilterComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> ledgerEntriesRefs(
+    Expression<bool> Function($$LedgerEntriesTableFilterComposer f) f,
+  ) {
+    final $$LedgerEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ledgerEntries,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgerEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.ledgerEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> recurringPatternsPrimaryAccount(
+    Expression<bool> Function($$RecurringPatternsTableFilterComposer f) f,
+  ) {
+    final $$RecurringPatternsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recurringPatterns,
+      getReferencedColumn: (t) => t.templateAccountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecurringPatternsTableFilterComposer(
+            $db: $db,
+            $table: $db.recurringPatterns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> recurringPatternsSecondaryAccount(
+    Expression<bool> Function($$RecurringPatternsTableFilterComposer f) f,
+  ) {
+    final $$RecurringPatternsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recurringPatterns,
+      getReferencedColumn: (t) => t.templateSecondaryAccountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecurringPatternsTableFilterComposer(
+            $db: $db,
+            $table: $db.recurringPatterns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AccountsTableOrderingComposer
@@ -3076,13 +4592,13 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get initialBalance => $composableBuilder(
-    column: $table.initialBalance,
+  ColumnOrderings<String> get nature => $composableBuilder(
+    column: $table.nature,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get currentBalance => $composableBuilder(
-    column: $table.currentBalance,
+  ColumnOrderings<bool> get isUserVisible => $composableBuilder(
+    column: $table.isUserVisible,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3101,6 +4617,16 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get statementDay => $composableBuilder(
     column: $table.statementDay,
     builder: (column) => ColumnOrderings(column),
@@ -3111,8 +4637,33 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get interestRate => $composableBuilder(
     column: $table.interestRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get principal => $composableBuilder(
+    column: $table.principal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get installmentAmount => $composableBuilder(
+    column: $table.installmentAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextDueDate => $composableBuilder(
+    column: $table.nextDueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get maturityDate => $composableBuilder(
+    column: $table.maturityDate,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -3132,16 +4683,14 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<AccountType, String> get type =>
+  GeneratedColumnWithTypeConverter<AccountType?, String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
-  GeneratedColumn<double> get initialBalance => $composableBuilder(
-    column: $table.initialBalance,
-    builder: (column) => column,
-  );
+  GeneratedColumnWithTypeConverter<AccountNature, String> get nature =>
+      $composableBuilder(column: $table.nature, builder: (column) => column);
 
-  GeneratedColumn<double> get currentBalance => $composableBuilder(
-    column: $table.currentBalance,
+  GeneratedColumn<bool> get isUserVisible => $composableBuilder(
+    column: $table.isUserVisible,
     builder: (column) => column,
   );
 
@@ -3158,6 +4707,12 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<bool> get isDeleted =>
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
   GeneratedColumn<int> get statementDay => $composableBuilder(
     column: $table.statementDay,
     builder: (column) => column,
@@ -3168,10 +4723,135 @@ class $$AccountsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get interestRate => $composableBuilder(
     column: $table.interestRate,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get principal =>
+      $composableBuilder(column: $table.principal, builder: (column) => column);
+
+  GeneratedColumn<double> get installmentAmount => $composableBuilder(
+    column: $table.installmentAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get nextDueDate => $composableBuilder(
+    column: $table.nextDueDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get maturityDate => $composableBuilder(
+    column: $table.maturityDate,
+    builder: (column) => column,
+  );
+
+  Expression<T> categoriesRefs<T extends Object>(
+    Expression<T> Function($$CategoriesTableAnnotationComposer a) f,
+  ) {
+    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.linkedAccountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> ledgerEntriesRefs<T extends Object>(
+    Expression<T> Function($$LedgerEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$LedgerEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ledgerEntries,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgerEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ledgerEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> recurringPatternsPrimaryAccount<T extends Object>(
+    Expression<T> Function($$RecurringPatternsTableAnnotationComposer a) f,
+  ) {
+    final $$RecurringPatternsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recurringPatterns,
+          getReferencedColumn: (t) => t.templateAccountId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecurringPatternsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recurringPatterns,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> recurringPatternsSecondaryAccount<T extends Object>(
+    Expression<T> Function($$RecurringPatternsTableAnnotationComposer a) f,
+  ) {
+    final $$RecurringPatternsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recurringPatterns,
+          getReferencedColumn: (t) => t.templateSecondaryAccountId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecurringPatternsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recurringPatterns,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$AccountsTableTableManager
@@ -3185,9 +4865,14 @@ class $$AccountsTableTableManager
           $$AccountsTableAnnotationComposer,
           $$AccountsTableCreateCompanionBuilder,
           $$AccountsTableUpdateCompanionBuilder,
-          (Account, BaseReferences<_$AppDatabase, $AccountsTable, Account>),
+          (Account, $$AccountsTableReferences),
           Account,
-          PrefetchHooks Function()
+          PrefetchHooks Function({
+            bool categoriesRefs,
+            bool ledgerEntriesRefs,
+            bool recurringPatternsPrimaryAccount,
+            bool recurringPatternsSecondaryAccount,
+          })
         > {
   $$AccountsTableTableManager(_$AppDatabase db, $AccountsTable table)
     : super(
@@ -3204,58 +4889,196 @@ class $$AccountsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<AccountType> type = const Value.absent(),
-                Value<double> initialBalance = const Value.absent(),
-                Value<double> currentBalance = const Value.absent(),
+                Value<AccountType?> type = const Value.absent(),
+                Value<AccountNature> nature = const Value.absent(),
+                Value<bool> isUserVisible = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<bool> includeInTotals = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
                 Value<int?> statementDay = const Value.absent(),
                 Value<int?> paymentDueDay = const Value.absent(),
+                Value<double?> creditLimit = const Value.absent(),
                 Value<double?> interestRate = const Value.absent(),
+                Value<double?> principal = const Value.absent(),
+                Value<double?> installmentAmount = const Value.absent(),
+                Value<DateTime?> nextDueDate = const Value.absent(),
+                Value<DateTime?> maturityDate = const Value.absent(),
               }) => AccountsCompanion(
                 id: id,
                 name: name,
                 type: type,
-                initialBalance: initialBalance,
-                currentBalance: currentBalance,
+                nature: nature,
+                isUserVisible: isUserVisible,
                 currencyCode: currencyCode,
                 includeInTotals: includeInTotals,
                 isDeleted: isDeleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
                 statementDay: statementDay,
                 paymentDueDay: paymentDueDay,
+                creditLimit: creditLimit,
                 interestRate: interestRate,
+                principal: principal,
+                installmentAmount: installmentAmount,
+                nextDueDate: nextDueDate,
+                maturityDate: maturityDate,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
-                required AccountType type,
-                Value<double> initialBalance = const Value.absent(),
-                Value<double> currentBalance = const Value.absent(),
+                Value<AccountType?> type = const Value.absent(),
+                required AccountNature nature,
+                Value<bool> isUserVisible = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<bool> includeInTotals = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
                 Value<int?> statementDay = const Value.absent(),
                 Value<int?> paymentDueDay = const Value.absent(),
+                Value<double?> creditLimit = const Value.absent(),
                 Value<double?> interestRate = const Value.absent(),
+                Value<double?> principal = const Value.absent(),
+                Value<double?> installmentAmount = const Value.absent(),
+                Value<DateTime?> nextDueDate = const Value.absent(),
+                Value<DateTime?> maturityDate = const Value.absent(),
               }) => AccountsCompanion.insert(
                 id: id,
                 name: name,
                 type: type,
-                initialBalance: initialBalance,
-                currentBalance: currentBalance,
+                nature: nature,
+                isUserVisible: isUserVisible,
                 currencyCode: currencyCode,
                 includeInTotals: includeInTotals,
                 isDeleted: isDeleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
                 statementDay: statementDay,
                 paymentDueDay: paymentDueDay,
+                creditLimit: creditLimit,
                 interestRate: interestRate,
+                principal: principal,
+                installmentAmount: installmentAmount,
+                nextDueDate: nextDueDate,
+                maturityDate: maturityDate,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$AccountsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback:
+              ({
+                categoriesRefs = false,
+                ledgerEntriesRefs = false,
+                recurringPatternsPrimaryAccount = false,
+                recurringPatternsSecondaryAccount = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (categoriesRefs) db.categories,
+                    if (ledgerEntriesRefs) db.ledgerEntries,
+                    if (recurringPatternsPrimaryAccount) db.recurringPatterns,
+                    if (recurringPatternsSecondaryAccount) db.recurringPatterns,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (categoriesRefs)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          Category
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._categoriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).categoriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.linkedAccountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (ledgerEntriesRefs)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          LedgerEntry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._ledgerEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).ledgerEntriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.accountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (recurringPatternsPrimaryAccount)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          RecurringPattern
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._recurringPatternsPrimaryAccountTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recurringPatternsPrimaryAccount,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.templateAccountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (recurringPatternsSecondaryAccount)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          RecurringPattern
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._recurringPatternsSecondaryAccountTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recurringPatternsSecondaryAccount,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.templateSecondaryAccountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
         ),
       );
 }
@@ -3270,9 +5093,14 @@ typedef $$AccountsTableProcessedTableManager =
       $$AccountsTableAnnotationComposer,
       $$AccountsTableCreateCompanionBuilder,
       $$AccountsTableUpdateCompanionBuilder,
-      (Account, BaseReferences<_$AppDatabase, $AccountsTable, Account>),
+      (Account, $$AccountsTableReferences),
       Account,
-      PrefetchHooks Function()
+      PrefetchHooks Function({
+        bool categoriesRefs,
+        bool ledgerEntriesRefs,
+        bool recurringPatternsPrimaryAccount,
+        bool recurringPatternsSecondaryAccount,
+      })
     >;
 typedef $$CategoriesTableCreateCompanionBuilder =
     CategoriesCompanion Function({
@@ -3280,9 +5108,12 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       required String name,
       required CategoryKind kind,
       Value<int?> parentId,
+      required int linkedAccountId,
       Value<String?> iconData,
       Value<int?> color,
       Value<bool> isDeleted,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
     });
 typedef $$CategoriesTableUpdateCompanionBuilder =
     CategoriesCompanion Function({
@@ -3290,9 +5121,12 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<CategoryKind> kind,
       Value<int?> parentId,
+      Value<int> linkedAccountId,
       Value<String?> iconData,
       Value<int?> color,
       Value<bool> isDeleted,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
     });
 
 final class $$CategoriesTableReferences
@@ -3318,22 +5152,47 @@ final class $$CategoriesTableReferences
     );
   }
 
-  static MultiTypedResultKey<$TransactionsTable, List<Transaction>>
-  _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.transactions,
-    aliasName: $_aliasNameGenerator(
-      db.categories.id,
-      db.transactions.categoryId,
-    ),
-  );
+  static $AccountsTable _linkedAccountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias(
+        $_aliasNameGenerator(db.categories.linkedAccountId, db.accounts.id),
+      );
 
-  $$TransactionsTableProcessedTableManager get transactionsRefs {
-    final manager = $$TransactionsTableTableManager(
+  $$AccountsTableProcessedTableManager get linkedAccountId {
+    final $_column = $_itemColumn<int>('linked_account_id')!;
+
+    final manager = $$AccountsTableTableManager(
       $_db,
-      $_db.transactions,
-    ).filter((f) => f.categoryId.id.sqlEquals($_itemColumn<int>('id')!));
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_linkedAccountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
-    final cache = $_typedResult.readTableOrNull(_transactionsRefsTable($_db));
+  static MultiTypedResultKey<$RecurringPatternsTable, List<RecurringPattern>>
+  _recurringPatternsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.recurringPatterns,
+        aliasName: $_aliasNameGenerator(
+          db.categories.id,
+          db.recurringPatterns.templateCategoryId,
+        ),
+      );
+
+  $$RecurringPatternsTableProcessedTableManager get recurringPatternsRefs {
+    final manager =
+        $$RecurringPatternsTableTableManager(
+          $_db,
+          $_db.recurringPatterns,
+        ).filter(
+          (f) => f.templateCategoryId.id.sqlEquals($_itemColumn<int>('id')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _recurringPatternsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3380,6 +5239,16 @@ class $$CategoriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CategoriesTableFilterComposer get parentId {
     final $$CategoriesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -3403,22 +5272,45 @@ class $$CategoriesTableFilterComposer
     return composer;
   }
 
-  Expression<bool> transactionsRefs(
-    Expression<bool> Function($$TransactionsTableFilterComposer f) f,
-  ) {
-    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+  $$AccountsTableFilterComposer get linkedAccountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.transactions,
-      getReferencedColumn: (t) => t.categoryId,
+      getCurrentColumn: (t) => t.linkedAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$TransactionsTableFilterComposer(
+          }) => $$AccountsTableFilterComposer(
             $db: $db,
-            $table: $db.transactions,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> recurringPatternsRefs(
+    Expression<bool> Function($$RecurringPatternsTableFilterComposer f) f,
+  ) {
+    final $$RecurringPatternsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recurringPatterns,
+      getReferencedColumn: (t) => t.templateCategoryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecurringPatternsTableFilterComposer(
+            $db: $db,
+            $table: $db.recurringPatterns,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3468,6 +5360,16 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get parentId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3482,6 +5384,29 @@ class $$CategoriesTableOrderingComposer
           }) => $$CategoriesTableOrderingComposer(
             $db: $db,
             $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableOrderingComposer get linkedAccountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.linkedAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3519,6 +5444,12 @@ class $$CategoriesTableAnnotationComposer
   GeneratedColumn<bool> get isDeleted =>
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
   $$CategoriesTableAnnotationComposer get parentId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -3542,28 +5473,52 @@ class $$CategoriesTableAnnotationComposer
     return composer;
   }
 
-  Expression<T> transactionsRefs<T extends Object>(
-    Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
-  ) {
-    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+  $$AccountsTableAnnotationComposer get linkedAccountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.transactions,
-      getReferencedColumn: (t) => t.categoryId,
+      getCurrentColumn: (t) => t.linkedAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$TransactionsTableAnnotationComposer(
+          }) => $$AccountsTableAnnotationComposer(
             $db: $db,
-            $table: $db.transactions,
+            $table: $db.accounts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return composer;
+  }
+
+  Expression<T> recurringPatternsRefs<T extends Object>(
+    Expression<T> Function($$RecurringPatternsTableAnnotationComposer a) f,
+  ) {
+    final $$RecurringPatternsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.recurringPatterns,
+          getReferencedColumn: (t) => t.templateCategoryId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RecurringPatternsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.recurringPatterns,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 }
@@ -3581,7 +5536,11 @@ class $$CategoriesTableTableManager
           $$CategoriesTableUpdateCompanionBuilder,
           (Category, $$CategoriesTableReferences),
           Category,
-          PrefetchHooks Function({bool parentId, bool transactionsRefs})
+          PrefetchHooks Function({
+            bool parentId,
+            bool linkedAccountId,
+            bool recurringPatternsRefs,
+          })
         > {
   $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
     : super(
@@ -3600,17 +5559,23 @@ class $$CategoriesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<CategoryKind> kind = const Value.absent(),
                 Value<int?> parentId = const Value.absent(),
+                Value<int> linkedAccountId = const Value.absent(),
                 Value<String?> iconData = const Value.absent(),
                 Value<int?> color = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => CategoriesCompanion(
                 id: id,
                 name: name,
                 kind: kind,
                 parentId: parentId,
+                linkedAccountId: linkedAccountId,
                 iconData: iconData,
                 color: color,
                 isDeleted: isDeleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -3618,17 +5583,23 @@ class $$CategoriesTableTableManager
                 required String name,
                 required CategoryKind kind,
                 Value<int?> parentId = const Value.absent(),
+                required int linkedAccountId,
                 Value<String?> iconData = const Value.absent(),
                 Value<int?> color = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => CategoriesCompanion.insert(
                 id: id,
                 name: name,
                 kind: kind,
                 parentId: parentId,
+                linkedAccountId: linkedAccountId,
                 iconData: iconData,
                 color: color,
                 isDeleted: isDeleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3639,11 +5610,15 @@ class $$CategoriesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({parentId = false, transactionsRefs = false}) {
+              ({
+                parentId = false,
+                linkedAccountId = false,
+                recurringPatternsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
-                    if (transactionsRefs) db.transactions,
+                    if (recurringPatternsRefs) db.recurringPatterns,
                   ],
                   addJoins:
                       <
@@ -3675,29 +5650,43 @@ class $$CategoriesTableTableManager
                                   )
                                   as T;
                         }
+                        if (linkedAccountId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.linkedAccountId,
+                                    referencedTable: $$CategoriesTableReferences
+                                        ._linkedAccountIdTable(db),
+                                    referencedColumn:
+                                        $$CategoriesTableReferences
+                                            ._linkedAccountIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
                         return state;
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
-                      if (transactionsRefs)
+                      if (recurringPatternsRefs)
                         await $_getPrefetchedData<
                           Category,
                           $CategoriesTable,
-                          Transaction
+                          RecurringPattern
                         >(
                           currentTable: table,
                           referencedTable: $$CategoriesTableReferences
-                              ._transactionsRefsTable(db),
+                              ._recurringPatternsRefsTable(db),
                           managerFromTypedResult: (p0) =>
                               $$CategoriesTableReferences(
                                 db,
                                 table,
                                 p0,
-                              ).transactionsRefs,
+                              ).recurringPatternsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
-                                (e) => e.categoryId == item.id,
+                                (e) => e.templateCategoryId == item.id,
                               ),
                           typedResults: items,
                         ),
@@ -3721,7 +5710,11 @@ typedef $$CategoriesTableProcessedTableManager =
       $$CategoriesTableUpdateCompanionBuilder,
       (Category, $$CategoriesTableReferences),
       Category,
-      PrefetchHooks Function({bool parentId, bool transactionsRefs})
+      PrefetchHooks Function({
+        bool parentId,
+        bool linkedAccountId,
+        bool recurringPatternsRefs,
+      })
     >;
 typedef $$TagsTableCreateCompanionBuilder =
     TagsCompanion Function({
@@ -3998,90 +5991,47 @@ typedef $$TransactionsTableCreateCompanionBuilder =
     TransactionsCompanion Function({
       Value<int> id,
       required DateTime transactionDate,
-      required double amount,
       required TransactionType type,
-      Value<String?> description,
-      Value<int?> sourceAccountId,
-      Value<int?> destinationAccountId,
-      Value<int?> categoryId,
+      Value<String?> userNote,
+      Value<String?> externalReference,
+      Value<bool> isVoid,
       Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
     TransactionsCompanion Function({
       Value<int> id,
       Value<DateTime> transactionDate,
-      Value<double> amount,
       Value<TransactionType> type,
-      Value<String?> description,
-      Value<int?> sourceAccountId,
-      Value<int?> destinationAccountId,
-      Value<int?> categoryId,
+      Value<String?> userNote,
+      Value<String?> externalReference,
+      Value<bool> isVoid,
       Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
     });
 
 final class $$TransactionsTableReferences
     extends BaseReferences<_$AppDatabase, $TransactionsTable, Transaction> {
   $$TransactionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $AccountsTable _sourceAccountIdTable(_$AppDatabase db) =>
-      db.accounts.createAlias(
-        $_aliasNameGenerator(db.transactions.sourceAccountId, db.accounts.id),
-      );
+  static MultiTypedResultKey<$LedgerEntriesTable, List<LedgerEntry>>
+  _ledgerEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ledgerEntries,
+    aliasName: $_aliasNameGenerator(
+      db.transactions.id,
+      db.ledgerEntries.transactionId,
+    ),
+  );
 
-  $$AccountsTableProcessedTableManager? get sourceAccountId {
-    final $_column = $_itemColumn<int>('source_account_id');
-    if ($_column == null) return null;
-    final manager = $$AccountsTableTableManager(
+  $$LedgerEntriesTableProcessedTableManager get ledgerEntriesRefs {
+    final manager = $$LedgerEntriesTableTableManager(
       $_db,
-      $_db.accounts,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_sourceAccountIdTable($_db));
-    if (item == null) return manager;
+      $_db.ledgerEntries,
+    ).filter((f) => f.transactionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ledgerEntriesRefsTable($_db));
     return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $AccountsTable _destinationAccountIdTable(_$AppDatabase db) =>
-      db.accounts.createAlias(
-        $_aliasNameGenerator(
-          db.transactions.destinationAccountId,
-          db.accounts.id,
-        ),
-      );
-
-  $$AccountsTableProcessedTableManager? get destinationAccountId {
-    final $_column = $_itemColumn<int>('destination_account_id');
-    if ($_column == null) return null;
-    final manager = $$AccountsTableTableManager(
-      $_db,
-      $_db.accounts,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(
-      _destinationAccountIdTable($_db),
-    );
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-        $_aliasNameGenerator(db.transactions.categoryId, db.categories.id),
-      );
-
-  $$CategoriesTableProcessedTableManager? get categoryId {
-    final $_column = $_itemColumn<int>('category_id');
-    if ($_column == null) return null;
-    final manager = $$CategoriesTableTableManager(
-      $_db,
-      $_db.categories,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_categoryIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
+      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 
@@ -4128,19 +6078,24 @@ class $$TransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnWithTypeConverterFilters<TransactionType, TransactionType, String>
   get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
-  ColumnFilters<String> get description => $composableBuilder(
-    column: $table.description,
+  ColumnFilters<String> get userNote => $composableBuilder(
+    column: $table.userNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get externalReference => $composableBuilder(
+    column: $table.externalReference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isVoid => $composableBuilder(
+    column: $table.isVoid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4149,73 +6104,34 @@ class $$TransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$AccountsTableFilterComposer get sourceAccountId {
-    final $$AccountsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.sourceAccountId,
-      referencedTable: $db.accounts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AccountsTableFilterComposer(
-            $db: $db,
-            $table: $db.accounts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  $$AccountsTableFilterComposer get destinationAccountId {
-    final $$AccountsTableFilterComposer composer = $composerBuilder(
+  Expression<bool> ledgerEntriesRefs(
+    Expression<bool> Function($$LedgerEntriesTableFilterComposer f) f,
+  ) {
+    final $$LedgerEntriesTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.destinationAccountId,
-      referencedTable: $db.accounts,
-      getReferencedColumn: (t) => t.id,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ledgerEntries,
+      getReferencedColumn: (t) => t.transactionId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$AccountsTableFilterComposer(
+          }) => $$LedgerEntriesTableFilterComposer(
             $db: $db,
-            $table: $db.accounts,
+            $table: $db.ledgerEntries,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
           ),
     );
-    return composer;
-  }
-
-  $$CategoriesTableFilterComposer get categoryId {
-    final $$CategoriesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.categoryId,
-      referencedTable: $db.categories,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CategoriesTableFilterComposer(
-            $db: $db,
-            $table: $db.categories,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
+    return f(composer);
   }
 
   Expression<bool> transactionTagsRefs(
@@ -4263,18 +6179,23 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get type => $composableBuilder(
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get description => $composableBuilder(
-    column: $table.description,
+  ColumnOrderings<String> get userNote => $composableBuilder(
+    column: $table.userNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get externalReference => $composableBuilder(
+    column: $table.externalReference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isVoid => $composableBuilder(
+    column: $table.isVoid,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4283,74 +6204,10 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$AccountsTableOrderingComposer get sourceAccountId {
-    final $$AccountsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.sourceAccountId,
-      referencedTable: $db.accounts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AccountsTableOrderingComposer(
-            $db: $db,
-            $table: $db.accounts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$AccountsTableOrderingComposer get destinationAccountId {
-    final $$AccountsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.destinationAccountId,
-      referencedTable: $db.accounts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AccountsTableOrderingComposer(
-            $db: $db,
-            $table: $db.accounts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$CategoriesTableOrderingComposer get categoryId {
-    final $$CategoriesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.categoryId,
-      referencedTable: $db.categories,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CategoriesTableOrderingComposer(
-            $db: $db,
-            $table: $db.categories,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -4370,87 +6227,49 @@ class $$TransactionsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
   GeneratedColumnWithTypeConverter<TransactionType, String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
-  GeneratedColumn<String> get description => $composableBuilder(
-    column: $table.description,
+  GeneratedColumn<String> get userNote =>
+      $composableBuilder(column: $table.userNote, builder: (column) => column);
+
+  GeneratedColumn<String> get externalReference => $composableBuilder(
+    column: $table.externalReference,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isVoid =>
+      $composableBuilder(column: $table.isVoid, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  $$AccountsTableAnnotationComposer get sourceAccountId {
-    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.sourceAccountId,
-      referencedTable: $db.accounts,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$AccountsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.accounts,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  $$AccountsTableAnnotationComposer get destinationAccountId {
-    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+  Expression<T> ledgerEntriesRefs<T extends Object>(
+    Expression<T> Function($$LedgerEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$LedgerEntriesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.destinationAccountId,
-      referencedTable: $db.accounts,
-      getReferencedColumn: (t) => t.id,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ledgerEntries,
+      getReferencedColumn: (t) => t.transactionId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$AccountsTableAnnotationComposer(
+          }) => $$LedgerEntriesTableAnnotationComposer(
             $db: $db,
-            $table: $db.accounts,
+            $table: $db.ledgerEntries,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
                 $removeJoinBuilderFromRootComposer,
           ),
     );
-    return composer;
-  }
-
-  $$CategoriesTableAnnotationComposer get categoryId {
-    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.categoryId,
-      referencedTable: $db.categories,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CategoriesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.categories,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
+    return f(composer);
   }
 
   Expression<T> transactionTagsRefs<T extends Object>(
@@ -4493,9 +6312,7 @@ class $$TransactionsTableTableManager
           (Transaction, $$TransactionsTableReferences),
           Transaction,
           PrefetchHooks Function({
-            bool sourceAccountId,
-            bool destinationAccountId,
-            bool categoryId,
+            bool ledgerEntriesRefs,
             bool transactionTagsRefs,
           })
         > {
@@ -4514,45 +6331,41 @@ class $$TransactionsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<DateTime> transactionDate = const Value.absent(),
-                Value<double> amount = const Value.absent(),
                 Value<TransactionType> type = const Value.absent(),
-                Value<String?> description = const Value.absent(),
-                Value<int?> sourceAccountId = const Value.absent(),
-                Value<int?> destinationAccountId = const Value.absent(),
-                Value<int?> categoryId = const Value.absent(),
+                Value<String?> userNote = const Value.absent(),
+                Value<String?> externalReference = const Value.absent(),
+                Value<bool> isVoid = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
                 transactionDate: transactionDate,
-                amount: amount,
                 type: type,
-                description: description,
-                sourceAccountId: sourceAccountId,
-                destinationAccountId: destinationAccountId,
-                categoryId: categoryId,
+                userNote: userNote,
+                externalReference: externalReference,
+                isVoid: isVoid,
                 createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required DateTime transactionDate,
-                required double amount,
                 required TransactionType type,
-                Value<String?> description = const Value.absent(),
-                Value<int?> sourceAccountId = const Value.absent(),
-                Value<int?> destinationAccountId = const Value.absent(),
-                Value<int?> categoryId = const Value.absent(),
+                Value<String?> userNote = const Value.absent(),
+                Value<String?> externalReference = const Value.absent(),
+                Value<bool> isVoid = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
                 transactionDate: transactionDate,
-                amount: amount,
                 type: type,
-                description: description,
-                sourceAccountId: sourceAccountId,
-                destinationAccountId: destinationAccountId,
-                categoryId: categoryId,
+                userNote: userNote,
+                externalReference: externalReference,
+                isVoid: isVoid,
                 createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4563,83 +6376,37 @@ class $$TransactionsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({
-                sourceAccountId = false,
-                destinationAccountId = false,
-                categoryId = false,
-                transactionTagsRefs = false,
-              }) {
+              ({ledgerEntriesRefs = false, transactionTagsRefs = false}) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
+                    if (ledgerEntriesRefs) db.ledgerEntries,
                     if (transactionTagsRefs) db.transactionTags,
                   ],
-                  addJoins:
-                      <
-                        T extends TableManagerState<
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic
-                        >
-                      >(state) {
-                        if (sourceAccountId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.sourceAccountId,
-                                    referencedTable:
-                                        $$TransactionsTableReferences
-                                            ._sourceAccountIdTable(db),
-                                    referencedColumn:
-                                        $$TransactionsTableReferences
-                                            ._sourceAccountIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
-                        }
-                        if (destinationAccountId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.destinationAccountId,
-                                    referencedTable:
-                                        $$TransactionsTableReferences
-                                            ._destinationAccountIdTable(db),
-                                    referencedColumn:
-                                        $$TransactionsTableReferences
-                                            ._destinationAccountIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
-                        }
-                        if (categoryId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.categoryId,
-                                    referencedTable:
-                                        $$TransactionsTableReferences
-                                            ._categoryIdTable(db),
-                                    referencedColumn:
-                                        $$TransactionsTableReferences
-                                            ._categoryIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
-                        }
-
-                        return state;
-                      },
+                  addJoins: null,
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (ledgerEntriesRefs)
+                        await $_getPrefetchedData<
+                          Transaction,
+                          $TransactionsTable,
+                          LedgerEntry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TransactionsTableReferences
+                              ._ledgerEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TransactionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).ledgerEntriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.transactionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (transactionTagsRefs)
                         await $_getPrefetchedData<
                           Transaction,
@@ -4681,12 +6448,435 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableUpdateCompanionBuilder,
       (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function({
-        bool sourceAccountId,
-        bool destinationAccountId,
-        bool categoryId,
-        bool transactionTagsRefs,
-      })
+      PrefetchHooks Function({bool ledgerEntriesRefs, bool transactionTagsRefs})
+    >;
+typedef $$LedgerEntriesTableCreateCompanionBuilder =
+    LedgerEntriesCompanion Function({
+      Value<int> id,
+      required int transactionId,
+      required int accountId,
+      required double amount,
+      required LedgerSide side,
+      Value<DateTime> createdAt,
+    });
+typedef $$LedgerEntriesTableUpdateCompanionBuilder =
+    LedgerEntriesCompanion Function({
+      Value<int> id,
+      Value<int> transactionId,
+      Value<int> accountId,
+      Value<double> amount,
+      Value<LedgerSide> side,
+      Value<DateTime> createdAt,
+    });
+
+final class $$LedgerEntriesTableReferences
+    extends BaseReferences<_$AppDatabase, $LedgerEntriesTable, LedgerEntry> {
+  $$LedgerEntriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TransactionsTable _transactionIdTable(_$AppDatabase db) =>
+      db.transactions.createAlias(
+        $_aliasNameGenerator(
+          db.ledgerEntries.transactionId,
+          db.transactions.id,
+        ),
+      );
+
+  $$TransactionsTableProcessedTableManager get transactionId {
+    final $_column = $_itemColumn<int>('transaction_id')!;
+
+    final manager = $$TransactionsTableTableManager(
+      $_db,
+      $_db.transactions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_transactionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $AccountsTable _accountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias(
+        $_aliasNameGenerator(db.ledgerEntries.accountId, db.accounts.id),
+      );
+
+  $$AccountsTableProcessedTableManager get accountId {
+    final $_column = $_itemColumn<int>('account_id')!;
+
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LedgerEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $LedgerEntriesTable> {
+  $$LedgerEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LedgerSide, LedgerSide, String> get side =>
+      $composableBuilder(
+        column: $table.side,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TransactionsTableFilterComposer get transactionId {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LedgerEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LedgerEntriesTable> {
+  $$LedgerEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get side => $composableBuilder(
+    column: $table.side,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TransactionsTableOrderingComposer get transactionId {
+    final $$TransactionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LedgerEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LedgerEntriesTable> {
+  $$LedgerEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LedgerSide, String> get side =>
+      $composableBuilder(column: $table.side, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$TransactionsTableAnnotationComposer get transactionId {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LedgerEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LedgerEntriesTable,
+          LedgerEntry,
+          $$LedgerEntriesTableFilterComposer,
+          $$LedgerEntriesTableOrderingComposer,
+          $$LedgerEntriesTableAnnotationComposer,
+          $$LedgerEntriesTableCreateCompanionBuilder,
+          $$LedgerEntriesTableUpdateCompanionBuilder,
+          (LedgerEntry, $$LedgerEntriesTableReferences),
+          LedgerEntry,
+          PrefetchHooks Function({bool transactionId, bool accountId})
+        > {
+  $$LedgerEntriesTableTableManager(_$AppDatabase db, $LedgerEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LedgerEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LedgerEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LedgerEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> transactionId = const Value.absent(),
+                Value<int> accountId = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<LedgerSide> side = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => LedgerEntriesCompanion(
+                id: id,
+                transactionId: transactionId,
+                accountId: accountId,
+                amount: amount,
+                side: side,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int transactionId,
+                required int accountId,
+                required double amount,
+                required LedgerSide side,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => LedgerEntriesCompanion.insert(
+                id: id,
+                transactionId: transactionId,
+                accountId: accountId,
+                amount: amount,
+                side: side,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$LedgerEntriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({transactionId = false, accountId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (transactionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.transactionId,
+                                referencedTable: $$LedgerEntriesTableReferences
+                                    ._transactionIdTable(db),
+                                referencedColumn: $$LedgerEntriesTableReferences
+                                    ._transactionIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (accountId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.accountId,
+                                referencedTable: $$LedgerEntriesTableReferences
+                                    ._accountIdTable(db),
+                                referencedColumn: $$LedgerEntriesTableReferences
+                                    ._accountIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LedgerEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LedgerEntriesTable,
+      LedgerEntry,
+      $$LedgerEntriesTableFilterComposer,
+      $$LedgerEntriesTableOrderingComposer,
+      $$LedgerEntriesTableAnnotationComposer,
+      $$LedgerEntriesTableCreateCompanionBuilder,
+      $$LedgerEntriesTableUpdateCompanionBuilder,
+      (LedgerEntry, $$LedgerEntriesTableReferences),
+      LedgerEntry,
+      PrefetchHooks Function({bool transactionId, bool accountId})
     >;
 typedef $$TransactionTagsTableCreateCompanionBuilder =
     TransactionTagsCompanion Function({
@@ -5059,8 +7249,13 @@ typedef $$RecurringPatternsTableCreateCompanionBuilder =
       required DateTime startDate,
       Value<DateTime?> endDate,
       required DateTime nextRunDate,
-      Value<RecurringType> type,
-      required String templateData,
+      Value<RecurringType> automationType,
+      required TransactionType templateTransactionType,
+      required double templateAmount,
+      required int templateAccountId,
+      Value<int?> templateCategoryId,
+      Value<int?> templateSecondaryAccountId,
+      Value<String?> templateNote,
       Value<bool> isDeleted,
     });
 typedef $$RecurringPatternsTableUpdateCompanionBuilder =
@@ -5071,10 +7266,97 @@ typedef $$RecurringPatternsTableUpdateCompanionBuilder =
       Value<DateTime> startDate,
       Value<DateTime?> endDate,
       Value<DateTime> nextRunDate,
-      Value<RecurringType> type,
-      Value<String> templateData,
+      Value<RecurringType> automationType,
+      Value<TransactionType> templateTransactionType,
+      Value<double> templateAmount,
+      Value<int> templateAccountId,
+      Value<int?> templateCategoryId,
+      Value<int?> templateSecondaryAccountId,
+      Value<String?> templateNote,
       Value<bool> isDeleted,
     });
+
+final class $$RecurringPatternsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $RecurringPatternsTable,
+          RecurringPattern
+        > {
+  $$RecurringPatternsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AccountsTable _templateAccountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias(
+        $_aliasNameGenerator(
+          db.recurringPatterns.templateAccountId,
+          db.accounts.id,
+        ),
+      );
+
+  $$AccountsTableProcessedTableManager get templateAccountId {
+    final $_column = $_itemColumn<int>('template_account_id')!;
+
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_templateAccountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $CategoriesTable _templateCategoryIdTable(_$AppDatabase db) =>
+      db.categories.createAlias(
+        $_aliasNameGenerator(
+          db.recurringPatterns.templateCategoryId,
+          db.categories.id,
+        ),
+      );
+
+  $$CategoriesTableProcessedTableManager? get templateCategoryId {
+    final $_column = $_itemColumn<int>('template_category_id');
+    if ($_column == null) return null;
+    final manager = $$CategoriesTableTableManager(
+      $_db,
+      $_db.categories,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_templateCategoryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $AccountsTable _templateSecondaryAccountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias(
+        $_aliasNameGenerator(
+          db.recurringPatterns.templateSecondaryAccountId,
+          db.accounts.id,
+        ),
+      );
+
+  $$AccountsTableProcessedTableManager? get templateSecondaryAccountId {
+    final $_column = $_itemColumn<int>('template_secondary_account_id');
+    if ($_column == null) return null;
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(
+      _templateSecondaryAccountIdTable($_db),
+    );
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$RecurringPatternsTableFilterComposer
     extends Composer<_$AppDatabase, $RecurringPatternsTable> {
@@ -5117,13 +7399,24 @@ class $$RecurringPatternsTableFilterComposer
   );
 
   ColumnWithTypeConverterFilters<RecurringType, RecurringType, String>
-  get type => $composableBuilder(
-    column: $table.type,
+  get automationType => $composableBuilder(
+    column: $table.automationType,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
-  ColumnFilters<String> get templateData => $composableBuilder(
-    column: $table.templateData,
+  ColumnWithTypeConverterFilters<TransactionType, TransactionType, String>
+  get templateTransactionType => $composableBuilder(
+    column: $table.templateTransactionType,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<double> get templateAmount => $composableBuilder(
+    column: $table.templateAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get templateNote => $composableBuilder(
+    column: $table.templateNote,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5131,6 +7424,75 @@ class $$RecurringPatternsTableFilterComposer
     column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$AccountsTableFilterComposer get templateAccountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CategoriesTableFilterComposer get templateCategoryId {
+    final $$CategoriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateCategoryId,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableFilterComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableFilterComposer get templateSecondaryAccountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateSecondaryAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$RecurringPatternsTableOrderingComposer
@@ -5172,13 +7534,23 @@ class $$RecurringPatternsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get type => $composableBuilder(
-    column: $table.type,
+  ColumnOrderings<String> get automationType => $composableBuilder(
+    column: $table.automationType,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get templateData => $composableBuilder(
-    column: $table.templateData,
+  ColumnOrderings<String> get templateTransactionType => $composableBuilder(
+    column: $table.templateTransactionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get templateAmount => $composableBuilder(
+    column: $table.templateAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get templateNote => $composableBuilder(
+    column: $table.templateNote,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5186,6 +7558,75 @@ class $$RecurringPatternsTableOrderingComposer
     column: $table.isDeleted,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$AccountsTableOrderingComposer get templateAccountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CategoriesTableOrderingComposer get templateCategoryId {
+    final $$CategoriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateCategoryId,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableOrderingComposer get templateSecondaryAccountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateSecondaryAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$RecurringPatternsTableAnnotationComposer
@@ -5217,16 +7658,99 @@ class $$RecurringPatternsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumnWithTypeConverter<RecurringType, String> get type =>
-      $composableBuilder(column: $table.type, builder: (column) => column);
+  GeneratedColumnWithTypeConverter<RecurringType, String> get automationType =>
+      $composableBuilder(
+        column: $table.automationType,
+        builder: (column) => column,
+      );
 
-  GeneratedColumn<String> get templateData => $composableBuilder(
-    column: $table.templateData,
+  GeneratedColumnWithTypeConverter<TransactionType, String>
+  get templateTransactionType => $composableBuilder(
+    column: $table.templateTransactionType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get templateAmount => $composableBuilder(
+    column: $table.templateAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get templateNote => $composableBuilder(
+    column: $table.templateNote,
     builder: (column) => column,
   );
 
   GeneratedColumn<bool> get isDeleted =>
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
+  $$AccountsTableAnnotationComposer get templateAccountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CategoriesTableAnnotationComposer get templateCategoryId {
+    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateCategoryId,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableAnnotationComposer get templateSecondaryAccountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.templateSecondaryAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$RecurringPatternsTableTableManager
@@ -5240,16 +7764,13 @@ class $$RecurringPatternsTableTableManager
           $$RecurringPatternsTableAnnotationComposer,
           $$RecurringPatternsTableCreateCompanionBuilder,
           $$RecurringPatternsTableUpdateCompanionBuilder,
-          (
-            RecurringPattern,
-            BaseReferences<
-              _$AppDatabase,
-              $RecurringPatternsTable,
-              RecurringPattern
-            >,
-          ),
+          (RecurringPattern, $$RecurringPatternsTableReferences),
           RecurringPattern,
-          PrefetchHooks Function()
+          PrefetchHooks Function({
+            bool templateAccountId,
+            bool templateCategoryId,
+            bool templateSecondaryAccountId,
+          })
         > {
   $$RecurringPatternsTableTableManager(
     _$AppDatabase db,
@@ -5275,8 +7796,14 @@ class $$RecurringPatternsTableTableManager
                 Value<DateTime> startDate = const Value.absent(),
                 Value<DateTime?> endDate = const Value.absent(),
                 Value<DateTime> nextRunDate = const Value.absent(),
-                Value<RecurringType> type = const Value.absent(),
-                Value<String> templateData = const Value.absent(),
+                Value<RecurringType> automationType = const Value.absent(),
+                Value<TransactionType> templateTransactionType =
+                    const Value.absent(),
+                Value<double> templateAmount = const Value.absent(),
+                Value<int> templateAccountId = const Value.absent(),
+                Value<int?> templateCategoryId = const Value.absent(),
+                Value<int?> templateSecondaryAccountId = const Value.absent(),
+                Value<String?> templateNote = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
               }) => RecurringPatternsCompanion(
                 id: id,
@@ -5285,8 +7812,13 @@ class $$RecurringPatternsTableTableManager
                 startDate: startDate,
                 endDate: endDate,
                 nextRunDate: nextRunDate,
-                type: type,
-                templateData: templateData,
+                automationType: automationType,
+                templateTransactionType: templateTransactionType,
+                templateAmount: templateAmount,
+                templateAccountId: templateAccountId,
+                templateCategoryId: templateCategoryId,
+                templateSecondaryAccountId: templateSecondaryAccountId,
+                templateNote: templateNote,
                 isDeleted: isDeleted,
               ),
           createCompanionCallback:
@@ -5297,8 +7829,13 @@ class $$RecurringPatternsTableTableManager
                 required DateTime startDate,
                 Value<DateTime?> endDate = const Value.absent(),
                 required DateTime nextRunDate,
-                Value<RecurringType> type = const Value.absent(),
-                required String templateData,
+                Value<RecurringType> automationType = const Value.absent(),
+                required TransactionType templateTransactionType,
+                required double templateAmount,
+                required int templateAccountId,
+                Value<int?> templateCategoryId = const Value.absent(),
+                Value<int?> templateSecondaryAccountId = const Value.absent(),
+                Value<String?> templateNote = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
               }) => RecurringPatternsCompanion.insert(
                 id: id,
@@ -5307,14 +7844,106 @@ class $$RecurringPatternsTableTableManager
                 startDate: startDate,
                 endDate: endDate,
                 nextRunDate: nextRunDate,
-                type: type,
-                templateData: templateData,
+                automationType: automationType,
+                templateTransactionType: templateTransactionType,
+                templateAmount: templateAmount,
+                templateAccountId: templateAccountId,
+                templateCategoryId: templateCategoryId,
+                templateSecondaryAccountId: templateSecondaryAccountId,
+                templateNote: templateNote,
                 isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RecurringPatternsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback:
+              ({
+                templateAccountId = false,
+                templateCategoryId = false,
+                templateSecondaryAccountId = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (templateAccountId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.templateAccountId,
+                                    referencedTable:
+                                        $$RecurringPatternsTableReferences
+                                            ._templateAccountIdTable(db),
+                                    referencedColumn:
+                                        $$RecurringPatternsTableReferences
+                                            ._templateAccountIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (templateCategoryId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.templateCategoryId,
+                                    referencedTable:
+                                        $$RecurringPatternsTableReferences
+                                            ._templateCategoryIdTable(db),
+                                    referencedColumn:
+                                        $$RecurringPatternsTableReferences
+                                            ._templateCategoryIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (templateSecondaryAccountId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn:
+                                        table.templateSecondaryAccountId,
+                                    referencedTable:
+                                        $$RecurringPatternsTableReferences
+                                            ._templateSecondaryAccountIdTable(
+                                              db,
+                                            ),
+                                    referencedColumn:
+                                        $$RecurringPatternsTableReferences
+                                            ._templateSecondaryAccountIdTable(
+                                              db,
+                                            )
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
         ),
       );
 }
@@ -5329,16 +7958,13 @@ typedef $$RecurringPatternsTableProcessedTableManager =
       $$RecurringPatternsTableAnnotationComposer,
       $$RecurringPatternsTableCreateCompanionBuilder,
       $$RecurringPatternsTableUpdateCompanionBuilder,
-      (
-        RecurringPattern,
-        BaseReferences<
-          _$AppDatabase,
-          $RecurringPatternsTable,
-          RecurringPattern
-        >,
-      ),
+      (RecurringPattern, $$RecurringPatternsTableReferences),
       RecurringPattern,
-      PrefetchHooks Function()
+      PrefetchHooks Function({
+        bool templateAccountId,
+        bool templateCategoryId,
+        bool templateSecondaryAccountId,
+      })
     >;
 
 class $AppDatabaseManager {
@@ -5351,6 +7977,8 @@ class $AppDatabaseManager {
   $$TagsTableTableManager get tags => $$TagsTableTableManager(_db, _db.tags);
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
+  $$LedgerEntriesTableTableManager get ledgerEntries =>
+      $$LedgerEntriesTableTableManager(_db, _db.ledgerEntries);
   $$TransactionTagsTableTableManager get transactionTags =>
       $$TransactionTagsTableTableManager(_db, _db.transactionTags);
   $$RecurringPatternsTableTableManager get recurringPatterns =>
