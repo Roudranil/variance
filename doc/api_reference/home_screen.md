@@ -14,6 +14,7 @@
 
 - **_currentIndex**: `int`
 - **_screens**: `List<Widget>`
+- **_labels**: `List<String>`
 
 
 ---

@@ -1,55 +1,120 @@
-/// **Enums for Type Safety**
-library;
+/// The fundamental accounting nature of an account.
+///
+/// Determines whether debits increase or decrease the account balance according
+/// to double-entry bookkeeping rules.
+enum AccountNature {
+  /// Debit-increase accounts (cash, savings, wallet).
+  ///
+  /// Balance = sum(debits) - sum(credits).
+  asset,
 
-/// Represents the nature of an account.
+  /// Credit-increase accounts (credit cards, loans).
+  ///
+  /// Balance = sum(credits) - sum(debits).
+  liability,
+
+  /// Credit-increase accounts (opening balances, retained earnings).
+  ///
+  /// Balance = sum(credits) - sum(debits).
+  equity,
+
+  /// Credit-increase accounts (salary, rent income).
+  ///
+  /// Balance = sum(credits) - sum(debits).
+  income,
+
+  /// Debit-increase accounts (food, transport categories).
+  ///
+  /// Balance = sum(debits) - sum(credits).
+  expense,
+}
+
+/// The user-facing type of an account for UI display and grouping.
+///
+/// This is separate from [AccountNature] which determines accounting behavior.
+/// An account's [AccountType] determines which UI group it appears in and what
+/// metadata fields are relevant.
 enum AccountType {
-  /// Represents physical cash in hand or wallet.
+  /// Physical cash in hand or wallet.
   cash,
 
-  /// Represents a savings account in a bank.
+  /// Savings account in a bank.
   savings,
 
-  /// Represents a standard bank account (checking/current).
+  /// Standard bank account (checking/current).
   bankAccount,
 
-  /// Represents a credit card account.
+  /// Credit card account.
   creditCard,
 
-  /// Represents a loan or debt account.
+  /// Loan or debt account.
   loan,
 
-  /// Represents an investment account (e.g., stocks, mutual funds).
+  /// Investment account (e.g., stocks, mutual funds).
   investment,
 
-  /// Represents an insurance policy account.
+  /// Insurance policy account.
   insurance,
+
+  /// Digital wallet (e.g., Paytm, GPay).
+  wallet,
 }
 
-/// Represents the direction flow for a category.
+/// The side of a ledger entry in double-entry bookkeeping.
+///
+/// Every transaction creates at least two ledger entries, and the sum of all
+/// debit amounts must equal the sum of all credit amounts.
+enum LedgerSide {
+  /// Left side of the accounting equation.
+  ///
+  /// Increases asset and expense accounts; decreases liability, equity, and
+  /// income accounts.
+  debit,
+
+  /// Right side of the accounting equation.
+  ///
+  /// Increases liability, equity, and income accounts; decreases asset and
+  /// expense accounts.
+  credit,
+}
+
+/// The direction of money flow for a category.
+///
+/// Used to filter categories in the UI based on transaction type.
 enum CategoryKind {
-  /// Represents an expense category.
+  /// Represents an expense category (money leaving).
   expense,
 
-  /// Represents an income category.
+  /// Represents an income category (money entering).
   income,
 }
 
-/// Represents the type of a transaction.
+/// The type of a financial transaction.
+///
+/// Determines the structure of ledger entries created for the transaction.
 enum TransactionType {
-  /// Money leaving an account.
+  /// Money leaving an account to an expense category.
+  ///
+  /// Creates: Debit expense account, Credit source account.
   expense,
 
-  /// Money entering an account.
+  /// Money entering an account from an income category.
+  ///
+  /// Creates: Debit destination account, Credit income account.
   income,
 
-  /// Money moving between two accounts.
+  /// Money moving between two user-visible accounts.
+  ///
+  /// Creates: Debit destination account, Credit source account.
   transfer,
 
-  /// Correction of account balance.
+  /// Correction of an account balance.
+  ///
+  /// Creates entries against the Opening Balances equity account.
   adjustment,
 }
 
-/// Represents the frequency for recurring patterns.
+/// The frequency for recurring transaction patterns.
 enum RecurringFrequency {
   /// Repeats every day.
   daily,
@@ -64,11 +129,11 @@ enum RecurringFrequency {
   yearly,
 }
 
-/// Represents the automation type for recurring patterns.
+/// The automation type for recurring transaction patterns.
 enum RecurringType {
-  /// Automatically generates the transaction.
+  /// Automatically generates the transaction on the scheduled date.
   automatic,
 
-  /// Reminds the user to create the transaction.
+  /// Sends a reminder to the user to manually create the transaction.
   manualReminder,
 }

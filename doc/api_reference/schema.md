@@ -4,10 +4,33 @@
 
 ### Description
 
-Classifies the nature of a transaction (Flow).
+Classifies the nature of a transaction (expense or income).
 
- Technically acts as Nominal Accounts in a strict ledger, but here treated as tagging.
+ In double-entry bookkeeping, each category is linked to a hidden nominal
+ account. When a user selects a category for a transaction, the system uses
+ the [linkedAccountId] to create the corresponding ledger entry.
+
  Supports infinite hierarchy via [parentId].
+
+### Dependencies
+
+- Table
+
+
+
+---
+
+## Overview for `LedgerEntries`
+
+### Description
+
+Immutable journal line items for double-entry bookkeeping.
+
+ Each transaction creates 2 or more ledger entries such that:
+ - sum(debits) = sum(credits) for the transaction.
+
+ Entries are never modified or deleted. To "undo" a transaction, the parent
+ [Transactions] record is marked as void.
 
 ### Dependencies
 
@@ -21,13 +44,14 @@ Classifies the nature of a transaction (Flow).
 
 ### Description
 
-Represents the physical or digital storage of money.
-
- This is the core entity for the Double Entry system.
+This includes user-visible accounts (cash, bank, credit cards) and hidden
+ system accounts (category-linked nominal accounts, equity accounts).
 
  Constraints:
- - [type] must be one of [AccountType] values.
- - [currencyCode] defaults to 'INR'.
+ - [nature] determines debit/credit behavior per accounting rules.
+ - [type] is nullable for system accounts (categories, equity).
+ - [isUserVisible] controls whether the account appears in the user-facing
+   account list.
 
 ### Dependencies
 
@@ -41,9 +65,10 @@ Represents the physical or digital storage of money.
 
 ### Description
 
-Represents the central ledger of the application.
+Represents the header of a financial event (immutable).
 
- Records money moving between accounts (Transfer) or in/out of an account (Income/Expense).
+ The actual money movement is recorded in [LedgerEntries]. A transaction is
+ never deleted; instead, it is marked as void via [isVoid].
 
 ### Dependencies
 
@@ -57,9 +82,10 @@ Represents the central ledger of the application.
 
 ### Description
 
-Defines cross-cutting labels for grouping transactions across categories.
+Cross-cutting labels for grouping transactions.
 
- Example: "Trip 2025" tag on Food, Flight, and Hotel transactions.
+ Example: Tag multiple transactions with "Hawaii Trip" to see the total trip
+ cost, regardless of whether they are Food, Travel, or Lodging expenses.
 
 ### Dependencies
 
@@ -73,9 +99,10 @@ Defines cross-cutting labels for grouping transactions across categories.
 
 ### Description
 
-Represents definitions for transactions that repeat over time.
+Definitions for transactions that repeat over time.
 
- Used by the generator engine to create actual [Transactions] entries.
+ The system checks [nextRunDate] and creates actual [Transactions] entries
+ based on the template fields when due.
 
 ### Dependencies
 
@@ -89,7 +116,7 @@ Represents definitions for transactions that repeat over time.
 
 ### Description
 
-Defines the Many-to-Many relationship between [Transactions] and [Tags].
+Many-to-many join between [Transactions] and [Tags].
 
 ### Dependencies
 
@@ -99,39 +126,13 @@ Defines the Many-to-Many relationship between [Transactions] and [Tags].
 
 ---
 
-## Method: `statementDay`
+## Method: `type`
 
 ### Description
 
-The day of the month (1-31) when the statement is generated.
+The user-facing type for UI grouping.
 
- Nullable: Only relevant for [type] == 'creditCard'.
-
-### Return Type
-`IntColumn`
-
-
-
----
-
-## Method: `transactionDate`
-
-### Description
-
-The actual date and time the transaction occurred.
-
-### Return Type
-`DateTimeColumn`
-
-
-
----
-
-## Method: `description`
-
-### Description
-
-The optional user-defined note.
+ Nullable for system accounts (category-linked accounts, equity accounts).
 
 ### Return Type
 `TextColumn`
@@ -140,14 +141,40 @@ The optional user-defined note.
 
 ---
 
-## Method: `sourceAccountId`
+## Method: `externalReference`
 
 ### Description
 
-The account money is coming FROM.
+External reference (e.g., SMS ID, bank reference number).
 
- Required for: 'expense', 'transfer'.
- Null for: 'income'.
+### Return Type
+`TextColumn`
+
+
+
+---
+
+## Method: `isVoid`
+
+### Description
+
+Soft-delete flag for immutable ledger.
+
+ True = voided transaction (hidden from UI, excluded from balance
+ calculations).
+
+### Return Type
+`BoolColumn`
+
+
+
+---
+
+## Method: `id`
+
+### Description
+
+Primary key.
 
 ### Return Type
 `IntColumn`
@@ -156,14 +183,76 @@ The account money is coming FROM.
 
 ---
 
-## Method: `categoryId`
+## Method: `createdAt`
 
 ### Description
 
-The classification category.
+Audit timestamp for record creation.
 
- Required for: 'expense', 'income'.
- Optional/Null for: 'transfer' (Transfers usually don't need categories).
+### Return Type
+`DateTimeColumn`
+
+
+
+---
+
+## Method: `side`
+
+### Description
+
+The side of the entry (DEBIT or CREDIT).
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
+## Method: `amount`
+
+### Description
+
+The amount (always stored as a positive number).
+
+### Return Type
+`RealColumn`
+
+
+
+---
+
+## Method: `accountId`
+
+### Description
+
+Foreign key to the account affected.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `transactionId`
+
+### Description
+
+Foreign key to the parent transaction.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `id`
+
+### Description
+
+Primary key.
 
 ### Return Type
 `IntColumn`
@@ -176,9 +265,9 @@ The classification category.
 
 ### Description
 
-The annual Interest Rate (percentage).
+Annual interest rate (as a percentage).
 
- Nullable: Only relevant for loans or savings accounts.
+ Applicable to loans and savings accounts.
 
 ### Return Type
 `RealColumn`
@@ -191,10 +280,25 @@ The annual Interest Rate (percentage).
 
 ### Description
 
-The primary Key. Auto-incrementing integer.
+Primary key. Auto-incrementing integer.
 
 ### Return Type
 `IntColumn`
+
+
+
+---
+
+## Method: `creditLimit`
+
+### Description
+
+Credit limit amount.
+
+ Applicable only to credit card accounts.
+
+### Return Type
+`RealColumn`
 
 
 
@@ -204,191 +308,9 @@ The primary Key. Auto-incrementing integer.
 
 ### Description
 
-The ISO 4217 Currency Code (e.g., 'INR', 'USD').
+ISO 4217 currency code.
 
  Defaults to 'INR'.
-
-### Return Type
-`TextColumn`
-
-
-
----
-
-## Method: `initialBalance`
-
-### Description
-
-The opening balance when the account was created/imported.
-
-### Return Type
-`RealColumn`
-
-
-
----
-
-## Method: `type`
-
-### Description
-
-The nature. of the account.
-
- Used for UI grouping and reporting logic (Net Worth calculation).
-
-### Return Type
-`TextColumn`
-
-
-
----
-
-## Method: `id`
-
-### Description
-
-
-
-### Return Type
-`IntColumn`
-
-
-
----
-
-## Method: `isDeleted`
-
-### Description
-
-The soft Delete flag.
-
- If true, the account is hidden from the UI but kept for history.
-
-### Return Type
-`BoolColumn`
-
-
-
----
-
-## Method: `paymentDueDay`
-
-### Description
-
-The day of the month (1-31) when the payment is due.
-
- Nullable: Only relevant for [type] == 'creditCard'.
-
-### Return Type
-`IntColumn`
-
-
-
----
-
-## Method: `currentBalance`
-
-### Description
-
-The current calculated balance.
-
- NOTE: This can be derived from [initialBalance] + Sum(Transactions).
- Optimization: We might cache this value here.
-
-### Return Type
-`RealColumn`
-
-
-
----
-
-## Method: `includeInTotals`
-
-### Description
-
-Determines if the balances in this account should be included in
- the overall net worth calculation.
-
-### Return Type
-`BoolColumn`
-
-
-
----
-
-## Method: `name`
-
-### Description
-
-The user-defined name for the account (e.g., "HDFC Bank", "Wallet").
-
-### Return Type
-`TextColumn`
-
-
-
----
-
-## Method: `destinationAccountId`
-
-### Description
-
-The account money is going TO.
-
- Required for: 'income', 'transfer'.
- Null for: 'expense'.
-
-### Return Type
-`IntColumn`
-
-
-
----
-
-## Method: `id`
-
-### Description
-
-
-
-### Return Type
-`IntColumn`
-
-
-
----
-
-## Method: `isDeleted`
-
-### Description
-
-Soft Delete flag.
-
-### Return Type
-`BoolColumn`
-
-
-
----
-
-## Method: `color`
-
-### Description
-
-
-
-### Return Type
-`IntColumn`
-
-
-
----
-
-## Method: `name`
-
-### Description
-
-
 
 ### Return Type
 `TextColumn`
@@ -401,10 +323,213 @@ Soft Delete flag.
 
 ### Description
 
-The audit timestamp.
+Audit timestamp for record creation.
 
 ### Return Type
 `DateTimeColumn`
+
+
+
+---
+
+## Method: `maturityDate`
+
+### Description
+
+Maturity date.
+
+ Applicable to fixed deposits and savings accounts.
+
+### Return Type
+`DateTimeColumn`
+
+
+
+---
+
+## Method: `createdAt`
+
+### Description
+
+Audit timestamp for record creation.
+
+### Return Type
+`DateTimeColumn`
+
+
+
+---
+
+## Method: `principal`
+
+### Description
+
+Original principal amount.
+
+ Applicable only to loan accounts.
+
+### Return Type
+`RealColumn`
+
+
+
+---
+
+## Method: `statementDay`
+
+### Description
+
+Statement generation day (1-31).
+
+ Applicable only to credit card accounts.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `isDeleted`
+
+### Description
+
+Soft delete flag.
+
+ If true, the account is hidden from the UI but kept for historical
+ integrity.
+
+### Return Type
+`BoolColumn`
+
+
+
+---
+
+## Method: `paymentDueDay`
+
+### Description
+
+Payment due day (1-31).
+
+ Applicable only to credit card accounts.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `updatedAt`
+
+### Description
+
+Audit timestamp for last update.
+
+### Return Type
+`DateTimeColumn`
+
+
+
+---
+
+## Method: `isUserVisible`
+
+### Description
+
+Whether this account is visible in the user-facing account list.
+
+ False for category-linked accounts and system equity accounts.
+
+### Return Type
+`BoolColumn`
+
+
+
+---
+
+## Method: `includeInTotals`
+
+### Description
+
+Whether to include this account in net worth calculations.
+
+ Defaults to true.
+
+### Return Type
+`BoolColumn`
+
+
+
+---
+
+## Method: `name`
+
+### Description
+
+The user-defined name for the account.
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
+## Method: `installmentAmount`
+
+### Description
+
+Monthly installment amount (EMI).
+
+ Applicable only to loan accounts.
+
+### Return Type
+`RealColumn`
+
+
+
+---
+
+## Method: `nature`
+
+### Description
+
+The fundamental accounting nature.
+
+ Determines whether debits increase or decrease the balance.
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
+## Method: `nextDueDate`
+
+### Description
+
+Next payment due date.
+
+ Applicable only to loan accounts.
+
+### Return Type
+`DateTimeColumn`
+
+
+
+---
+
+## Method: `type`
+
+### Description
+
+The type of transaction.
+
+### Return Type
+`TextColumn`
 
 
 
@@ -414,7 +539,7 @@ The audit timestamp.
 
 ### Description
 
-
+Primary key.
 
 ### Return Type
 `IntColumn`
@@ -423,13 +548,91 @@ The audit timestamp.
 
 ---
 
-## Method: `templateData`
+## Method: `isDeleted`
 
 ### Description
 
-The template data (amount, accounts, category) to copy when generating the real transaction.
+Soft delete flag.
 
- Stored as a JSON blob.
+### Return Type
+`BoolColumn`
+
+
+
+---
+
+## Method: `color`
+
+### Description
+
+UI color (ARGB integer).
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `name`
+
+### Description
+
+Display name.
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
+## Method: `userNote`
+
+### Description
+
+Optional user-defined note.
+
+### Return Type
+`TextColumn`
+
+
+
+---
+
+## Method: `templateAmount`
+
+### Description
+
+Amount to use when creating the transaction.
+
+### Return Type
+`RealColumn`
+
+
+
+---
+
+## Method: `id`
+
+### Description
+
+Primary key.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `automationType`
+
+### Description
+
+Automation type.
+
+ Defaults to 'automatic'.
 
 ### Return Type
 `TextColumn`
@@ -442,7 +645,7 @@ The template data (amount, accounts, category) to copy when generating the real 
 
 ### Description
 
-The date when this pattern starts active.
+When this pattern starts.
 
 ### Return Type
 `DateTimeColumn`
@@ -451,11 +654,26 @@ The date when this pattern starts active.
 
 ---
 
-## Method: `type`
+## Method: `linkedAccountId`
 
 ### Description
 
-The automation type.
+Foreign key to the hidden nominal account for DEB.
+
+ This account is created automatically when the category is created.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `templateTransactionType`
+
+### Description
+
+Transaction type for the generated transaction.
 
 ### Return Type
 `TextColumn`
@@ -464,14 +682,31 @@ The automation type.
 
 ---
 
-## Method: `name`
+## Method: `nextRunDate`
 
 ### Description
 
-The display name (e.g., "Food", "Salary").
+Pre-calculated next occurrence date.
+
+ Optimization field for efficient querying.
 
 ### Return Type
-`TextColumn`
+`DateTimeColumn`
+
+
+
+---
+
+## Method: `templateCategoryId`
+
+### Description
+
+Category for the transaction.
+
+ Required for expense/income. Null for transfers.
+
+### Return Type
+`IntColumn`
 
 
 
@@ -481,10 +716,39 @@ The display name (e.g., "Food", "Salary").
 
 ### Description
 
-Soft Delete flag.
+Soft delete flag.
 
 ### Return Type
 `BoolColumn`
+
+
+
+---
+
+## Method: `templateSecondaryAccountId`
+
+### Description
+
+Secondary account for transfers.
+
+ The destination account for transfer transactions. Null for
+ expense/income.
+
+### Return Type
+`IntColumn`
+
+
+
+---
+
+## Method: `templateNote`
+
+### Description
+
+Optional note for the generated transaction.
+
+### Return Type
+`TextColumn`
 
 
 
@@ -494,9 +758,9 @@ Soft Delete flag.
 
 ### Description
 
-The date when this pattern stops.
+When this pattern ends.
 
- If null, it repeats forever.
+ If null, repeats forever.
 
 ### Return Type
 `DateTimeColumn`
@@ -509,9 +773,9 @@ The date when this pattern stops.
 
 ### Description
 
-The multiplier for the frequency.
+Multiplier for the frequency.
 
- Example: frequency='weekly', interval=2 implies "Every 2 weeks".
+ Example: frequency = weekly, interval = 2 means "every 2 weeks".
 
 ### Return Type
 `IntColumn`
@@ -524,7 +788,7 @@ The multiplier for the frequency.
 
 ### Description
 
-The base frequency unit.
+Base frequency unit.
 
 ### Return Type
 `TextColumn`
@@ -533,14 +797,14 @@ The base frequency unit.
 
 ---
 
-## Method: `type`
+## Method: `updatedAt`
 
 ### Description
 
-The nature of the transaction.
+Audit timestamp for last update.
 
 ### Return Type
-`TextColumn`
+`DateTimeColumn`
 
 
 
@@ -550,7 +814,7 @@ The nature of the transaction.
 
 ### Description
 
-
+Foreign key to the transaction.
 
 ### Return Type
 `IntColumn`
@@ -563,7 +827,7 @@ The nature of the transaction.
 
 ### Description
 
-
+Foreign key to the tag.
 
 ### Return Type
 `IntColumn`
@@ -585,16 +849,14 @@ The nature of the transaction.
 
 ---
 
-## Method: `amount`
+## Method: `transactionDate`
 
 ### Description
 
-The absolute magnitude of the money flow.
-
- NOTE: Always stored as a positive number. Direction is determined by [type] and Accounts.
+The date and time the transaction occurred.
 
 ### Return Type
-`RealColumn`
+`DateTimeColumn`
 
 
 
@@ -617,10 +879,23 @@ The direction of flow this category represents.
 
 ### Description
 
-The primary Key.
+Primary key.
 
 ### Return Type
 `IntColumn`
+
+
+
+---
+
+## Method: `createdAt`
+
+### Description
+
+Audit timestamp for record creation.
+
+### Return Type
+`DateTimeColumn`
 
 
 
@@ -630,7 +905,7 @@ The primary Key.
 
 ### Description
 
-The icon identifier (stored as string codePoint or asset path).
+Icon identifier (codePoint or asset path).
 
 ### Return Type
 `TextColumn`
@@ -643,10 +918,23 @@ The icon identifier (stored as string codePoint or asset path).
 
 ### Description
 
-Soft Delete flag.
+Soft delete flag.
 
 ### Return Type
 `BoolColumn`
+
+
+
+---
+
+## Method: `updatedAt`
+
+### Description
+
+Audit timestamp for last update.
+
+### Return Type
+`DateTimeColumn`
 
 
 
@@ -656,7 +944,7 @@ Soft Delete flag.
 
 ### Description
 
-The UI Color (stored as ARGB integer).
+UI color (ARGB integer).
 
 ### Return Type
 `IntColumn`
@@ -669,9 +957,9 @@ The UI Color (stored as ARGB integer).
 
 ### Description
 
-The self-referencing Foreign Key to support sub-categories.
+Self-referencing foreign key for sub-categories.
 
- If null, this is a Top-Level Category.
+ If null, this is a top-level category.
 
 ### Return Type
 `IntColumn`
@@ -680,16 +968,31 @@ The self-referencing Foreign Key to support sub-categories.
 
 ---
 
-## Method: `nextRunDate`
+## Method: `name`
 
 ### Description
 
-The pre-calculated date of the next occurrence.
-
- Optimization field: The engine queries this to find what's due today.
+Display name (e.g., "Food", "Salary").
 
 ### Return Type
-`DateTimeColumn`
+`TextColumn`
+
+
+
+---
+
+## Method: `templateAccountId`
+
+### Description
+
+Primary account for the transaction.
+
+ For expense: the source account (money leaves).
+ For income: the destination account (money enters).
+ For transfer: the source account.
+
+### Return Type
+`IntColumn`
 
 
 

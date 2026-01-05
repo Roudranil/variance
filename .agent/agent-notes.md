@@ -39,15 +39,28 @@
 *   **Integration:** `MultiProvider` + `DynamicColorBuilder` in `main.dart`.
 *   **Verification:** Full suite of Unit Tests covering all Extensions, Providers, and Theme Definitions.
 
-### Database & Schema
-*   **Schema Design:** Fully defined using Drift. Tables: `Accounts`, `Categories`, `Transactions`, `Tags`, `RecurringPatterns`.
-*   **Type Safety:** Replaced raw strings with Dart Enums (`AccountType`, `CategoryKind`, `TransactionType`, `RecurringFrequency`, `RecurringType`).
-*   **Features Implemented:**
-    *   **Soft Deletes:** `isDeleted` boolean column added to key tables.
-    *   **One-way Data Flow:** `includeInTotals` flag for Accounts.
-    *   **Cascading Logic:** `TransactionRepository` handles complex updates by reverting old balances and applying new ones.
-    *   **Auto-Adjustment:** `AccountRepository` automatically creates `adjustment` transactions when the user manually edits a balance.
-    *   **Verification:** Comprehensive Unit Test suite covering CRUD, Double-Entry Logic, and Soft Deletes (100% Pass Rate).
+### Database & Schema (DEB Migration - 2026-01-06)
+*   **True Double-Entry Bookkeeping:** Migrated from hybrid source/destination pattern to proper ledger-based DEB.
+*   **Schema Design:** Tables: `Accounts`, `Categories`, `Transactions`, `LedgerEntries`, `Tags`, `TransactionTags`, `RecurringPatterns`.
+*   **New Enums:** `AccountNature` (asset/liability/equity/income/expense), `LedgerSide` (debit/credit), retained `AccountType` for UI grouping.
+*   **Key Changes:**
+    *   **Immutable Ledger:** Transactions are never deleted; voided via `isVoid` flag.
+    *   **LedgerEntries Table:** Each transaction creates 2+ entries where sum(debits) = sum(credits).
+    *   **Balance Computation:** Derived from ledger entries, not cached on accounts.
+    *   **Category Linking:** Each category has a `linkedAccountId` to a hidden nominal account.
+    *   **Opening Balances:** Equity account created automatically for initial balances.
+*   **Repository API:**
+    *   `createExpense()`, `createIncome()`, `createTransfer()`, `createAdjustment()`
+    *   `voidTransaction()` instead of delete
+    *   `editTransaction()` = void + recreate
+*   **IntegrityService (`lib/database/integrity.dart`):**
+    *   `checkTransactionBalance(txId)` - verify single transaction
+    *   `checkAllTransactionsBalance()` - find unbalanced transactions
+    *   `checkGlobalEquation()` - verify Assets = Liab + Equity + Net Income
+    *   `canSoftDeleteAccount(id)` - check zero balance before delete
+    *   **Usage:** App startup health check, Settings "Verify Data", unit tests, delete account flow
+    *   **NEVER** call on every transaction - expensive! Use `accountRepo.getAccountBalance()` for display.
+*   **Verification:** 32 unit tests passing.
 
 ## 4. User Rules & Guidelines
 *   **Persona:** Expert Android Mentor pair-programming with a Data Scientist.
@@ -67,13 +80,17 @@
 ## 5. Conventions & "Gotchas"
 *   **Enums in Drift:** We use `textEnum<T>()` in `schema.dart`. This maps to the Enum in Dart but Text in SQLite.
 *   **Testing Database:** ALWAYS use `AppDatabase.forTesting(NativeDatabase.memory())` in unit tests to ensure isolation.
-*   **Double Entry Enforcement:** NEVER manually update `currentBalance` in `Accounts` without a corresponding `Transaction` record (or use the `updateAccount` method which handles this).
+*   **DEB Invariant:** NEVER create a transaction manually. ALWAYS use `TransactionRepository` which creates balanced ledger entries.
+*   **Balance Computation:** NEVER assume balance is stored. ALWAYS call `AccountRepository.getAccountBalance()` which computes from ledger.
+*   **Void, Don't Delete:** NEVER delete transactions. Call `voidTransaction()` to mark as void.
+*   **Category Accounts:** Every category has a linked hidden account. ALWAYS use `CategoryRepository.createCategory()` which creates both.
 *   **Repository API:** ALWAYS encapsulate `Drift` objects (Companions) inside the Repository. Public methods should accept named parameters with strict types.
 *   **Lists:** `flutter_test` `testWidgets` is for Widgets. Use `test` for pure logic (even ChangeNotifier logic if no context is needed).
 
 ## 6. Current Status & Next Steps
-*   **Status:** Database Layer and UI Foundation are complete and verified.
+*   **Status:** Database Layer with true DEB and UI Foundation are complete and verified.
 *   **Immediate Needs:**
-    *   Build the Main Dashboard Shell (Bottom Nav, App Bar).
-    *   Connect UI to the Repository methods (Accounts List, Add Transaction).
-    *   Implement "Recurring Transaction" engine.
+    *   Connect UI to the new Repository methods (Accounts List, Add Transaction forms).
+    *   Implement "Recurring Transaction" engine to use new DEB template fields.
+    *   Update `doc/database.md` to reflect new schema.
+
