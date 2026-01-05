@@ -1,7 +1,6 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
 
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
-import 'package:flutter/material.dart';
 
 /// Defines the semantic colors used across the application.
 ///
