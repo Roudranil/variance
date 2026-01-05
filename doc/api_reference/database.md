@@ -4,9 +4,10 @@
 
 ### Description
 
-The main database class for the application.
+The main database class for the Variance application.
 
- Configures tables and provides access to the underlying SQLite database.
+ Configures all tables and provides access to the underlying SQLite database.
+ Uses Drift for type-safe database operations.
 
 ### Dependencies
 
@@ -17,13 +18,14 @@ The main database class for the application.
 #### Unnamed Constructor
 Creates a new instance of [AppDatabase].
 
- Initializes the database connection using the native platform implementation.
+ Initializes the database connection using the native platform
+ implementation.
 
 #### forTesting
 Creates a new instance of [AppDatabase] for testing purposes.
 
  Parameters:
- - [e]: The query executor to use (e.g., in-memory).
+ - [e]: The query executor to use (e.g., in-memory database).
 
 ##### Parameters
 
