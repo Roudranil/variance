@@ -33,43 +33,23 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: codenewroman_nf
+    # primary sans-serif font (variable)
+    - family: NunitoSans
       fonts:
-        - asset: fonts/CodeNewRomanNerdFont-Regular.otf
-        - asset: fonts/CodeNewRomanNerdFont-Italic.otf
+        - asset: fonts/nunito-sans/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf
+        - asset: fonts/nunito-sans/NunitoSans-Italic-VariableFont_YTLC,opsz,wdth,wght.ttf
           style: italic
-        - asset: fonts/CodeNewRomanNerdFont-Bold.otf
-          weight: 700
-    - family: victormono_nf
+
+    # cursive/handwriting font (variable)
+    - family: Caveat
       fonts:
-        - asset: fonts/VictorMonoNerdFont-Regular.ttf
-        - asset: fonts/VictorMonoNerdFont-Bold.ttf
-          weight: 700
-        - asset: fonts/VictorMonoNerdFont-Italic.ttf
-          style: italic
-        - asset: fonts/VictorMonoNerdFont-LightItalic.ttf
-          weight: 300
-          style: italic
-        - asset: fonts/VictorMonoNerdFont-MediumItalic.ttf
-          weight: 500
-          style: italic
-        - asset: fonts/VictorMonoNerdFont-SemiBoldItalic.ttf
-          weight: 600
-          style: italic
-        - asset: fonts/VictorMonoNerdFont-ThinItalic.ttf
-          weight: 100
-          style: italic
-    - family: lmsans
+        - asset: fonts/caveat-cursive/Caveat-VariableFont_wght.ttf
+
+    # serif font for headings (static)
+    - family: OldStandardTT
       fonts:
-        - asset: fonts/lmsans10-regular.otf
-        - asset: fonts/lmsans10-bold.otf
+        - asset: fonts/old-standard-tt-serif/OldStandardTT-Regular.ttf
+        - asset: fonts/old-standard-tt-serif/OldStandardTT-Bold.ttf
           weight: 700
-        - asset: fonts/lmsans10-oblique.otf
-          style: italic
-    - family: lmroman
-      fonts:
-        - asset: fonts/lmroman10-regular.otf
-        - asset: fonts/lmroman10-bold.otf
-          weight: 700
-        - asset: fonts/lmroman10-italic.otf
+        - asset: fonts/old-standard-tt-serif/OldStandardTT-Italic.ttf
           style: italic
