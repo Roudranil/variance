@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:variance/core/preferences/settings_provider.dart';
 import 'package:variance/features/accounts/screens/accounts_screen.dart';
 import 'package:variance/features/dashboard/screens/dashboard_screen.dart';
 import 'package:variance/features/home/screens/home_screen.dart';
@@ -7,8 +10,16 @@ import 'package:variance/features/settings/screens/settings_screen.dart';
 import 'package:variance/features/transactions/screens/transactions_screen.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   Widget createHomeScreen() {
-    return const MaterialApp(home: HomeScreen());
+    final settingsProvider = SettingsProvider();
+    return ChangeNotifierProvider<SettingsProvider>.value(
+      value: settingsProvider,
+      child: const MaterialApp(home: HomeScreen()),
+    );
   }
 
   testWidgets('HomeScreen displays TransactionsScreen by default', (
