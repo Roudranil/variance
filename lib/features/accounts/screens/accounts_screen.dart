@@ -9,6 +9,7 @@ class AccountsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
       body: const Center(child: Text('Accounts Screen')),
@@ -16,6 +17,8 @@ class AccountsScreen extends StatelessWidget {
         onPressed: () {
           // TODO: Implement Add Account
         },
+        foregroundColor: theme.colorScheme.onPrimary,
+        backgroundColor: theme.colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );
