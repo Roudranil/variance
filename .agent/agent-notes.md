@@ -86,10 +86,14 @@
 *   **Category Accounts:** Every category has a linked hidden account. ALWAYS use `CategoryRepository.createCategory()` which creates both.
 *   **Repository API:** ALWAYS encapsulate `Drift` objects (Companions) inside the Repository. Public methods should accept named parameters with strict types.
 *   **Lists:** `flutter_test` `testWidgets` is for Widgets. Use `test` for pure logic (even ChangeNotifier logic if no context is needed).
+*   **User Preferences:** Use `SettingsProvider` (not ThemeProvider). It persists to `shared_preferences`. Access via `Provider.of<SettingsProvider>(context)`.
+*   **Async Init:** `main()` is async. Preferences are loaded BEFORE `runApp()`. Never create `SettingsProvider` inside widget tree.
+*   **SharedPreferences Testing:** ALWAYS set `SharedPreferences.setMockInitialValues({})` in `setUp()` for tests involving `SettingsProvider`.
 
 ## 6. Current Status & Next Steps
-*   **Status:** Database Layer with true DEB and UI Foundation are complete and verified.
+*   **Status:** Database Layer (DEB), UI Foundation, and Settings Persistence (Phase 1) are complete and verified.
 *   **Immediate Needs:**
+    *   **Settings UI (Phase 2):** Build the Settings screen with theme toggles, currency picker, etc.
     *   Connect UI to the new Repository methods (Accounts List, Add Transaction forms).
     *   Implement "Recurring Transaction" engine to use new DEB template fields.
     *   Update `doc/database.md` to reflect new schema.
