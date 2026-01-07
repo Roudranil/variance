@@ -39,7 +39,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      fontFamily: 'lmsans',
+      fontFamily: 'NunitoSans',
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: colorScheme.surface,
@@ -48,13 +48,26 @@ class AppTheme {
         scrolledUnderElevation: 0,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        indicatorColor: Colors.transparent,
+        // selected state uses primary background (the indicator)
+        indicatorColor: colorScheme.primary,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: colorScheme.tertiary);
+            // filled icons with surfaceContainer color on primary background
+            // increase weight if filled variant is unavailable (M3 guideline)
+            return IconThemeData(
+              color: colorScheme.surfaceContainer,
+              fill: 1.0,
+              weight: 600,
+            );
           }
-          return IconThemeData(color: colorScheme.onSurfaceVariant);
+          // outlined icons with primary color
+          // decrease weight if outlined variant is unavailable (M3 guideline)
+          return IconThemeData(
+            color: colorScheme.primary,
+            fill: 0.0,
+            weight: 400,
+          );
         }),
       ),
       extensions: [
