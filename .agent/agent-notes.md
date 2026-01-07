@@ -91,9 +91,9 @@
 *   **SharedPreferences Testing:** ALWAYS set `SharedPreferences.setMockInitialValues({})` in `setUp()` for tests involving `SettingsProvider`.
 
 ## 6. Current Status & Next Steps
-*   **Status:** Database Layer (DEB), UI Foundation, and Settings Persistence (Phase 1) are complete and verified.
+*   **Status:** Database Layer (DEB), UI Foundation, Settings Persistence (Phase 1), and Settings UI (Phase 2) are complete and verified.
 *   **Immediate Needs:**
-    *   **Settings UI (Phase 2):** Build the Settings screen with theme toggles, currency picker, etc.
+    *   **Entity Management (Phase 3):** Build CRUD screens for Accounts and Categories.
     *   Connect UI to the new Repository methods (Accounts List, Add Transaction forms).
     *   Implement "Recurring Transaction" engine to use new DEB template fields.
     *   Update `doc/database.md` to reflect new schema.
