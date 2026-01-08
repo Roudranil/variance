@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
-import 'package:currency_picker/currency_picker.dart';
 import 'package:provider/provider.dart';
 
 import 'package:variance/core/preferences/settings_provider.dart';
 import 'package:variance/core/utils/logger.dart';
+import 'package:variance/core/widgets/currency_picker.dart';
+import 'package:variance/features/settings/screens/account_settings_list_screen.dart';
 import 'package:variance/features/settings/screens/theme_preview_screen.dart';
 import 'package:variance/features/settings/widgets/settings_card.dart';
 
@@ -153,7 +154,11 @@ class SettingsScreen extends StatelessWidget {
           leading: const Icon(Icons.account_balance_outlined),
           title: const Text('Accounts'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => _showComingSoon(context),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (context) => const AccountSettingsListScreen(),
+            ),
+          ),
           visualDensity: VisualDensity.compact,
         ),
         divider,
@@ -302,17 +307,18 @@ class SettingsScreen extends StatelessWidget {
   }
 
   /// Shows the currency picker dialog.
-  void _showCurrencyPicker(BuildContext context, SettingsProvider settings) {
-    showCurrencyPicker(
-      context: context,
-      showFlag: true,
-      showCurrencyName: true,
-      showCurrencyCode: true,
-      onSelect: (currency) {
-        settings.setCurrencyCode(currency.code);
-        VarianceLogger.info('Currency selected: ${currency.code}');
-      },
+  Future<void> _showCurrencyPicker(
+    BuildContext context,
+    SettingsProvider settings,
+  ) async {
+    final selectedCode = await CurrencyPickerSheet.show(
+      context,
+      settings.currencyCode,
     );
+    if (selectedCode != null) {
+      settings.setCurrencyCode(selectedCode);
+      VarianceLogger.info('Currency selected: $selectedCode');
+    }
   }
 
   /// Shows the locale picker dialog.

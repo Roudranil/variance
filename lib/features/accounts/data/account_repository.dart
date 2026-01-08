@@ -124,6 +124,8 @@ class AccountRepository {
   /// - [installmentAmount]: Loan EMI amount.
   /// - [nextDueDate]: Loan next payment date.
   /// - [maturityDate]: Savings/FD maturity date.
+  /// - [color]: Optional custom color for theming (as int value).
+  /// - [description]: Optional description for the account.
   Future<int> createAccount({
     required String name,
     required AccountType type,
@@ -139,6 +141,8 @@ class AccountRepository {
     double? installmentAmount,
     DateTime? nextDueDate,
     DateTime? maturityDate,
+    int? color,
+    String? description,
   }) async {
     return _db.transaction(() async {
       // create the account
@@ -160,6 +164,8 @@ class AccountRepository {
               installmentAmount: Value(installmentAmount),
               nextDueDate: Value(nextDueDate),
               maturityDate: Value(maturityDate),
+              color: Value(color),
+              description: Value(description),
             ),
           );
 
@@ -207,7 +213,9 @@ class AccountRepository {
         installmentAmount: Value(account.installmentAmount),
         nextDueDate: Value(account.nextDueDate),
         maturityDate: Value(account.maturityDate),
+        color: Value(account.color),
         updatedAt: Value(DateTime.now()),
+        description: Value(account.description),
       ),
     );
     VarianceLogger.debug('Updated account ${account.id}: ${account.name}');
