@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 
 import 'package:variance/database/enums.dart';
 import 'package:variance/database/schema.dart';
+import 'package:variance/features/accounts/data/account_repository.dart';
+import 'package:variance/features/categories/data/category_repository.dart';
 
 import 'setup/native.dart';
 part 'database.g.dart';
@@ -36,4 +38,10 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 2;
+
+  /// Provides access to account operations.
+  AccountRepository get accountRepository => AccountRepository(this);
+
+  /// Provides access to category operations.
+  CategoryRepository get categoryRepository => CategoryRepository(this);
 }

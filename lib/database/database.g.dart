@@ -94,6 +94,26 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isDeletedMeta = const VerificationMeta(
     'isDeleted',
   );
@@ -231,6 +251,8 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     isUserVisible,
     currencyCode,
     includeInTotals,
+    color,
+    description,
     isDeleted,
     createdAt,
     updatedAt,
@@ -290,6 +312,21 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         includeInTotals.isAcceptableOrUnknown(
           data['include_in_totals']!,
           _includeInTotalsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
         ),
       );
     }
@@ -421,6 +458,14 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}include_in_totals'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      ),
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
       isDeleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_deleted'],
@@ -513,6 +558,16 @@ class Account extends DataClass implements Insertable<Account> {
   /// Defaults to true.
   final bool includeInTotals;
 
+  /// UI color for theming (ARGB integer).
+  ///
+  /// If null, the app's current color scheme is used.
+  final int? color;
+
+  /// Description
+  ///
+  /// Nullable for system accounts (categories, equity).
+  final String? description;
+
   /// Soft delete flag.
   ///
   /// If true, the account is hidden from the UI but kept for historical
@@ -572,6 +627,8 @@ class Account extends DataClass implements Insertable<Account> {
     required this.isUserVisible,
     required this.currencyCode,
     required this.includeInTotals,
+    this.color,
+    this.description,
     required this.isDeleted,
     required this.createdAt,
     required this.updatedAt,
@@ -602,6 +659,12 @@ class Account extends DataClass implements Insertable<Account> {
     map['is_user_visible'] = Variable<bool>(isUserVisible);
     map['currency_code'] = Variable<String>(currencyCode);
     map['include_in_totals'] = Variable<bool>(includeInTotals);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<int>(color);
+    }
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
     map['is_deleted'] = Variable<bool>(isDeleted);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -641,6 +704,12 @@ class Account extends DataClass implements Insertable<Account> {
       isUserVisible: Value(isUserVisible),
       currencyCode: Value(currencyCode),
       includeInTotals: Value(includeInTotals),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
       isDeleted: Value(isDeleted),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -688,6 +757,8 @@ class Account extends DataClass implements Insertable<Account> {
       isUserVisible: serializer.fromJson<bool>(json['isUserVisible']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
       includeInTotals: serializer.fromJson<bool>(json['includeInTotals']),
+      color: serializer.fromJson<int?>(json['color']),
+      description: serializer.fromJson<String?>(json['description']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -718,6 +789,8 @@ class Account extends DataClass implements Insertable<Account> {
       'isUserVisible': serializer.toJson<bool>(isUserVisible),
       'currencyCode': serializer.toJson<String>(currencyCode),
       'includeInTotals': serializer.toJson<bool>(includeInTotals),
+      'color': serializer.toJson<int?>(color),
+      'description': serializer.toJson<String?>(description),
       'isDeleted': serializer.toJson<bool>(isDeleted),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -740,6 +813,8 @@ class Account extends DataClass implements Insertable<Account> {
     bool? isUserVisible,
     String? currencyCode,
     bool? includeInTotals,
+    Value<int?> color = const Value.absent(),
+    Value<String?> description = const Value.absent(),
     bool? isDeleted,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -759,6 +834,8 @@ class Account extends DataClass implements Insertable<Account> {
     isUserVisible: isUserVisible ?? this.isUserVisible,
     currencyCode: currencyCode ?? this.currencyCode,
     includeInTotals: includeInTotals ?? this.includeInTotals,
+    color: color.present ? color.value : this.color,
+    description: description.present ? description.value : this.description,
     isDeleted: isDeleted ?? this.isDeleted,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -790,6 +867,10 @@ class Account extends DataClass implements Insertable<Account> {
       includeInTotals: data.includeInTotals.present
           ? data.includeInTotals.value
           : this.includeInTotals,
+      color: data.color.present ? data.color.value : this.color,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -828,6 +909,8 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('isUserVisible: $isUserVisible, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('includeInTotals: $includeInTotals, ')
+          ..write('color: $color, ')
+          ..write('description: $description, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -852,6 +935,8 @@ class Account extends DataClass implements Insertable<Account> {
     isUserVisible,
     currencyCode,
     includeInTotals,
+    color,
+    description,
     isDeleted,
     createdAt,
     updatedAt,
@@ -875,6 +960,8 @@ class Account extends DataClass implements Insertable<Account> {
           other.isUserVisible == this.isUserVisible &&
           other.currencyCode == this.currencyCode &&
           other.includeInTotals == this.includeInTotals &&
+          other.color == this.color &&
+          other.description == this.description &&
           other.isDeleted == this.isDeleted &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -896,6 +983,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<bool> isUserVisible;
   final Value<String> currencyCode;
   final Value<bool> includeInTotals;
+  final Value<int?> color;
+  final Value<String?> description;
   final Value<bool> isDeleted;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -915,6 +1004,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.isUserVisible = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.includeInTotals = const Value.absent(),
+    this.color = const Value.absent(),
+    this.description = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -935,6 +1026,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.isUserVisible = const Value.absent(),
     this.currencyCode = const Value.absent(),
     this.includeInTotals = const Value.absent(),
+    this.color = const Value.absent(),
+    this.description = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -956,6 +1049,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<bool>? isUserVisible,
     Expression<String>? currencyCode,
     Expression<bool>? includeInTotals,
+    Expression<int>? color,
+    Expression<String>? description,
     Expression<bool>? isDeleted,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -976,6 +1071,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (isUserVisible != null) 'is_user_visible': isUserVisible,
       if (currencyCode != null) 'currency_code': currencyCode,
       if (includeInTotals != null) 'include_in_totals': includeInTotals,
+      if (color != null) 'color': color,
+      if (description != null) 'description': description,
       if (isDeleted != null) 'is_deleted': isDeleted,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -998,6 +1095,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<bool>? isUserVisible,
     Value<String>? currencyCode,
     Value<bool>? includeInTotals,
+    Value<int?>? color,
+    Value<String?>? description,
     Value<bool>? isDeleted,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -1018,6 +1117,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       isUserVisible: isUserVisible ?? this.isUserVisible,
       currencyCode: currencyCode ?? this.currencyCode,
       includeInTotals: includeInTotals ?? this.includeInTotals,
+      color: color ?? this.color,
+      description: description ?? this.description,
       isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1059,6 +1160,12 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     }
     if (includeInTotals.present) {
       map['include_in_totals'] = Variable<bool>(includeInTotals.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
     }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
@@ -1106,6 +1213,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('isUserVisible: $isUserVisible, ')
           ..write('currencyCode: $currencyCode, ')
           ..write('includeInTotals: $includeInTotals, ')
+          ..write('color: $color, ')
+          ..write('description: $description, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -4233,6 +4342,8 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<bool> isUserVisible,
       Value<String> currencyCode,
       Value<bool> includeInTotals,
+      Value<int?> color,
+      Value<String?> description,
       Value<bool> isDeleted,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -4254,6 +4365,8 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<bool> isUserVisible,
       Value<String> currencyCode,
       Value<bool> includeInTotals,
+      Value<int?> color,
+      Value<String?> description,
       Value<bool> isDeleted,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -4409,6 +4522,16 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<bool> get includeInTotals => $composableBuilder(
     column: $table.includeInTotals,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4612,6 +4735,16 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isDeleted => $composableBuilder(
     column: $table.isDeleted,
     builder: (column) => ColumnOrderings(column),
@@ -4701,6 +4834,14 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<bool> get includeInTotals => $composableBuilder(
     column: $table.includeInTotals,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => column,
   );
 
@@ -4894,6 +5035,8 @@ class $$AccountsTableTableManager
                 Value<bool> isUserVisible = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<bool> includeInTotals = const Value.absent(),
+                Value<int?> color = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -4913,6 +5056,8 @@ class $$AccountsTableTableManager
                 isUserVisible: isUserVisible,
                 currencyCode: currencyCode,
                 includeInTotals: includeInTotals,
+                color: color,
+                description: description,
                 isDeleted: isDeleted,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -4934,6 +5079,8 @@ class $$AccountsTableTableManager
                 Value<bool> isUserVisible = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
                 Value<bool> includeInTotals = const Value.absent(),
+                Value<int?> color = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -4953,6 +5100,8 @@ class $$AccountsTableTableManager
                 isUserVisible: isUserVisible,
                 currencyCode: currencyCode,
                 includeInTotals: includeInTotals,
+                color: color,
+                description: description,
                 isDeleted: isDeleted,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

@@ -44,6 +44,16 @@ class Accounts extends Table {
   BoolColumn get includeInTotals =>
       boolean().withDefault(const Constant(true))();
 
+  /// UI color for theming (ARGB integer).
+  ///
+  /// If null, the app's current color scheme is used.
+  IntColumn get color => integer().nullable()();
+
+  /// Description
+  ///
+  /// Nullable for system accounts (categories, equity).
+  TextColumn get description => text().nullable()();
+
   /// Soft delete flag.
   ///
   /// If true, the account is hidden from the UI but kept for historical
