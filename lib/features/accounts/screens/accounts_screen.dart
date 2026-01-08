@@ -14,6 +14,7 @@ class AccountsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Accounts')),
       body: const Center(child: Text('Accounts Screen')),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'accounts_fab',
         onPressed: () {
           // TODO: Implement Add Account
         },

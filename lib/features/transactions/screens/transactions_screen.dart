@@ -14,6 +14,7 @@ class TransactionsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Transactions')),
       body: const Center(child: Text('Transactions Screen')),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'transactions_fab',
         onPressed: () {
           // TODO: Implement Add Transaction
         },
