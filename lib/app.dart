@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'core/preferences/settings_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/logger.dart';
+import 'database/database.dart';
 import 'features/home/screens/home_screen.dart';
 
 /// The root widget of the application.
@@ -20,10 +21,14 @@ class VarianceApp extends StatelessWidget {
   /// Parameters:
   /// - [settingsProvider]: The pre-initialized settings provider with loaded
   ///   preferences.
-  const VarianceApp({required this.settingsProvider, super.key});
+  /// - [database]: Optional database instance for testing.
+  const VarianceApp({required this.settingsProvider, this.database, super.key});
 
   /// The settings provider instance, pre-loaded with user preferences.
   final SettingsProvider settingsProvider;
+
+  /// Optional database instance. If null, creates a new AppDatabase.
+  final AppDatabase? database;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +36,10 @@ class VarianceApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
+        Provider<AppDatabase>(
+          create: (_) => database ?? AppDatabase(),
+          dispose: (_, db) => db.close(),
+        ),
       ],
       child: DynamicColorBuilder(
         builder: (lightDynamic, darkDynamic) {
