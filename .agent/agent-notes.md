@@ -75,6 +75,7 @@
     *   **NEVER** hardcode colors. Always use `Theme.of(context).extension<SemanticColorsExtension>()` or `ColorScheme`.
     *   **NEVER** hardcode font sizes. Always use `Theme.of(context).extension<TextSizesExtension>()`.
     *   **Logging:** STRICTLY usage of `VarianceLogger` from `lib/core/utils/logger.dart` is enforced across the entire codebase. Do not use `print` or other logging packages.
+    *   **Implementation Plans:** ALWAYS include ASCII/markdown diagrams for widget layouts.
 
 
 ## 5. Conventions & "Gotchas"
@@ -91,10 +92,9 @@
 *   **SharedPreferences Testing:** ALWAYS set `SharedPreferences.setMockInitialValues({})` in `setUp()` for tests involving `SettingsProvider`.
 
 ## 6. Current Status & Next Steps
-*   **Status:** Database Layer (DEB), UI Foundation, Settings Persistence (Phase 1), and Settings UI (Phase 2) are complete and verified.
+*   **Status:** Phases 1-2 complete. Now executing Phase 3A (Account Management from Settings).
 *   **Immediate Needs:**
-    *   **Entity Management (Phase 3):** Build CRUD screens for Accounts and Categories.
-    *   Connect UI to the new Repository methods (Accounts List, Add Transaction forms).
-    *   Implement "Recurring Transaction" engine to use new DEB template fields.
-    *   Update `doc/database.md` to reflect new schema.
+    *   Complete Account CRUD screens (list, add, edit).
+    *   Implement `GroupedListCard`, `SearchAlgorithmV1`, `ThemedEditScaffold`.
+    *   Connect Settings Data Management to Account screens.
 
