@@ -19,7 +19,7 @@
 
 | # | Deliverable | Status | Notes |
 |---|-------------|--------|-------|
-| 1 | **PRD v0.1.3** | 🟡 In Review | 12 open questions remain (Q29–Q40) |
+| 1 | **PRD v0.1.3** | 🟡 In Review | 18 open questions remain (Q29–Q46) |
 | 2 | **System Design Spec (SDS)** | 🔴 Blocked | Blocked on Q29, Q32, Q34, Q35, Q36, Q37, Q40 |
 | 3 | **UX Flows** | 🔴 Blocked | Blocked on Q29–Q33, Q38–Q39, PRD sign-off |
 | 4 | **API Contracts** | 🔴 Blocked | Blocked on SDS |
@@ -50,6 +50,12 @@
 | Q36 | Budget pool add: can N+T exceed M, or is M also increased? | ❓ Open |
 | Q37 | Archived recurring templates: can user reactivate? Resume or restart? | ❓ Open |
 | Q40 | System-provided default categories: can user rename/hide them, or immutable? | ❓ Open |
+| Q41 | PRD §4.5 and §4.6 conflict on income entry sides. §4.5 says Dr IC, Cr A; §4.6 says income balance = Σ Cr − Σ Dr (contradicts). Recommend: `Dr A, Cr IC`. | ❓ Open |
+| Q42 | Transfer to liability account (pay credit card): confirm entry is `Dr L, Cr A`, reducing liability balance. | ❓ Open |
+| Q43 | Opening balance for liability accounts: EQ must be debited (not credited). Confirm EQ supports bidirectional postings. | ❓ Open |
+| Q44 | Liability account journal adjustment: how is income/expense direction determined? (Balance ↑ = more debt = expense? Balance ↓ = debt forgiven = income?) | ❓ Open |
+| Q45 | Soft-delete account with non-zero balance: prompt user to transfer balance first, or silent? | ❓ Open |
+| Q46 | Cross-currency transfers: native amounts + rate snapshot, home-currency conversion, or disallow in v1? **Blocking SDS schema.** | ❓ Open |
 
 ---
 
@@ -106,6 +112,7 @@
 | 2026-04-12 | Tags deferred to v2 (color, name, icon; filterable and searchable). |
 | 2026-04-12 | Audit view (all transactions including voided + journal adjustments) deferred to v2. |
 | 2026-04-12 | C1 (internet constraint) formalised as offline-first; exchange rate fetch + Drive backup are opt-in future online features. |
+| 2026-04-12 | Ledger entry case analysis completed. All 19 posting cases enumerated (Groups 1–3). Six new open questions surfaced (Q41–Q46), including a potential PRD §4.5/§4.6 inconsistency on income entry sides, liability account journal adjustment direction, and cross-currency transfer schema (blocking SDS). See `docs/ledger-entry-cases.md`. |
 
 ---
 
