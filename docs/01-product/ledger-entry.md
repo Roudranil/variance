@@ -1,3 +1,13 @@
+---
+name: Ledger Entry Case Analysis
+status: approved
+owner: pm
+created: 2026-04-12
+last_updated: 2026-04-12
+depends_on: [01-product/prd.md]
+outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
+---
+
 # Variance — Ledger Entry Case Analysis
 ## Double-Entry Bookkeeping: All Posting Cases
 

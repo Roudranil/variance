@@ -1,28 +1,38 @@
+---
+name: Gaps and Open Questions
+status: in progress
+owner: pm
+created: 2026-04-13
+last_updated: 2026-04-13
+depends_on: [01-product/prd.md]
+outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
+---
+
 # Variance — Gaps & Open Questions
 
 > **Last Updated:** 2026-04-13 (PRD v0.3.0)
 >
 > This document is a comprehensive reference for product gaps and questions. It is organized into three parts:
 >
-> - **Part 1 — PRD Questions (Q47–Q76):** ✅ **ALL RESOLVED** in PRD v0.3.0. Question text removed from this document — resolutions are baked into the PRD body; the resolved questions log is in `docs/ideation-tracker.md`.
+> - **Part 1 — PRD Questions (Q47–Q76):** ✅ **ALL RESOLVED** in PRD v0.3.0. Question text removed from this document — resolutions are baked into the PRD body; the resolved questions log is in `docs/06-helpers/ideation-tracker.md`.
 >
-> - **Part 2 — UX Flows Pre-Work Topics (UX-1–UX-14):** Interaction design decisions that belong in `docs/ux-flows.md`, not the PRD. These do not block the PRD sign-off but must be resolved before the UX Flows document can be completed. Items UX-7 and UX-8 are deferred with budgets to v2.
+> - **Part 2 — UX Flows Pre-Work Topics (UX-1–UX-14):** Interaction design decisions that belong in `docs/02-technical/ux-flows.md`, not the PRD. These do not block the PRD sign-off but must be resolved before the UX Flows document can be completed. Items UX-7 and UX-8 are deferred with budgets to v2.
 >
 > - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD identifying (A) existing features with unresolved edge cases or missing detail, (B) features mentioned or implied but never fully specified, and (C) features never discussed that a user would encounter or expect. Budget-related items are marked as deferred to v2.
 >
-> The authoritative status of each question is tracked in `docs/ideation-tracker.md`.
+> The authoritative status of each question is tracked in `docs/06-helpers/ideation-tracker.md`.
 
 ---
 
 ## Part 1 — PRD Questions
 
-> ✅ **All 30 questions (Q47–Q76) were resolved on 2026-04-13 and baked into PRD v0.3.0.** Resolutions are in the PRD document body. The full resolved questions log is in `docs/ideation-tracker.md`. Part 1 has been removed from this document — see those sources for details.
+> ✅ **All 30 questions (Q47–Q76) were resolved on 2026-04-13 and baked into PRD v0.3.0.** Resolutions are in the PRD document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Part 1 has been removed from this document — see those sources for details.
 
 ---
 
 ## Part 2 — UX Flows Pre-Work Topics
 
-> These are interaction design decisions. They belong in `docs/ux-flows.md`, not the PRD. They do not block PRD sign-off but must be answered before UX Flows can be written.
+> These are interaction design decisions. They belong in `docs/02-technical/ux-flows.md`, not the PRD. They do not block PRD sign-off but must be answered before UX Flows can be written.
 
 ### App Structure & Navigation
 

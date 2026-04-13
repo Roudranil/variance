@@ -1,15 +1,15 @@
+---
+name: Product Requirements Document
+status: in progress
+owner: pm
+created: 2026-04-13
+last_updated: 2026-04-13
+depends_on: []
+outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-contracts.md, 03-planning/task-breakdown.md]
+---
+
 # Product Requirements Document (PRD)
 ## Variance — Personal Finance & Expense Tracker
-
-| Field        | Value          |
-|-------------|----------------|
-| Version      | 0.3.0          |
-| Status       | 🟢 All Questions Resolved |
-| Phase        | Ideation       |
-| Author       | PM Agent       |
-| Last Updated | 2026-04-13     |
-
----
 
 ## 1. Problem Statement
 
@@ -143,7 +143,7 @@ A transaction is valid if and only if:
 ### 4.8 Immutability & Correction Model
 
 - All posted transactions are **permanently immutable**.
-- Correcting a transaction's financial fields — including **amount, account, and category** — posts a **new reversing transaction** (negates the original) followed by a **new corrected transaction**. This is consistent with Cases 1.4 and 1.5 in `docs/ledger-entry.md`, where the corrected entry already uses EC' and IC' to represent a changed category.
+- Correcting a transaction's financial fields — including **amount, account, and category** — posts a **new reversing transaction** (negates the original) followed by a **new corrected transaction**. This is consistent with Cases 1.4 and 1.5 in `docs/01-product/ledger-entry.md`, where the corrected entry already uses EC' and IC' to represent a changed category.
 - **In-place edits are limited to: title, description, and photos only.** These fields carry no ledger significance.
 - **Soft delete** of a transaction posts an automatic reversing entry to neutralise it. The original transaction record is retained.
 - No entity (transaction, account, category) is ever permanently deleted.
@@ -193,7 +193,7 @@ When a user directly edits an account's balance, the system posts a **journal ad
 
 ### 4.11 Ledger Posting Cases (Reference)
 
-All system events that produce ledger entries are fully enumerated in `docs/ledger-entry.md`, which is the authoritative posting case reference for SDS design. The compact summary is reproduced here.
+All system events that produce ledger entries are fully enumerated in `docs/01-product/ledger-entry.md`, which is the authoritative posting case reference for SDS design. The compact summary is reproduced here.
 
 **Notation:** A = asset account · L = liability account · IC = income category · EC = expense category · EQ = internal equity account · BAI/BAE = Balance Adjustment income/expense category.
 
@@ -227,7 +227,7 @@ All system events that produce ledger entries are fully enumerated in `docs/ledg
 | 3.5 | Budget Replenishment | None (budget layer) | 0 |
 | 3.6 | Category Soft-Delete | None | 0 |
 
-> The posting model for liability accounts is complete. Cross-currency transfers are disallowed in v1. Full enumeration of all posting cases is in `docs/ledger-entry.md`, which is the authoritative reference for SDS schema design.
+> The posting model for liability accounts is complete. Cross-currency transfers are disallowed in v1. Full enumeration of all posting cases is in `docs/01-product/ledger-entry.md`, which is the authoritative reference for SDS schema design.
 
 ---
 
@@ -298,8 +298,8 @@ This model applies to **all account types** — there is no functional differenc
 An account's balance changes in exactly three ways:
 
 1. **Direct balance edit** (via edit account menu): System prompts — *"Record this change as a real transaction?"*
-   - If Yes → posts a proper income/expense transaction with the protected **"Balance Adjustment"** category. Visible in transaction list. See §4.10 and Cases 2.3a–2.3d in `docs/ledger-entry.md` for the full posting logic by account type (asset vs. liability) and direction (balance up vs. balance down).
-   - If No → posts an invisible journal adjustment against the internal equity account (EQ). Not visible in normal views. Surfaces in the v2 audit view. See Cases 2.4a–2.4d in `docs/ledger-entry.md`.
+   - If Yes → posts a proper income/expense transaction with the protected **"Balance Adjustment"** category. Visible in transaction list. See §4.10 and Cases 2.3a–2.3d in `docs/01-product/ledger-entry.md` for the full posting logic by account type (asset vs. liability) and direction (balance up vs. balance down).
+   - If No → posts an invisible journal adjustment against the internal equity account (EQ). Not visible in normal views. Surfaces in the v2 audit view. See Cases 2.4a–2.4d in `docs/01-product/ledger-entry.md`.
 2. **Recorded transaction against this account**: A normal income/expense/transfer entry referencing this account. Displayed in the transaction list.
 3. **Deletion (soft-delete) of an existing transaction**: Posts an invisible reversing entry to neutralise the original transaction's effect on the account balance. The reversal is not displayed in normal transaction views.
 
@@ -361,7 +361,7 @@ Each row in the transaction list displays three columns:
 #### 5.2.2 Transaction Immutability & Editing
 
 - All posted transactions are immutable.
-- **Editing amount, account, or category**: A reversing entry is posted (negating the original), followed by the corrected transaction. This applies equally to all three financial fields. A category change is treated identically to an account or amount change — it is a financial correction requiring a reversing + corrected pair. This is consistent with §4.8 and with Cases 1.4 and 1.5 in `docs/ledger-entry.md`, where the corrected entry already models a changed category (EC', IC').
+- **Editing amount, account, or category**: A reversing entry is posted (negating the original), followed by the corrected transaction. This applies equally to all three financial fields. A category change is treated identically to an account or amount change — it is a financial correction requiring a reversing + corrected pair. This is consistent with §4.8 and with Cases 1.4 and 1.5 in `docs/01-product/ledger-entry.md`, where the corrected entry already models a changed category (EC', IC').
 - **Correction visibility:** Only the **final corrected transaction** is visible in the transaction list. The original transaction and its reversing entry are hidden as internal ledger entries — they maintain ledger integrity but are not shown in normal user-facing views. This preserves full DEB abstraction (§2, G2). The original and reversal are surfaced in the v2 audit view.
 - **In-place edits (no ledger posting)**: Title, description, and photos only. These fields carry no ledger significance and may be updated without generating new entries.
 - **Soft delete**: The transaction is voided. A reversing entry is posted automatically. The original record is retained but excluded from all normal views and calculations. Voided transactions are surfaced in the v2 audit view.
@@ -500,7 +500,7 @@ Users can define recurring transaction templates. Parameters:
 
 **Child transaction editing and deletion:**
 - Individual child transactions generated by a recurring or installment template are editable and soft-deletable like any other transaction.
-- The existing correction model (reversing + corrected entries, Cases 1.4–1.9 in `docs/ledger-entry.md`) applies in full.
+- The existing correction model (reversing + corrected entries, Cases 1.4–1.9 in `docs/01-product/ledger-entry.md`) applies in full.
 - **Effect on the parent template (Q47):** When a child transaction is edited or soft-deleted, the specific occurrence is marked as **"manually handled"** on the template's schedule. The template's overall configuration (amount, recurrence, account, category) is **not affected**. All remaining future occurrences continue to be scheduled and realised normally. The scheduler skips any occurrence already marked as manually handled.
 
 #### 5.2.8 Installments
@@ -885,6 +885,6 @@ When a transaction is created against an account whose currency differs from the
 
 ## 11. Open Questions
 
-> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log with original question text and decisions is maintained in `docs/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and feature gap items (Parts 2–3) are tracked in `docs/gaps-and-questions.md`.
+> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log with original question text and decisions is maintained in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and feature gap items (Parts 2–3) are tracked in `docs/06-helpers/gaps-and-questions.md`.
 >
 > No open questions remain. The PRD is ready for sign-off.

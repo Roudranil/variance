@@ -1,3 +1,13 @@
+---
+name: Ideation Phase Tracker
+status: in progress
+owner: pm
+created: 2026-04-13
+last_updated: 2026-04-13
+depends_on: [01-product/prd.md]
+outputs_to: []
+---
+
 # Variance — Ideation Phase Tracker
 
 > **Last Updated:** 2026-04-13 (PRD v0.3.0)
@@ -157,7 +167,7 @@
 
 ## UX Flows Pre-Work Topics
 
-> These topics are **not PRD questions** — they are interaction design decisions that belong in `docs/ux-flows.md`. They do not block the PRD, but they must be resolved before UX Flows can be completed. Listed here so nothing falls through the gap between documents.
+> These topics are **not PRD questions** — they are interaction design decisions that belong in `docs/02-technical/ux-flows.md`. They do not block the PRD, but they must be resolved before UX Flows can be completed. Listed here so nothing falls through the gap between documents.
 
 | # | Topic | Scope |
 |---|-------|-------|
@@ -194,10 +204,10 @@
 
 | Document | Repo Path | Version | Status |
 |----------|-----------|---------|--------|
-| PRD | `docs/prd.md` | 0.3.0 | 🟢 All Questions Resolved |
-| Gaps & Questions | `docs/gaps-and-questions.md` | – | 📋 Reference (Part 1 resolved; Parts 2–3 tracked) |
-| Ledger Entry Cases | `docs/ledger-entry.md` | – | ✅ Updated |
-| SDS | `docs/sds.md` | – | ⬜ Ready to Start |
-| UX Flows | `docs/ux-flows.md` | – | ⬜ Ready to Start |
-| API Contracts | `docs/api-contracts.md` | – | ⬜ Not Started |
-| Execution Plan | `docs/execution-plan.md` | – | ⬜ Not Started |
+| PRD | `docs/01-product/prd.md` | 0.3.0 | 🟢 All Questions Resolved |
+| Gaps & Questions | `docs/06-helpers/gaps-and-questions.md` | – | 📋 Reference (Part 1 resolved; Parts 2–3 tracked) |
+| Ledger Entry Cases | `docs/01-product/ledger-entry.md` | – | ✅ Updated |
+| SDS | `docs/02-technical/sds.md` | – | ⬜ Ready to Start |
+| UX Flows | `docs/02-technical/ux-flows.md` | – | ⬜ Ready to Start |
+| API Contracts | `docs/02-technical/api-contracts.md` | – | ⬜ Not Started |
+| Execution Plan | `docs/03-planning/task-breakdown.md` | – | ⬜ Not Started |
