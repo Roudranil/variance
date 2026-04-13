@@ -23,6 +23,7 @@ docs/
 │   ├── sds.md
 │   ├── data-model.md
 │   ├── api-contracts.md
+│   ├── architecture-decision-records.md
 │   └── ux-flows.md
 ├── 03-planning/                    # Execution planning
 │   ├── task-breakdown.md
