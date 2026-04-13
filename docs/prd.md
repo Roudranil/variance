@@ -3,11 +3,11 @@
 
 | Field        | Value          |
 |-------------|----------------|
-| Version      | 0.2.3          |
-| Status       | 🟡 In Review   |
+| Version      | 0.3.0          |
+| Status       | 🟢 All Questions Resolved |
 | Phase        | Ideation       |
 | Author       | PM Agent       |
-| Last Updated | 2026-04-12     |
+| Last Updated | 2026-04-13     |
 
 ---
 
@@ -37,8 +37,8 @@ Existing personal finance apps on Android fall into one of two camps:
 
 | Version | Scope |
 |---------|-------|
-| **v1** | Core: accounts, transactions, categories, budgets, recurring transactions, installments, settings, home summary |
-| **v2** | Advanced: trends, dashboards, analytics, data management (backup/restore, CSV), savings goals, tags, audit view |
+| **v1** | Core: accounts, transactions, categories, recurring transactions, installments, onboarding, settings, home summary |
+| **v2** | Advanced: budgeting (total + per-category, multi-horizon, rollover, alerts, income replenishment), trends, dashboards, analytics, data management (backup/restore, CSV), savings goals, tags, audit view, account & category reordering |
 | **v3** | Predictive: ML insights, OCR receipt capture, advanced analytics, exchange rate updates (online-optional), Drive backup |
 
 ### Anti-Goals (Permanent — Never)
@@ -61,9 +61,11 @@ The user can create, view, edit, and soft-delete **accounts** across a fixed set
 
 The user records transactions as income, expense, or transfer. All transactions are immutable — edits to financial fields post correcting entries. The user manages a two-level taxonomy of transaction categories (category → subcategory) separately for income and expense. All deletions are soft deletes.
 
-### UC-3: View and Manage Budgets
+### UC-3: View and Manage Budgets *(Deferred to v2)*
 
-The user defines a total budget and per-category budgets across multiple time horizons. Budget pools track remaining amounts in real time. Income transactions can manually replenish a budget pool. In-app alerts fire at configurable thresholds.
+> **Deferred:** Budgeting has been moved to v2 to allow a ground-up rethink of how budgets interact with savings goals (also v2). The full budget model — total + per-category budgets, multi-horizon, rollover, alerts, income replenishment — will be designed holistically alongside savings goals in v2.
+
+~~The user defines a total budget and per-category budgets across multiple time horizons. Budget pools track remaining amounts in real time. Income transactions can manually replenish a budget pool. In-app alerts fire at configurable thresholds.~~
 
 ---
 
@@ -256,7 +258,11 @@ The Create Account form collects the following fields. Category-specific fields 
 
 **Account Name Uniqueness Constraint**
 
-Account names must be unique. No two accounts may share the same name. Whether this uniqueness constraint extends to soft-deleted accounts (i.e., whether a deleted account's name is still reserved) is an open question — see Q52.
+Account names must be unique across all accounts, **including soft-deleted accounts**. A soft-deleted account's name is permanently reserved and cannot be reused by a new account.
+
+**Reinstatement of soft-deleted accounts:** When a user attempts to create a new account whose name and account category both match a soft-deleted account, the app displays a warning: *"It looks like you previously had an account with this name. Would you like to reinstate it instead?"* If the user accepts, the soft-deleted account is reinstated (its `is_deleted` flag is cleared). This is architecturally trivial: since balances are always computed from ledger entries (which are never deleted), the reinstated account's balance, transaction history, and net worth contribution are automatically correct with no recalculation. If the user declines, they must choose a different name.
+
+The same reinstatement logic applies to soft-deleted categories (see §5.2.4).
 
 **Edit**
 
@@ -266,7 +272,7 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
 
 **Delete**: Soft delete only. Account becomes hidden from all user-facing views. Ledger entries are retained. A soft-deleted account's balance is excluded from net worth. Hard delete and transaction migration to another account are deferred to a future version.
   - If the account has a non-zero balance at deletion time, the app presents a two-step flow:
-    1. "Would you like to transfer the remaining balance to another account?" — if yes, a transfer transaction is posted (transaction type TBD — see Q49).
+    1. "Would you like to transfer the remaining balance to another account?" — if yes, the user selects a destination account and a **system-generated internal transfer** is posted. This transfer is visible in the transaction list but is marked as system-generated and is not user-editable. If the user later attempts to soft-delete this system transfer, the app warns: *"This transfer was created when you deleted [account name]. Voiding it will reduce your net worth because the source account is no longer active."*
     2. If the user declines: "Deleting this account without transferring the balance will change your net worth. Are you sure?" — if confirmed, the soft-delete proceeds.
 - Cannot delete the last remaining account.
 
@@ -324,16 +330,39 @@ User selects transaction type. Fields collected:
 | Account (source) | — | ✅ | — | |
 | Transaction category | ✅ | ✅ | ❌ (not applicable) | |
 | Subcategory | ✅ | ✅ | ❌ | |
-| Title | ✅ | ✅ | ✅ | Optional. Short label for the transaction. See Q53 for display behaviour. |
-| Description | ✅ | ✅ | ✅ | Optional. Long-form text. See Q54 for display behaviour. |
+| Title | ✅ | ✅ | ✅ | Optional. Short label for the transaction. See display rules below. |
+| Description | ✅ | ✅ | ✅ | Optional. Long-form text. Max character limit configurable in Settings (default: 1000; options: 500, 1000, 2000). See display rules below. |
 | Photo(s) | ✅ | ✅ | ✅ | Optional. Max 2 photos per transaction (see §5.2.3). |
 
 > **Note:** "Notes" has been removed from transactions and replaced by two separate optional fields: **Title** and **Description**. Notes remains on **accounts** (see §5.1.1) — it was only removed from transactions.
+
+**Transaction List Display (3-Column Layout)**
+
+Each row in the transaction list displays three columns:
+
+| Column | Content |
+|--------|---------|
+| **C1 — Category** | If the transaction has only a parent category: the parent category icon and name. If the transaction has a parent + subcategory: parent name on the first row, subcategory name on the second row. For transfers: no category (display "Transfer" label). |
+| **C2 — Title & Account** | **Row 1:** Title (blank if not provided; v3 idea: ML/rule-based auto-generated titles). **Row 2:** Account info — for expense: source account name; for income: destination account name; for transfer: source account → destination account. |
+| **C3 — Amount & Currency** | The transaction amount with currency symbol. For accounts in a foreign currency, both the original currency amount and the home currency equivalent are shown (see §7.1). |
+
+**Grouping and ordering:** Transactions are grouped by date (date header per group). Within each date group, transactions are ordered by time (most recent first). The timestamp is not shown in the list row — it is revealed when the user taps the transaction to open the detail view.
+
+**Transaction List Architecture:**
+- The default view is a **unified transaction list** showing all transactions across all accounts.
+- Soft-deleted (voided) transactions, unrealised future-dated transactions (see §5.7), and superseded versions of corrected transactions are excluded from the default list. Only the final corrected version is shown (see §5.2.2).
+- A **per-account transaction list** is accessible from the account detail screen (tapping an account navigates to its detail view, which shows transactions filtered to that account).
+- Balance adjustment transactions (§4.10): when the user chose "Yes" (record as income/expense), the transaction appears in the list with the Balance Adjustment category like any other transaction. When the user chose "No" (invisible journal entry), the transaction does **not** appear in the list — it is an internal ledger entry surfaced only in the v2 audit view. This is consistent with §4.10 and §5.1.3.
+
+**Transaction Description Display:**
+- Description appears **only in the transaction detail view**, never in the transaction list.
+- Character limit is configurable in Settings (§5.4.2) from a predefined set: 500, 1000, or 2000 characters. Default: 1000.
 
 #### 5.2.2 Transaction Immutability & Editing
 
 - All posted transactions are immutable.
 - **Editing amount, account, or category**: A reversing entry is posted (negating the original), followed by the corrected transaction. This applies equally to all three financial fields. A category change is treated identically to an account or amount change — it is a financial correction requiring a reversing + corrected pair. This is consistent with §4.8 and with Cases 1.4 and 1.5 in `docs/ledger-entry.md`, where the corrected entry already models a changed category (EC', IC').
+- **Correction visibility:** Only the **final corrected transaction** is visible in the transaction list. The original transaction and its reversing entry are hidden as internal ledger entries — they maintain ledger integrity but are not shown in normal user-facing views. This preserves full DEB abstraction (§2, G2). The original and reversal are surfaced in the v2 audit view.
 - **In-place edits (no ledger posting)**: Title, description, and photos only. These fields carry no ledger significance and may be updated without generating new entries.
 - **Soft delete**: The transaction is voided. A reversing entry is posted automatically. The original record is retained but excluded from all normal views and calculations. Voided transactions are surfaced in the v2 audit view.
 - No transaction is ever permanently deleted.
@@ -354,7 +383,7 @@ Separate trees exist for **Income** and **Expense**. Transfers have no category.
 
 **Category fields:**
 Each category (both parent and child) has exactly two fields:
-- **Icon**: Selected from a bundled icon set. Source of icons TBD — see Q50 (partially addressed).
+- **Icon**: Selected from the `material_symbols_icons` Flutter package (^4.2928.1 from pub.dev). The full icon set is large; a curated subset will be bundled for the category picker. The exact subset and bundling strategy (tree-shaking, selective import) are deferred to SDS for efficiency analysis.
 - **Name**: Free-form text label.
 No other fields (colour, description, etc.) exist on categories.
 
@@ -372,21 +401,26 @@ Category management is accessed from Settings (§5.4.4). The flow is:
 - Name uniqueness is case-insensitive (exact case-sensitivity behaviour deferred to SDS).
 
 **Category mutability rules (all categories — default and user-created):**
-- All categories and subcategories (default and user-created) may be: renamed, icon-changed (see Q50), reordered, and soft-deleted.
+- All categories and subcategories (default and user-created) may be: renamed, icon-changed, and soft-deleted. Manual reordering is deferred to v2; the default display order is alphabetical.
 - A subcategory cannot be reassigned to a different parent category. The parent is fixed at creation.
-- A parent category **cannot be deleted if it has any child subcategories**. The user must first soft-delete all children before the parent becomes deletable.
+- A parent category **cannot be deleted if it has any child subcategories**. The user must first soft-delete all children before the parent becomes deletable. Bulk "delete parent and all children" is not supported.
 - **A leaf parent category** (a parent with no children) **can be soft-deleted at any time.**
 - **A child category (subcategory) can be soft-deleted at any time**, regardless of whether active (non-voided) transactions reference it. This supersedes any prior constraint to the contrary.
+- **Transaction migration on category deletion:** When a user initiates a category soft-delete, the app prompts: *"Would you like to migrate transactions from this category to another category?"*
+  - **No migration (default):** Existing transactions retain the soft-deleted category label. The category is hidden from pickers and filters but the label persists on historical transactions.
+  - **Yes — migrate all:** The user selects a destination category. All transactions referencing the deleted category are re-categorised to the destination (this is a financial edit — reversing + corrected entry pairs are posted per §4.8).
+  - **Yes — choose specific transactions:** The user is presented with the list of transactions referencing the category and selects which ones to migrate. Selected transactions are re-categorised; unselected transactions retain the old category (same as "no migration" for those).
 - Soft-deleted categories are hidden from: filter dropdowns, and the category picker in new transaction entry. They are not available for selection when creating or editing a transaction.
 - Existing (non-voided) transactions that reference a soft-deleted category continue to display that category's name exactly as it was at the time of the transaction. The soft-deleted category label is shown as-is in the transaction detail view.
-- Whether a parent category with children can be soft-deleted (forcing all children to also be deleted) is an open question — see Q55. The current rule is: parent cannot be deleted if children exist.
+- **Reinstatement of soft-deleted categories:** The same reinstatement logic described in §5.1.1 for accounts applies to categories. When creating a new category whose name matches a soft-deleted category within the same tree and parent, the app offers to reinstate the deleted category instead. Category names must be unique including across soft-deleted categories.
 
 **Protected system category — "Balance Adjustment":**
 - Exists in both income and expense trees.
 - Cannot be selected by the user when creating a transaction.
 - Assigned automatically when a journal adjustment is recorded as income/expense.
 - Visible in the transaction list when such transactions exist. Balance Adjustment transactions are **visually indistinguishable** from normal transactions in the list. Full UI treatment is deferred to UX Flows.
-- Whether this category is exempt from the general mutability rules (rename, icon-change, soft-delete) is an open question — see Q51.
+- **Completely hidden from the category management screen.** The user cannot see, rename, change the icon of, or soft-delete this category. It is fully immutable and system-managed.
+- **Protected entity pattern:** The "Balance Adjustment" category and the internal equity account (§4.9) are both protected system entities. The DB schema must support a `is_protected` flag (or equivalent) on categories and accounts to distinguish system-managed entities from user-managed ones. This pattern may expand in future versions as additional protected entities are introduced.
 
 ##### Default Expense Categories
 
@@ -423,7 +457,7 @@ Category management is accessed from Settings (§5.4.4). The flow is:
 
 #### 5.2.5 Transaction Search
 
-- Fuzzy search across all fields: date, amount, account name, category name, subcategory name, title, description, and any searchable metadata. Whether title and description are searched identically or with different weighting is deferred to UX Flows. See Q53 and Q54 for open questions on how title and description surface in the transaction list and detail views.
+- Fuzzy search across all fields: date, amount, account name, category name, subcategory name, title, description, and any searchable metadata. Whether title and description are searched identically or with different weighting is deferred to UX Flows. Title and description display behaviour is defined in §5.2.1 (transaction list display and description display sections).
 
 #### 5.2.6 Transaction Filtering
 
@@ -454,14 +488,20 @@ Users can define recurring transaction templates. Parameters:
 - Start date, optional end date.
 - **Posting behaviour** (configurable per template):
   - **Auto-post**: Transaction is posted automatically on the scheduled date.
-  - **Remind and confirm**: An in-app notification prompts the user to review and confirm before posting.
+  - **Remind and confirm**: An **OS-level local notification** prompts the user to review and confirm before posting. This requires `POST_NOTIFICATIONS` (Android 13+) and `SCHEDULE_EXACT_ALARM` permissions. No network call is involved — notifications are entirely on-device. If the user does not respond within **24 hours** of the scheduled time, the transaction is **auto-approved and posted**. The user can disable "remind and confirm" mode for all future occurrences of a template via the template's contextual menu (switching it to auto-post).
+- **Pause / Unpause** (v1):
+  - A recurring template can be **paused** for a specified duration: either M units of the template's time unit (e.g., "pause for 2 months" on a monthly template), or until a custom date and time.
+  - While paused, no transactions are realised. Skipped occurrences **remain skipped** — they are not retroactively posted when the template resumes.
+  - A paused template can be **unpaused** at any time (resumes from the next scheduled occurrence after the current date).
+  - A template **cannot be paused indefinitely** — that is functionally equivalent to disabling, which is deferred to v2. The pause duration must have a defined end.
+  - **Disable / Enable** (permanently stop and restart a template) is deferred to v2. In v2, re-enabling will prompt the user: realise only future transactions, or also backfill all transactions that would have been realised during the disabled period.
 - When the end date passes or all installments are exhausted, the template is **automatically archived**.
 - Archived templates **cannot be reactivated**. If the user wishes to resume a recurring pattern, they must create a new template.
 
 **Child transaction editing and deletion:**
 - Individual child transactions generated by a recurring or installment template are editable and soft-deletable like any other transaction.
 - The existing correction model (reversing + corrected entries, Cases 1.4–1.9 in `docs/ledger-entry.md`) applies in full.
-- Whether editing or soft-deleting a child transaction affects the parent template's state is an open question — see Q47 and Q48.
+- **Effect on the parent template (Q47):** When a child transaction is edited or soft-deleted, the specific occurrence is marked as **"manually handled"** on the template's schedule. The template's overall configuration (amount, recurrence, account, category) is **not affected**. All remaining future occurrences continue to be scheduled and realised normally. The scheduler skips any occurrence already marked as manually handled.
 
 #### 5.2.8 Installments
 
@@ -473,11 +513,30 @@ Parameters:
 - The user may manually adjust individual installment amounts after the auto-calculation stage.
 - If the sum of manually adjusted amounts does not equal the total amount, the app surfaces a **non-blocking warning at save time** of the payment plan. The user may still save and proceed.
 - Whether installments are implemented as a tagged sub-type within the templates table or as a separate entity within that table is deferred to SDS schema design. The PRD treats installments as a distinct concept under the same template generation mechanism as recurring transactions.
-- Whether editing or soft-deleting an individual installment child transaction affects the installment's running total tracking is an open question — see Q48.
+
+**Installment running total tracking (Q48):**
+
+The installment template maintains four tracked amounts:
+
+| Amount | Definition |
+|--------|-----------|
+| **Total configured** | The target total amount set when the installment was created. Immutable after creation. |
+| **Running total** | Sum of all posted (non-voided) child transaction amounts to date. If a child is soft-deleted, its amount is subtracted from the running total. If a child's amount is edited (corrected), the running total reflects the corrected amount. |
+| **Total remaining** | Sum of all future scheduled installment amounts (not yet posted). |
+| **Projected final total** | Running total + Total remaining. May differ from Total configured if individual installments have been manually adjusted, deleted, or corrected. |
+
+The non-blocking mismatch warning (at save time) applies when Projected final total ≠ Total configured.
 
 ---
 
-### 5.3 Budgeting (CORE) — UC-3
+### 5.3 Budgeting *(Deferred to v2)*
+
+> **Deferred:** The entire budgeting feature has been moved to v2. Budgets will be redesigned from the ground up alongside savings goals (also v2) to ensure the two features interact coherently. The previous specification (total + per-category budgets, multi-horizon, rollover, alerts, income replenishment) is preserved below as a v2 starting point but is **not in scope for v1**.
+>
+> All budget-related open questions (Q59, Q61, Q68, Q69) and feature gap items (FG-A17 through FG-A21, FG-B3, FG-B6, FG-C8, FG-C9) are deferred with this decision.
+
+<details>
+<summary>v2 Budget Specification (preserved for reference — not in v1 scope)</summary>
 
 #### 5.3.1 Budget Model
 
@@ -509,12 +568,14 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 
 - In-app alerts fire when spending crosses configurable thresholds (default: 80% and 100%).
 - Alert thresholds are per-budget and user-configurable.
-- Alerts appear within the app only. No OS-level push notifications in v1.
+- Alerts appear within the app only.
 
 #### 5.3.5 Budget Rollover
 
 - Configurable per budget: whether unused remaining budget ($N$ at period end) carries forward to the next period.
 - Defaults to off.
+
+</details>
 
 ---
 
@@ -538,23 +599,38 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 | Time format | 12-hour / 24-hour |
 | Number format | Decimal separator (comma or period), thousands grouping style |
 | Percentage precision | 0, 1, or 2 decimal places for percentage display |
+| Description max length | Configurable character limit for transaction descriptions. Options: 500, 1000, 2000. Default: 1000. |
 
 #### 5.4.3 Security
 
+**Lock mechanism (hierarchical):**
+1. **Device lock** (if set by the user at the OS level) — preferred. The app delegates authentication to the Android Keyguard.
+2. **Device-set app-specific lock** (if the device supports per-app biometric lock) — secondary.
+3. **In-app PIN** — fallback. If neither of the above is available, the app prompts the user to set a PIN within the app on first launch.
+
+**Lock scope (user-configurable):**
+- The user can choose between two modes:
+  - **App-wide lock**: The entire app is locked. The user must authenticate to access any screen.
+  - **Sensitive details only**: The app is freely accessible, but viewing sensitive account details (card numbers, CVV, account numbers, balances in account detail) requires authentication.
+
+**Lock timing:**
+- The lock activates on **app close or app minimisation** (backgrounding). The timeout before the lock engages is **user-configurable** (options: immediately, 30 seconds, 1 minute, 5 minutes).
+- **Sensitive field authentication** is required regardless of the timeout setting. However, once the user authenticates to view sensitive details in a session, the details remain visible until the app is closed or minimised (the lock timeout resets the sensitive-details unlock as well).
+
 | Setting | Notes |
 |---------|-------|
-| App lock | PIN (set within the app) or biometric (fingerprint / face unlock) |
-| Biometric fallback | If biometric fails: falls back to PIN |
-| Sensitive field reveal | Viewing masked card fields (CVV, full card number) requires successful security authentication |
+| Lock mechanism | Device lock / device app-specific lock / in-app PIN (hierarchical fallback) |
+| Lock scope | App-wide or sensitive details only (user-configurable) |
+| Lock timeout | Immediately / 30s / 1m / 5m after app backgrounding (user-configurable) |
+| Sensitive field reveal | Viewing masked card fields (CVV, full card number, account number) requires authentication within the current session |
 
 #### 5.4.4 Management
 
 | Section | Contents |
 |---------|----------|
-| Accounts | View and manage all accounts, including soft-deleted; per-account settings |
-| Transaction categories | Manage income and expense category and subcategory trees |
-| Budgets | View, create, edit, and delete budget definitions |
-| Recurring / Installments | Manage active and archived recurring transaction templates |
+| Accounts | View and manage all accounts, including soft-deleted (with reinstatement option); per-account settings |
+| Transaction categories | Manage income and expense category and subcategory trees (excluding protected system categories, which are hidden) |
+| Recurring / Installments | Manage active, paused, and archived recurring transaction and installment templates |
 
 #### 5.4.5 About & Legal
 
@@ -572,28 +648,69 @@ Contextual action menus are accessible via long-tap, hamburger menu, or 3-dot me
 
 #### 5.5.1 Confirmed Contextual Menu Actions
 
-The following contextual menus and their actions are confirmed by the founder:
+| Entity | Contextual Actions | Notes |
+|--------|-------------------|-------|
+| **Transaction (normal)** | Edit, Delete | "Add to Budget" removed — budgets deferred to v2 |
+| **Account** | Edit, Delete | |
+| **Parent category** (in category management) | Edit, Delete, Add Child Category | Delete triggers migration prompt (§5.2.4) |
+| **Child/subcategory** (in category management) | Edit, Delete | No "Add Child" (max depth is 2). Change parent deferred to v2. |
+| **Recurring transaction template** (active) | Edit template, Delete template, Pause, Unpause, View child transactions | View shows both past and future child transactions. Pause accepts duration in template's time unit or custom date. See §5.2.7. |
+| **Recurring transaction template** (paused) | Edit template, Delete template, Unpause, View child transactions | |
+| **Child transaction of recurring series** | Edit, Delete | Same as normal transaction. |
+| **Photo attachment** (in transaction detail) | Delete photo | No "View full-screen" contextual action — tapping a photo opens it full-screen directly. |
+| **Installment series template** | Edit template, Delete template, Pause, Unpause, View child transactions, View payment progress, Mark series as complete | View payment progress shows the 4 tracked amounts (§5.2.8). Mark as complete archives the template early (for lump-sum payoffs or negligible remaining amounts). |
+| **Soft-deleted account** (in Settings > Accounts) | Reinstate | See §5.1.1 reinstatement. |
+| **Soft-deleted category** (in Settings > Categories) | Reinstate | See §5.2.4 reinstatement. |
 
-| Entity | Contextual Actions |
-|--------|-------------------|
-| Transaction (normal) | Edit, Delete, Add to Budget |
-| Account | Edit, Delete |
-| Parent category (in category management) | Edit, Delete, Add Child Category |
+#### 5.5.2 Deferred Contextual Menu Cases (v2)
 
-#### 5.5.2 Unresolved Contextual Menu Cases
+| Entity | Notes |
+|--------|-------|
+| Budget entry | Entire budgeting feature deferred to v2. |
+| Transaction "Add to Budget" / "Remove from Budget" | Deferred with budgets. |
+| Voided transaction (audit view) | No restoring voided transactions. Audit view actions to be designed in v2. |
+| Recurring template "Disable / Enable" | Only Pause / Unpause in v1. Full disable/enable with backfill option in v2. |
+| Subcategory "Change parent" | Reassigning a subcategory to a different parent deferred to v2. |
 
-The following entities may also need contextual action menus. Each is an open question. The founder identified that he felt he was missing cases — the full list is surfaced here for resolution.
+---
 
-| Entity | Open Question ID | Candidate Actions (unconfirmed) |
-|--------|-----------------|--------------------------------|
-| Child/subcategory entry | Q56 | Edit, Delete — but no "Add Child" since max depth is 2. Confirm? |
-| Recurring transaction template (active) | Q57 | Edit template, Delete template, Pause/Disable template (is pause a feature?), View generated child transactions? |
-| Individual child transaction in a recurring series | Q58 | Same as normal transaction (Edit, Delete, Add to Budget)? Can "Add to Budget" be applied to a recurring child? |
-| Budget entry | Q59 | Edit budget, Delete budget — is there a contextual menu or are these only accessible from the budget detail screen? |
-| Photo attachment on a transaction | Q60 | View full screen, Delete photo — is there a contextual menu on individual photos? |
-| Transaction already added to a budget | Q61 | Once a transaction has been added to a budget, can it be removed? Is there a "Remove from Budget" action? |
-| Voided transaction (visible in v2 audit view) | Q62 | What actions are available on a voided transaction? Can the user un-void a transaction? |
-| Installment series template | Q63 | Edit template, Delete template — same questions as recurring template (Q57). Any installment-specific actions? |
+### 5.6 Onboarding & First Launch
+
+#### 5.6.1 Default Category Seeding
+
+On first install, all default income and expense categories listed in §5.2.4 are **silently pre-loaded** into the database. The user starts with a fully populated category taxonomy with zero friction. No user action is required.
+
+#### 5.6.2 Onboarding Wizard
+
+A first-launch onboarding wizard guides the user through initial setup. The wizard consists of the following steps:
+
+| Step | Screen | Content | Skippable? |
+|------|--------|---------|------------|
+| 1 | **Welcome** | App name, tagline, brief value proposition (local-first, private, no sign-up required). | No (entry screen) |
+| 2 | **Currency selection** | The app derives the home currency from the device locale and displays it prominently: *"We think your currency is ₹ INR."* The user can confirm or change it. **Fallback:** INR (this is an Indian-audience app). If the user skips the entire onboarding, the locale-derived currency (or INR fallback) is set as the default. Currency can be changed at any time in Settings (§5.4.2). | Yes |
+| 3 | **Create first account** | Simplified account creation form: name, account category (from the 8 fixed types in §5.1.2), initial balance. Gets the user to a usable state immediately. | Yes (home screen shows empty state CTA) |
+| 4 | **Quick highlights** | 2–3 swipeable cards showing key capabilities (track expenses, recurring transactions, multiple accounts). Brief, visual, skippable. | Yes |
+| 5 | **Done** | Transition to the home screen. If the user created an account in step 3, it appears immediately. If skipped, the home screen shows an empty state with a CTA to create their first account. | N/A (auto-transition) |
+
+A **Skip** button is available on steps 2–4. Skipping bypasses remaining wizard steps and lands the user on the home screen with locale-derived defaults applied. Categories are always seeded regardless of whether the user completes or skips the wizard.
+
+> **Note:** The exact onboarding screen designs, illustrations, copy, and transitions are deferred to UX Flows (UX-5, UX-6). This section defines the functional scope and step sequence.
+
+---
+
+### 5.7 Timezone & Date Policy
+
+**Storage:** All transaction timestamps are stored in **UTC**. Display is always in the device's local timezone.
+
+**Back-dating:** Users may set a transaction date in the past. Back-dated transactions are posted to the ledger immediately on save. They affect the account balance and appear in the transaction list at their specified date.
+
+**Future-dating:** Users may set a transaction date in the future. Future-dated transactions are **held as pending** until the scheduled date arrives. Pending transactions:
+- Are **not** posted to the ledger and do **not** affect account balances until the date is reached.
+- Do **not** appear in the default transaction list (they are excluded alongside voided and superseded transactions).
+- Are automatically posted on the scheduled date (or on the next app open after the date passes).
+- An **info popup** is shown at save time when the user selects a future date: *"This transaction is dated in the future. It will be held as pending and posted on [date]."*
+
+> **Schema implication:** Transactions require a `status` field with at least two values: `posted` and `pending`. The transition from `pending` to `posted` is handled by the same scheduler that processes recurring auto-posts.
 
 ---
 
@@ -601,7 +718,7 @@ The following entities may also need contextual action menus. Each is an open qu
 
 | ID    | Category | Requirement |
 |-------|----------|-------------|
-| NF-1  | Privacy | Zero telemetry. The app never initiates a network call for any core functionality. |
+| NF-1  | Privacy | Zero telemetry. The app never initiates a network call for any core functionality. OS-level **local** notifications are used for recurring "remind and confirm" prompts (§5.2.7) — these are entirely on-device and require `POST_NOTIFICATIONS` (Android 13+) and `SCHEDULE_EXACT_ALARM` permissions. No cloud push infrastructure is involved. |
 | NF-2  | Offline-first | All core v1 functionality operates with zero internet. Internet will be used only for future opt-in features (exchange rate sync, Drive backup), fetched opportunistically in the background. |
 | NF-3  | Performance | Cold start < 2 seconds on mid-range hardware. Transaction list render (10,000 records) < 500ms. |
 | NF-4  | Data portability | Data stored in a portable, standard format. Format decision deferred to SDS. |
@@ -628,6 +745,21 @@ In v1, each account holds a currency. The app maintains a home currency (set in 
 **Cross-currency transfers:**
 - In v1, **transfers between accounts of different currencies are disallowed**. The UI must prevent the user from selecting a destination account whose currency differs from the source account during a transfer. This constraint is deferred for resolution in v2.
 
+### 7.1 Transaction-Level Exchange Rate Capture
+
+When a transaction is created against an account whose currency differs from the home currency, the app captures the current cached exchange rate at the time of creation and **stores it with the transaction**. This rate is locked — it does not change with subsequent rate updates.
+
+**Display in the unified transaction list (Q76):**
+- Amounts are shown in **both** the original account currency and the home currency equivalent.
+- The home currency equivalent is computed from the stored transaction-level exchange rate (not the current cached rate).
+- The exchange rate itself is shown in the **transaction detail view** (not in the list row).
+
+**Net worth vs. transaction display:**
+- **Net worth** uses the **current/cached rate** (§7 above) because net worth should reflect current market value.
+- **Individual transaction amounts** use the **historical stored rate** because the economic value at the time of the transaction is fixed.
+
+**Schema implication:** Transactions require an `exchange_rate_to_home` field (nullable — only set when account currency ≠ home currency). When set, the home currency equivalent is `amount × exchange_rate_to_home`.
+
 > Full exchange rate fetching model will be specified in SDS. This is an internet-optional feature even in v1.
 
 ---
@@ -637,30 +769,44 @@ In v1, each account holds a currency. The app maintains a home currency (set in 
 ### ✅ In Scope — v1
 
 - Double-entry ledger engine (internal)
-- Account CRUD (soft delete) with 8 fixed account category types and per-type fields; account name uniqueness enforced
+- Account CRUD (soft delete, reinstatement) with 8 fixed account category types and per-type fields; account name uniqueness enforced across active and soft-deleted accounts
 - Per-account net-worth inclusion flag
 - Transaction entry: income, expense, transfer (abstract DEB UI); title and description replace notes on transactions
-- Transaction immutability: correcting entries for amount, account, and category edits; reversing entries on delete
-- Two-level transaction category taxonomy (income and expense), user-manageable; icon + name fields only; two-level management UX; name uniqueness within parent
-- Protected "Balance Adjustment" system category
+- Transaction immutability: correcting entries for amount, account, and category edits; reversing entries on delete; only final corrected version visible in list
+- Two-level transaction category taxonomy (income and expense), user-manageable; icon (from `material_symbols_icons` curated subset) + name fields only; two-level management UX; name uniqueness within parent; alphabetical display order
+- Protected "Balance Adjustment" system category (fully immutable, hidden from management)
+- Protected entity pattern (`is_protected` flag) for system-managed categories and accounts
+- Transaction category migration on soft-delete (move transactions to another category)
 - Universal account balance model (direct balance edit, recorded transaction, delete reversal) — applies to all account types
+- Unified transaction list (all accounts, 3-column layout) + per-account transaction list via account detail
 - Fuzzy search across all transaction fields
 - Dedicated filter view with defined filter criteria
-- Recurring transactions with configurable N-unit recurrence and posting behaviour
-- Installments as a recurring sub-type with total/per-period amount and adjustment
+- Recurring transactions with configurable N-unit recurrence, posting behaviour, pause/unpause
+- OS-level local notifications for "remind and confirm" recurring transactions (auto-approve after 24h)
+- Installments as a recurring sub-type with total/per-period amount, adjustment, and 4-way running total tracking
+- Child transaction "manually handled" marking on templates
 - Multiple photo attachments per transaction (local private storage)
-- Budgeting: total + per-category budgets, multi-horizon, configurable rollover, alerts
-- Income replenishment of budget pools via more-options
+- Future-dated transactions held as pending until scheduled date
+- Transaction timestamps stored in UTC, displayed in local timezone
+- Transaction-level exchange rate capture (locked at creation time) for foreign-currency accounts
 - Basic home summary (account balances, net worth)
-- Settings: appearance (Material You), primary config, security (PIN + biometric), management, about
+- First-launch onboarding wizard (currency selection, first account creation, feature highlights)
+- Default category seeding on first install
+- Settings: appearance (Material You), primary config, security (device lock / PIN with configurable scope and timeout), management, about
 - Multi-currency accounts with cached exchange rates (opportunistic background fetch)
+- Multi-currency display: both original and home currency amounts in transaction list
 - Universal soft-delete: no entity is ever permanently deleted
 - Internal equity account for initial balance (invisible to user)
+- System-generated internal transfer on account soft-delete (with warning on deletion)
 
 ### 🔄 Deferred — v2
 
-- Trends, dashboards, charts, analytics, visualisations
+- **Budgeting** (total + per-category budgets, multi-horizon, configurable rollover, alerts, income replenishment) — to be redesigned alongside savings goals
 - Savings goals
+- Account and category manual reordering
+- Recurring template disable/enable (with backfill option)
+- Subcategory parent reassignment
+- Trends, dashboards, charts, analytics, visualisations
 - Data management: backup/restore (portable file), CSV export, CSV import, data wipe
 - Audit view (surfaces all transactions including voided and journal adjustments)
 - Tags (color, name, icon; assignable to transactions; filterable and searchable)
@@ -694,7 +840,7 @@ In v1, each account holds a currency. The app maintains a home currency (set in 
 | SC-1 | User can record an expense transaction in < 30 seconds from cold app open. |
 | SC-2 | Ledger invariant holds: $\sum \text{debit}(T) = \sum \text{credit}(T)$ for every posted transaction, verifiable by automated test. |
 | SC-3 | Account balances are always consistent with ledger — no stale stored balance. |
-| SC-4 | Budget views render correctly across all four supported horizons (weekly, monthly, quarterly, annual). |
+| SC-4 | *(Deferred to v2 — budget views)* |
 | SC-5 | No uninstructed network call is made during normal app use (verifiable via Android network profiler). |
 | SC-6 | App cold-starts in < 2 seconds on mid-range Android 12+ hardware. |
 | SC-7 | Data survives forced-kill: no transaction is lost after force-closing the app. |
@@ -739,53 +885,6 @@ In v1, each account holds a currency. The app maintains a home currency (set in 
 
 ## 11. Open Questions
 
-> All questions Q1–Q46 are resolved and baked into the document above. The resolved questions log is maintained in `docs/ideation-tracker.md`. The following questions (Q47–Q63) remain open and block downstream deliverables.
-
-### Open Questions (Active)
-
-#### Group A — Blocking UX Flows
-
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q47 | **Child transaction edit/delete — effect on recurring template**: When the user edits or soft-deletes an individual child transaction that was generated by a recurring template, does this affect the template in any way? For example: (a) mark that occurrence as "manually handled" so the scheduler skips it, (b) update the template's "last posted" pointer, or (c) no effect — the template is entirely unaware. This affects the scheduler design and UX affordances on the child transaction. | SDS, UX |
-| Q48 | **Child transaction edit/delete — effect on installment running total**: An installment template tracks a running total of amounts posted across child transactions (Σ posted = target total). If a child transaction is soft-deleted (voided), should the voided amount be subtracted from the running total? If a child transaction's amount is edited (corrected), should the running total update to reflect the corrected amount? If not updated, the installment may never reach the target total via the tracker even though it was economically settled. | SDS, UX |
-| Q49 | **Account soft-delete balance transfer transaction type**: When the user accepts the prompt to transfer their remaining account balance to another account as part of the soft-delete flow (resolved in Q45), what type of transaction is posted? Options: (a) a standard Transfer transaction between the two accounts (visible, user-owned), (b) a special system-generated transfer (internal, not user-editable), or (c) the user is dropped into the normal Transfer entry screen pre-populated. This affects both the UX flow and the ledger entry case. | SDS, UX |
-
-#### Group B — Blocking SDS
-
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q50 | **Category icon system** (partially addressed): Q40 confirmed users can change the icon of any category. The founder confirmed in v0.2.3 that categories have an icon field. The source of icons is still unresolved. Options: (a) a bundled finite icon set (user picks from a predefined palette, e.g., Material Symbols subset), (b) any icon from the full Material Symbols / Material Icons library (large but bounded set), (c) user-provided images from device storage (unbounded, complex). This decision affects storage model, asset bundling strategy, and SDS. | SDS |
-| Q51 | **"Balance Adjustment" protected category — exempt from mutability?**: Q40 confirmed all default categories are fully mutable (rename, icon-change, reorder, soft-delete). The "Balance Adjustment" category is a system-managed protected category (not user-selectable, assigned automatically). Is it exempt from the mutability rules? Specifically: can the user rename it, change its icon, or soft-delete it? Soft-deleting it would leave the system with no valid target for journal adjustment income/expense classification. | SDS, product policy |
-
-#### Group C — Account Management (New — v0.2.3)
-
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q52 | **Account name uniqueness — does it extend to soft-deleted accounts?**: Account names must be unique (§5.1.1). Does this uniqueness constraint apply across soft-deleted accounts as well? That is, if an account named "HDFC Savings" is soft-deleted, can the user create a new account also named "HDFC Savings"? Options: (a) uniqueness applies to all accounts including soft-deleted — the name is permanently reserved; (b) uniqueness applies only to non-deleted (active) accounts — soft-deleted names are recyclable. | SDS, UX |
-
-#### Group D — Transaction Fields (New — v0.2.3)
-
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q53 | **Transaction title — display behaviour**: The title field is optional. When present, does it appear as the primary label in the transaction list (replacing or supplementing the category name)? When absent, what label is shown in the list? Does title appear in search results as a primary or secondary field? | UX |
-| Q54 | **Transaction description — display behaviour**: The description field is optional and may be long-form. Does description appear in the transaction list view, or only in the transaction detail view? Is there a character limit? If it appears in the list, is it truncated? | UX |
-
-#### Group E — Category Management (New — v0.2.3)
-
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q55 | **Parent category with children — can it be soft-deleted en masse?**: The current rule is: a parent category cannot be soft-deleted if it has child subcategories. The user must soft-delete all children first, at which point the now-leaf parent can be deleted. Is this the final rule, or should the app offer a bulk "delete parent and all its children" action? | SDS, UX |
-
-#### Group F — Contextual Action Menus (New — v0.2.3)
-
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q56 | **Subcategory contextual menu**: Does a child/subcategory entry in the category management screen have a contextual action menu? If yes, what are the actions? Expected: Edit, Delete. Confirm that "Add Child" is absent (max depth is 2 — subcategories cannot have their own children). | UX |
-| Q57 | **Recurring template contextual menu**: What contextual actions are available on a recurring transaction template entry (in the Recurring / Installments management screen)? Confirmed candidates: Edit template, Delete template. Open sub-questions: (a) Is "Pause/Disable template" a feature (pauses auto-posting without deleting the template)? (b) Is there a "View generated child transactions" action? (c) Can a paused template be resumed? | SDS, UX |
-| Q58 | **Child transaction of a recurring series — contextual menu**: Does an individual child transaction generated by a recurring template have the same contextual menu as a normal transaction (Edit, Delete, Add to Budget)? Specifically: is "Add to Budget" valid on a recurring child transaction? | UX |
-| Q59 | **Budget entry contextual menu**: Is there a contextual action menu on a budget entry (in the budget list or budget detail screen)? If yes, what actions? Candidates: Edit budget, Delete budget. Or are these actions only accessible via a dedicated budget settings/detail screen? | UX |
-| Q60 | **Photo attachment contextual menu**: When a user views photos attached to a transaction (in the transaction detail view), is there a contextual menu per photo? If yes, what actions? Candidates: View full-screen, Delete photo. | UX |
-| Q61 | **"Remove from Budget" action**: Once a transaction has been added to a budget pool via "Add to Budget", can that association be reversed? Is there a "Remove from Budget" contextual action on the transaction? What happens to the budget pool's remaining balance if the transaction is removed? | SDS, UX |
-| Q62 | **Voided transaction actions (v2 audit view)**: When voided transactions are surfaced in the v2 audit view, what contextual actions are available? Can the user un-void (restore) a transaction? If un-voiding is allowed, does the system simply remove the reversing entry, or does it post a new correcting pair? | SDS, UX |
-| Q63 | **Installment series template contextual menu**: Same as Q57 but for installment templates. What contextual actions are available on an installment series template? Do installment templates have any actions unique to their nature (e.g., "View remaining installments", "Mark series as complete")? | SDS, UX |
+> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log with original question text and decisions is maintained in `docs/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and feature gap items (Parts 2–3) are tracked in `docs/gaps-and-questions.md`.
+>
+> No open questions remain. The PRD is ready for sign-off.
