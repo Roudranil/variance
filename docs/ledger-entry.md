@@ -98,7 +98,7 @@
 > **Liability as destination (pay credit card bill):** A₁ = bank (A), A₂ = credit card (L).
 > Entries: `Dr L, Cr A`. Dr on liability → liability balance ↓ (less owed). ✅
 >
-> 🔴 **Q42:** Clarify transfer direction when one account is a liability (Credit Card). Confirm entry is `Dr L (credit card), Cr A (bank)` for a credit card payment. This reduces the liability balance.
+> ✅ **Q42 Resolved:** Entry confirmed as `Dr L (credit card), Cr A (bank)` for a credit card payment. Reduces liability balance.
 
 ---
 
@@ -185,8 +185,8 @@
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
-| R1 | Cr | IC | B |
-| R2 | Dr | A | B |
+| R1 | Cr | A | B |
+| R2 | Dr | IC | B |
 
 **Invariant check:** Dr = B, Cr = B ✅
 
@@ -233,7 +233,7 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 **Effect:** L liability balance = Σ Cr − Σ Dr = B ✅. EQ debited.
 
-> 🔴 **Q43:** Confirm opening balance model for liability accounts: EQ is debited (not credited) when a liability starts with balance B. The EQ account must support both debit and credit postings depending on account type.
+> ✅ **Q43 Resolved:** EQ is debited when a liability starts with balance B > 0. EQ supports bidirectional postings (credited for asset openings, debited for liability openings). This case is valid as written.
 
 ---
 
@@ -258,12 +258,29 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 | 1 | Dr | BAE (Balance Adjustment expense) | ΔB |
 | 2 | Cr | A | ΔB |
 
-**Invariant check:** Dr = Cr = ΔB ✅ for all sub-cases.
+**Sub-case 2.3c — Liability balance increases (B' > B, more owed): recorded as expense**
 
-> 🔴 **Q44:** For **liability** accounts, when balance increases (more owed) or decreases (less owed) via journal adjustment, how is the income/expense direction determined?
-> - Liability balance ↑ (more owed) logically corresponds to an *expense* (you incurred more debt).
-> - Liability balance ↓ (less owed without a transfer) logically corresponds to *income* (debt forgiven/written off).
-> The DR/CR mechanics must be confirmed for liability sub-cases.
+> *e.g., an existing credit card debt grows (interest charged, fee levied) — recorded as expense incurred.*
+
+| Entry | Side | Account/Category | Amount |
+|-------|------|-----------------|--------|
+| 1 | Dr | BAE (Balance Adjustment expense) | ΔB |
+| 2 | Cr | L | ΔB |
+
+**Effect:** L liability balance (Σ Cr − Σ Dr) ↑ ΔB. BAE expense balance ↑ ΔB. ✅
+
+**Sub-case 2.3d — Liability balance decreases (B' < B, less owed without a transfer): recorded as income**
+
+> *e.g., a debt is forgiven or written off — recorded as income received.*
+
+| Entry | Side | Account/Category | Amount |
+|-------|------|-----------------|--------|
+| 1 | Dr | L | ΔB |
+| 2 | Cr | BAI (Balance Adjustment income) | ΔB |
+
+**Effect:** L liability balance (Σ Cr − Σ Dr) ↓ ΔB. BAI income balance ↑ ΔB. ✅
+
+**Invariant check:** Dr = Cr = ΔB ✅ for all sub-cases.
 
 ---
 
@@ -285,7 +302,27 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 | 1 | Dr | EQ | ΔB |
 | 2 | Cr | A | ΔB |
 
-**Invariant check:** Dr = Cr = ΔB ✅
+**Sub-case 2.4c — Liability balance increases (B' > B, more owed): not recorded**
+
+> *The change is absorbed silently against EQ.*
+
+| Entry | Side | Account/Category | Amount |
+|-------|------|-----------------|--------|
+| 1 | Dr | EQ | ΔB |
+| 2 | Cr | L | ΔB |
+
+**Effect:** L liability balance ↑ ΔB. EQ debited (mirrors opening balance liability logic). ✅
+
+**Sub-case 2.4d — Liability balance decreases (B' < B, less owed): not recorded**
+
+| Entry | Side | Account/Category | Amount |
+|-------|------|-----------------|--------|
+| 1 | Dr | L | ΔB |
+| 2 | Cr | EQ | ΔB |
+
+**Effect:** L liability balance ↓ ΔB. EQ credited. ✅
+
+**Invariant check:** Dr = Cr = ΔB ✅ for all sub-cases.
 
 ---
 
@@ -295,7 +332,7 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 All prior ledger history retained. Account flagged as deleted. Excluded from net worth and all user-facing views going forward.
 
-> 🔴 **Q45:** When an account with non-zero balance (B > 0) is soft-deleted, should the app prompt the user to transfer or re-allocate the remaining balance before deletion? Or is silent soft-delete acceptable with the balance becoming "inaccessible" in normal views? This is a UX and product policy decision.
+> ✅ **Q45 Resolved:** Two-step flow: (1) Prompt user to transfer remaining balance to another account. (2) If declined, second confirmation warns net worth will change. If confirmed, soft-delete proceeds. Balance transfer transaction type tracked in Q49.
 
 ---
 
@@ -328,12 +365,7 @@ No new ledger pattern. ✅
 
 **Invariant challenge:** The DEB invariant `Σ Dr = Σ Cr` holds only in a single currency. Multi-currency entries break nominal balance.
 
-> 🔴 **Q46 (blocking SDS):** How does the ledger handle cross-currency transfers? Options:
-> - **Option A:** Store all amounts in home currency (converted at entry time). Simple but lossy (original currency amounts lost).
-> - **Option B:** Store native currency amounts + exchange rate snapshot per entry. Allows reconstruction. Complex schema.
-> - **Option C:** Disallow transfers between accounts of different currencies in v1. Simplest path.
->
-> Recommendation: Resolve before SDS. This affects schema, balance calculation, and invariant enforcement.
+> ✅ **Q46 Resolved:** Cross-currency transfers are **disallowed in v1**. The UI must prevent selecting a destination account with a different currency than the source. This case will not occur in v1. Deferred to v2.
 
 ---
 
@@ -365,18 +397,22 @@ The new balance edit computes ΔB from the *current* balance (which already incl
 | 1.2 | Create Income | Dr A, Cr IC | 1 txn, 2 entries |
 | 1.3 | Create Transfer | Dr A₂, Cr A₁ | 1 txn, 2 entries |
 | 1.4 | Modify Expense (financial) | Reversing (Cr EC, Dr A) + Corrected (Dr EC', Cr A') | 2 txns, 4 entries |
-| 1.5 | Modify Income (financial) | Reversing (Cr IC, Dr A) + Corrected (Dr A', Cr IC') | 2 txns, 4 entries |
+| 1.5 | Modify Income (financial) | Reversing (Cr A, Dr IC) + Corrected (Dr A', Cr IC') | 2 txns, 4 entries |
 | 1.6 | Modify Transfer (financial) | Reversing (Cr A₂, Dr A₁) + Corrected (Dr A₂', Cr A₁') | 2 txns, 4 entries |
 | 1.7 | Soft-Delete Expense | Cr EC, Dr A | 1 txn, 2 entries |
-| 1.8 | Soft-Delete Income | Cr IC, Dr A | 1 txn, 2 entries |
+| 1.8 | Soft-Delete Income | Cr A, Dr IC | 1 txn, 2 entries |
 | 1.9 | Soft-Delete Transfer | Cr A₂, Dr A₁ | 1 txn, 2 entries |
 | 2.1 | Create Account, balance = 0 | None | 0 |
 | 2.2a | Create Asset Account, balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
 | 2.2b | Create Liability Account, balance B > 0 | Dr EQ, Cr L | 1 txn, 2 entries |
 | 2.3a | Edit Asset Balance ↑ → record as income | Dr A, Cr BAI | 1 txn, 2 entries |
 | 2.3b | Edit Asset Balance ↓ → record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
+| 2.3c | Edit Liability Balance ↑ → record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
+| 2.3d | Edit Liability Balance ↓ → record as income | Dr L, Cr BAI | 1 txn, 2 entries |
 | 2.4a | Edit Asset Balance ↑ → do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
 | 2.4b | Edit Asset Balance ↓ → do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
+| 2.4c | Edit Liability Balance ↑ → do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
+| 2.4d | Edit Liability Balance ↓ → do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
 | 2.5 | Soft-Delete Account | None | 0 |
 | 3.1 | Recurring auto-post | Same as 1.1–1.3 | Same as type |
 | 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
@@ -387,13 +423,13 @@ The new balance edit computes ΔB from the *current* balance (which already incl
 
 ---
 
-## New Open Questions Surfaced by This Analysis
+## Questions Surfaced by This Analysis — Resolution Status
 
-| ID | Question | Blocks |
-|----|----------|--------|
-| Q41 | PRD §4.5 and §4.6 conflict on income transaction entry sides. §4.5 says Dr IC, Cr A, but §4.6 says income balance = Σ Cr − Σ Dr. Recommend correcting to: `Dr A, Cr IC`. Resolve before SDS. | SDS, financial model |
-| Q42 | For a liability-to-asset transfer (e.g., pay credit card bill), confirm entry is `Dr L (credit card), Cr A (bank)` — which reduces the liability balance. | SDS, UX |
-| Q43 | Opening balance for liability accounts: EQ must be debited (not credited) when a liability starts with balance B > 0. Confirm EQ supports bidirectional postings. | SDS |
-| Q44 | For liability accounts, how is income/expense direction determined in a journal adjustment? (Balance ↑ = more debt = expense? Balance ↓ = debt forgiven = income?) | SDS, UX |
-| Q45 | When an account with non-zero balance is soft-deleted, should the user be prompted to transfer the remaining balance first? | UX, product policy |
-| Q46 | Cross-currency transfers: how are entries balanced in the ledger? (home-currency conversion, native + rate snapshot, or disallow in v1?) | SDS, financial model — **blocking** |
+| ID | Question | Status | Decision |
+|----|----------|--------|----------|
+| Q41 | PRD §4.5 and §4.6 conflict on income transaction entry sides. | ✅ Resolved (v0.2.0) | Corrected to `Dr A, Cr IC`. |
+| Q42 | Confirm entry `Dr L, Cr A` for credit card payment. | ✅ Resolved (v0.2.1) | Confirmed. Reduces liability balance. |
+| Q43 | EQ debited for liability opening balance. Confirm bidirectional postings. | ✅ Resolved (v0.2.1) | Confirmed. EQ supports debit and credit. |
+| Q44 | Liability journal adjustment income/expense direction. | ✅ Resolved (v0.2.1) | Balance ↑ = expense (2.3c/2.4c). Balance ↓ = income (2.3d/2.4d). Cases added. |
+| Q45 | Soft-delete account with non-zero balance: prompt to transfer? | ✅ Resolved (v0.2.1) | Two-step flow with transfer prompt and net-worth warning. Q49 tracks transfer type. |
+| Q46 | Cross-currency transfers ledger handling. | ✅ Resolved (v0.2.1) | Disallowed in v1. Deferred to v2. |
