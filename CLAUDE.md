@@ -51,7 +51,7 @@ You are responsible for producing and maintaining these artifacts. Engineering w
 
 ### 1. Product Requirements Document (PRD)
 
-Location: `docs/prd.md`
+Location: `docs/01-product/prd.md`
 
 Contents:
 - Problem statement
@@ -65,7 +65,7 @@ Contents:
 
 ### 2. System Design Spec (SDS)
 
-Location: `docs/sds.md`
+Location: `docs/02-technical/sds.md`
 
 Contents:
 - Technical stack (language, frameworks, libraries, target platform)
@@ -78,7 +78,7 @@ Contents:
 
 ### 3. API Contracts
 
-Location: `docs/api-contracts.md`
+Location: `docs/02-technical/api-contracts.md`
 
 Contents:
 - Internal interfaces (repository layer, services, etc.)
@@ -90,7 +90,7 @@ Contents:
 
 ### 4. UX Flows
 
-Location: `docs/ux-flows.md`
+Location: `docs/02-technical/ux-flows.md`
 
 Contents:
 - User journey maps
@@ -103,7 +103,7 @@ Contents:
 
 ### 5. Execution Plan (EP)
 
-Location: `docs/execution-plan.md`
+Location: `docs/03-planning/task-breakdown.md`
 
 Contents:
 - Task breakdown (EPIC → CAPABILITY → TASK DAG)
@@ -114,7 +114,7 @@ Contents:
 
 ### 6. Ideation Tracker
 
-Location: `docs/ideation-tracker.md`
+Location: `docs/06-helpers/ideation-tracker.md`
 
 Contents:
 - Phase status
@@ -261,10 +261,16 @@ Two skills are available as slash commands. Invoke them when working on Flutter/
 
 | Document | Path | Purpose |
 |----------|------|---------|
-| PRD | `docs/prd.md` | What we're building and why |
-| Ledger Entry Cases | `docs/ledger-entry.md` | Authoritative posting case reference |
-| Ideation Tracker | `docs/ideation-tracker.md` | Phase status, open questions, decisions |
-| SDS | `docs/sds.md` | How we're building it |
-| API Contracts | `docs/api-contracts.md` | Internal interfaces |
-| UX Flows | `docs/ux-flows.md` | User interaction specification |
-| Execution Plan | `docs/execution-plan.md` | Task breakdown and dependencies |
+| PRD | `docs/01-product/prd.md` | What we're building and why |
+| Ledger Entry Cases | `docs/01-product/ledger-entry.md` | Authoritative posting case reference |
+| Frontmatter Schema | `docs/frontmatter-schema.md` | Schema reference for all doc frontmatter |
+| Folder Structure | `docs/06-helpers/ideation-folder-structure.md` | Docs folder taxonomy |
+| Ideation Tracker | `docs/06-helpers/ideation-tracker.md` | Phase status, open questions, decisions |
+| Gaps & Questions | `docs/06-helpers/gaps-and-questions.md` | UX pre-work and feature gap analysis |
+| SDS | `docs/02-technical/sds.md` | How we're building it |
+| Feature DAG | `docs/02-technical/feature-dag.md` | Feature dependency graph |
+| Data Model | `docs/02-technical/data-model.md` | Schema and entity design |
+| API Contracts | `docs/02-technical/api-contracts.md` | Internal interfaces |
+| UX Flows | `docs/02-technical/ux-flows.md` | User interaction specification |
+| Task Breakdown | `docs/03-planning/task-breakdown.md` | Task breakdown and dependencies |
+| Sprint Plans | `docs/03-planning/sprint-plans.md` | Sprint-level delivery plans |
