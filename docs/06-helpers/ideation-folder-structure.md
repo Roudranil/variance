@@ -18,7 +18,8 @@ docs/
 ├── 01-product/                     # Product definition artifacts
 │   ├── prd.md
 │   ├── prd-v2-draft.md
-│   └── ledger-entry.md
+│   ├── ledger-entry.md
+│   └── input-fields.md
 ├── 02-technical/                   # Technical specifications
 │   ├── feature-dag.md
 │   ├── sds.md
@@ -59,6 +60,7 @@ docs/
 | PRD                | `docs/01-product/prd.md`                       | What we're building and why              |
 | Ledger Entry Cases | `docs/01-product/ledger-entry.md`              | Authoritative posting case reference     |
 | PRD v2 Draft       | `docs/01-product/prd-v2-draft.md`              | All deferred v2 features and decisions   |
+| Input Fields       | `docs/01-product/input-fields.md`              | Authoritative field inventory for all user input forms |
 | Frontmatter Schema | `docs/frontmatter-schema.md`                   | Schema reference for all doc frontmatter |
 | Folder Structure   | `docs/06-helpers/ideation-folder-structure.md` | Docs folder taxonomy                     |
 | Ideation Tracker   | `docs/06-helpers/ideation-tracker.md`          | Phase status, open questions, decisions  |
