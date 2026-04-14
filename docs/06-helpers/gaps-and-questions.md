@@ -90,6 +90,19 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 | ID | Document | Section | Error | Status |
 |----|----------|---------|-------|--------|
 | ERR-1 | `docs/01-product/prd.md` | §4.5 Transaction Rules by Type — Expense | Debit/credit sides were reversed. | ✅ Fixed — §4.5 now correctly reads "debit side" for expense category and "credit side" for account. |
+| ERR-2 | `docs/01-product/prd.md` | §4.2 Accounting Equation | The second equation was missing the Equity term. | ✅ Fixed — Equity term added; Variance-specific note added explaining EQ exclusion from user-facing computation. |
+| ERR-3 | `docs/01-product/prd.md` | §4.11 Notation line | Notation legend used retired `L = liability account` symbol. | ✅ Fixed — Replaced with `A = any user-facing account`; added `FC` symbol. |
+
+### LC — Ledger Case Coverage Gaps
+
+> ✅ All gaps resolved on 2026-04-14. Cases added to both `docs/01-product/ledger-entry.md` and the PRD §4.11 compact summary table.
+
+| ID | Event | Resolution |
+|----|-------|-----------|
+| LC-1 | Modify transfer-with-fee | ✅ Case 1.6a added — reverse both (transfer + fee) + correct both. 4 txns, 8 entries. |
+| LC-2 | Soft-delete transfer-with-fee | ✅ Case 1.9a added — reverse both (transfer + fee). 2 linked txns, 4 entries. |
+| LC-3 | Account deletion balance transfer | ✅ Case 2.5a added — with sub-cases for positive and negative balance. System-generated, non-editable. |
+| LC-4 | Batch category migration | ✅ Case 3.7 added — per transaction: reversing + corrected pair. Atomicity note for SDS. |
 
 ---
 

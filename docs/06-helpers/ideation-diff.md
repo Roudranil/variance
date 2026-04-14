@@ -4,114 +4,96 @@ status: current
 owner: pm
 created: 2026-04-14
 last_updated: 2026-04-14
-depends_on: [01-product/prd.md, 06-helpers/gaps-and-questions.md, 06-helpers/ideation-tracker.md]
+depends_on: [01-product/prd.md, 01-product/ledger-entry.md, 06-helpers/gaps-and-questions.md, 06-helpers/ideation-tracker.md]
 outputs_to: []
 ---
 
-# Ideation Session Diff — 2026-04-14 (Session 4)
+# Ideation Session Diff — 2026-04-14 (Session 5)
 
 > This file records the exact set of changes made to product documents in the current ideation session. It is used as the basis for commit messages. It overwrites the previous session's contents on each new session.
 
-**Session scope:** Feature gap resolution — FG-C1 through FG-C21 (Part 3, Group C of `gaps-and-questions.md`). 7 items baked into v1 PRD, 7 deferred to v2, 1 deferred to v3, 3 rejected, 2 no action needed. FG-C21 (auto-detect transactions from SMS/email) is a new item added during this session. v2 draft PRD updated with new §21 and resolved FG-C table.
+**Session scope:** DEB & ledger entry audit — comprehensive mathematical verification of all double-entry bookkeeping postings, balance formulas, and equation consistency across the PRD and ledger-entry.md. 2 equation errors fixed (ERR-2, ERR-3). 4 missing ledger cases added (LC-1 through LC-4). Sign-based asset/liability inference stress-tested across 11 scenarios — all hold.
 
 ---
 
 ## `docs/01-product/prd.md`
 
-### TOC
+### §4.2 — Accounting Equation (ERR-2 fix)
 
-- Added §5.1.3a Balance Reconciliation entry.
+- **Added Equity term** to the expanded accounting equation: `Assets = Liabilities + Equity + Income − Expenses` (was missing Equity).
+- **Added Variance-specific note** explaining that EQ is excluded from user-facing computation; the practical formula is `Net Worth = Σ account balances` (§4.9). The accounting equation is stated for formal DEB completeness.
 
-### §5.1.3a — Balance Reconciliation (new sub-section, FG-C6)
+### §4.11 — Ledger Posting Cases (ERR-3 fix + new cases)
 
-- **New "Balance Reconciliation" sub-section** added after §5.1.3.
-- Reconcile action available on all accounts (not just cash).
-- Flow: display computed balance → user enters actual balance → app computes discrepancy → standard journal adjustment prompt (§4.10).
-- Access from account contextual menu and account detail screen.
-
-### §5.1.4 — Account Balance View (Credit Card Limit Warning, FG-C18)
-
-- **New "Credit card limit warning" paragraph** added after overdraft warning.
-- Non-blocking inline warning when expense/transfer would exceed configured credit limit.
-
-### §5.2.1 — Transaction Entry (Duplicate Detection, FG-C2)
-
-- **New "Duplicate Transaction Detection" block** added before §5.2.2.
-- Same type + amount + account + category on the same calendar day triggers non-blocking warning.
-- User confirms or cancels. No auto-delete.
-
-### §5.4.2 — Primary Configuration (FG-C11, FG-C18, FG-C20)
-
-- **Number format row updated:** Indian numbering (lakh/crore, 2-2-3 grouping) explicitly supported. Default inferred from device locale.
-- **New "Currency formatting" row** added. Configurable symbol placement, spacing, grouping. Defaults from home currency locale.
-- **New "Large transaction warning" row** added. Per-account and per-category configurable thresholds. Non-blocking confirmation when exceeded.
-- **New "Back button behaviour" row** added. Configurable: ask before discarding (default), auto-save as draft, discard immediately.
-
-### §5.5.1 — Confirmed Contextual Menu Actions
-
-- **Account row updated:** Added "Reconcile" action (opens §5.1.3a flow).
-
-### §7 — Multi-Currency Model (Currency Symbol Disambiguation, FG-C13)
-
-- **New "Currency symbol disambiguation" paragraph** added before cross-currency transfers.
-- 3-letter ISO code shown alongside symbol when multiple accounts share the same currency symbol.
-
-### §7.1 — Transaction-Level Exchange Rate Capture (FG-C12)
-
-- **New "Exchange rate estimate during transaction entry" paragraph** added.
-- Home currency estimate shown below amount field for foreign-currency accounts.
-- Staleness warning if cached rate > 14 days old. "Exchange rate unavailable" if no cached rate.
-
-### §8 — In-Scope vs. Out-of-Scope
-
-- **v1 in-scope updated:** Eight new FG-C bullets added: duplicate transaction detection, balance reconciliation, Indian numbering format, exchange rate estimate in entry, currency symbol disambiguation, large transaction warning, back button behaviour.
-- **v2 deferred updated:** Seven new bullets: combined search + filter, balance history, budget period start day, income categories in budget context, app data wipe, account statement export, auto-detect transactions from SMS/email.
-- **v3 deferred updated:** One new bullet: Android home screen widget.
-
-### §11 — Open Questions
-
-- Updated to reference full FG-C resolution. Feature gap analysis marked as complete. UX design decisions (UX-1 through UX-14) and ERR-1 noted as remaining open items.
+- **Notation line fixed:** Replaced `A = asset account · L = liability account` with `A = any user-facing account (all types use the universal balance formula, §4.6)`. Added `FC = fee expense category`.
+- **4 new rows added to compact summary table:**
+  - 1.3a — Create Transfer with Fee
+  - 1.6a — Modify Transfer with Fee (financial)
+  - 1.9a — Soft-Delete Transfer with Fee
+  - 2.5a — Account Deletion Balance Transfer (with positive/negative sub-cases)
+  - 3.7 — Batch Category Migration
+- **Row 3.1 updated:** "Same as 1.1–1.3" → "Same as 1.1–1.3 (or 1.3a if fee applies)"
 
 ---
 
-## `docs/01-product/prd-v2-draft.md`
+## `docs/01-product/ledger-entry.md`
 
-### §19 — v3+ Items
+### Notation & Conventions
 
-- Added Android home screen widget (FG-C7) as v3 item.
+- **Added `FC` symbol** to notation table: `FC = Fee expense category (e.g., Financial > Fees & Charges)`.
 
-### §20 — FG-C Items (table replaced)
+### Case 1.6a — Modify Transfer with Fee (NEW, LC-1)
 
-- Former "Unresolved — Pending Product Decisions" table replaced with **"Resolved — Decision Log"** summary.
-- All 21 FG-C items categorized by disposition (v1, v2, v3, rejected, no action needed).
+- **New case** added after Case 1.6. Reversing entries negate both the transfer and the fee (4 entries); corrected entries re-post both (4 entries). Total: 4 transactions, 8 entries.
 
-### §21 — Auto-Detect Transactions from SMS & Email Notifications (new section, FG-C21)
+### Case 1.9a — Soft-Delete Transfer with Fee (NEW, LC-2)
 
-- **New major section** added as §21.
-- Core use cases: UPI payments, credit card transactions, bank debits/credits.
-- Design considerations table: permission model, pattern matching, account matching, merchant-to-category mapping, user review flow, duplicate handling, error handling, Gmail integration.
-- Marked as high-priority v2 feature.
+- **New case** added after Case 1.9. Reversing entries for both components. 2 linked transactions, 4 entries.
+
+### Case 2.5a — Account Deletion Balance Transfer (NEW, LC-3)
+
+- **New case** added after Case 2.5, with two sub-cases:
+  - 2.5a-i: Positive balance (asset state) — `Dr A₂ B₁, Cr A₁ B₁`.
+  - 2.5a-ii: Negative balance (liability state) — `Dr A₁ |B₁|, Cr A₂ |B₁|` (reversed direction to zero out liability).
+- System-generated, non-editable, with special soft-delete warning.
+- Same-currency constraint noted.
+
+### Case 3.7 — Batch Category Migration (NEW, LC-4)
+
+- **New case** added after Case 3.6. Per migrated transaction: reversing + corrected pair (same as 1.4/1.5 with category changed). Produces 2N transactions and 4N entries for N migrated transactions. Atomicity note for SDS.
+
+### Complete Summary Table
+
+- **6 new rows added:** 1.6a, 1.9a, 2.5a-i, 2.5a-ii, 3.7.
+
+### Questions Table
+
+- **Q42 updated:** Replaced retired `Dr L, Cr A` with `Dr CreditCard, Cr Bank`; updated decision text.
+- **Q44 updated:** Replaced reference to retired cases 2.3c/2.4c and 2.3d/2.4d with universal rule (2.3a/2.4a and 2.3b/2.4b).
+
+### Metadata
+
+- `Last Updated` in header changed from 2026-04-12 to 2026-04-14.
 
 ---
 
 ## `docs/06-helpers/gaps-and-questions.md`
 
-- Header updated: Part 3 marked as fully resolved.
-- Part 3 description replaced with resolution summary.
-- **FG-C1 through FG-C20 full text removed.** Replaced with categorized resolution summary note.
-- FG-C21 (new item) included in resolution summary.
-- Part 0 (ERR-1) marked as resolved — §4.5 was already fixed in a prior session.
+### Part 0 — Internal Errors & Inconsistencies
 
----
+- **ERR-2 added and resolved:** §4.2 missing Equity term.
+- **ERR-3 added and resolved:** §4.11 notation used retired `L` symbol.
+- Header updated from "All errors resolved" to reflect new items, then back to "All errors resolved" after fixes applied.
 
-## `docs/06-helpers/ideation-tracker.md`
+### LC — Ledger Case Coverage Gaps (new section)
 
-- PRD deliverable row updated: FG-C1–FG-C21 resolution noted. Feature gap analysis marked complete.
-- **New 2026-04-14 key decisions entry** added (before the FG-B entry) covering all FG-C1–FG-C21 decisions with per-item summaries. Feature gap analysis marked as complete.
+- **New section added** after Part 0.
+- LC-1 through LC-4 added and resolved: modify/delete transfer-with-fee, account deletion balance transfer, batch category migration.
 
 ---
 
 ## Files NOT changed
 
-- `docs/01-product/ledger-entry.md` — no ledger posting changes in this session.
-- `docs/06-helpers/ideation-folder-structure.md` — no new files created (v2 draft already existed).
+- `docs/01-product/prd-v2-draft.md` — no v2 changes in this session.
+- `docs/01-product/ledger-entry.md` notation for `EQ`, `BAI`, `BAE` — unchanged (already correct).
+- `docs/06-helpers/ideation-folder-structure.md` — no new files created.

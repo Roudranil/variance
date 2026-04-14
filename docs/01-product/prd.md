@@ -174,7 +174,9 @@ $$\sum \text{debit}(T) = \sum \text{credit}(T)$$
 
 $$\text{Assets} = \text{Liabilities} + \text{Equity}$$
 
-$$\text{Assets} = \text{Liabilities} + \text{Income} - \text{Expenses}$$
+$$\text{Assets} = \text{Liabilities} + \text{Equity} + \text{Income} - \text{Expenses}$$
+
+> **Variance-specific note:** The internal Opening Balance equity account (EQ, §4.9) carries a non-zero balance whenever accounts have initial balances. EQ is excluded from all user-facing computation — the practical formula used throughout the app is `Net Worth = Σ account balances` (§4.9). The accounting equation above is stated for formal DEB completeness; it is never evaluated directly by the app.
 
 ### 4.3 Data Model
 
@@ -293,19 +295,22 @@ This applies uniformly whether the account is currently in asset state or liabil
 
 All system events that produce ledger entries are fully enumerated in `docs/01-product/ledger-entry.md`, which is the authoritative posting case reference for SDS design. The compact summary is reproduced here.
 
-**Notation:** A = asset account · L = liability account · IC = income category · EC = expense category · EQ = internal equity account · BAI/BAE = Balance Adjustment income/expense category.
+**Notation:** A = any user-facing account (all types use the universal balance formula, §4.6) · IC = income category · EC = expense category · EQ = internal equity account · BAI/BAE = Balance Adjustment income/expense category · FC = fee expense category.
 
 | # | Event | Ledger Entries | Entries Posted |
 |---|-------|----------------|----------------|
 | 1.1 | Create Expense | Dr EC, Cr A | 1 txn, 2 entries |
 | 1.2 | Create Income | Dr A, Cr IC | 1 txn, 2 entries |
 | 1.3 | Create Transfer | Dr A₂, Cr A₁ | 1 txn, 2 entries |
+| 1.3a | Create Transfer with Fee (fee F, category FC) | Transfer: Dr A₂ B, Cr A₁ B + Fee: Dr FC F, Cr A₁ F | 2 linked txns, 4 entries |
 | 1.4 | Modify Expense (financial) | Reversing (Cr EC, Dr A) + Corrected (Dr EC', Cr A') | 2 txns, 4 entries |
 | 1.5 | Modify Income (financial) | Reversing (Cr A, Dr IC) + Corrected (Dr A', Cr IC') | 2 txns, 4 entries |
 | 1.6 | Modify Transfer (financial) | Reversing (Cr A₂, Dr A₁) + Corrected (Dr A₂', Cr A₁') | 2 txns, 4 entries |
+| 1.6a | Modify Transfer with Fee (financial) | Reverse both (transfer + fee) + Correct both | 4 txns, 8 entries |
 | 1.7 | Soft-Delete Expense | Cr EC, Dr A | 1 txn, 2 entries |
 | 1.8 | Soft-Delete Income | Cr A, Dr IC | 1 txn, 2 entries |
 | 1.9 | Soft-Delete Transfer | Cr A₂, Dr A₁ | 1 txn, 2 entries |
+| 1.9a | Soft-Delete Transfer with Fee | Reverse both (transfer + fee) | 2 linked txns, 4 entries |
 | 2.1 | Create Account, balance = 0 | None | 0 |
 | 2.2a | Create Account, initial balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
 | 2.2b | Create Account, initial balance B < 0 | Dr EQ, Cr A | 1 txn, 2 entries |
@@ -314,12 +319,14 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 | 2.4a | Edit Balance ↑ → do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
 | 2.4b | Edit Balance ↓ → do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
 | 2.5 | Soft-Delete Account | None | 0 |
-| 3.1 | Recurring auto-post | Same as 1.1–1.3 | Same as type |
+| 2.5a | Account Deletion Balance Transfer | Dr A₂ B₁, Cr A₁ B₁ (positive) or Dr A₁ \|B₁\|, Cr A₂ \|B₁\| (negative) | 1 txn, 2 entries (system-generated) |
+| 3.1 | Recurring auto-post | Same as 1.1–1.3 (or 1.3a if fee applies) | Same as type |
 | 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
 | 3.3 | Cross-currency Transfer | Disallowed in v1 — deferred to v2 | N/A |
 | 3.4 | Correct a Journal Adjustment | Reversing + Corrected | 2 txns, 4 entries |
 | 3.5 | Budget Replenishment | None (budget layer) | 0 |
 | 3.6 | Category Soft-Delete | None | 0 |
+| 3.7 | Batch Category Migration | Per txn: Reversing + Corrected (same as 1.4/1.5 with category changed) | 2N txns, 4N entries |
 
 > All accounts use the universal balance formula (§4.6). The former separate liability cases (2.3c/d, 2.4c/d) are subsumed by 2.3a/b and 2.4a/b under the universal formula — the ledger entries are identical; only the interpretation of "balance ↑ vs ↓" changes. Cross-currency transfers are disallowed in v1. Full enumeration of all posting cases is in `docs/01-product/ledger-entry.md`, which is the authoritative reference for SDS schema design.
 
