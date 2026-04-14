@@ -8,143 +8,145 @@ depends_on: [01-product/prd.md, 06-helpers/gaps-and-questions.md, 06-helpers/ide
 outputs_to: []
 ---
 
-# Ideation Session Diff — 2026-04-14
+# Ideation Session Diff — 2026-04-14 (Session 2)
 
 > This file records the exact set of changes made to product documents in the current ideation session. It is used as the basis for commit messages. It overwrites the previous session's contents on each new session.
 
-**Session scope:** Feature gap resolution — FG-A1 through FG-A11 (Part 3, Group A of `gaps-and-questions.md`). PRD bumped to **v0.4.0**.
+**Session scope:** Feature gap resolution — FG-A12 through FG-A31 (Part 3, Group A of `gaps-and-questions.md`). PRD bumped to **v0.5.0**.
 
 ---
 
 ## `docs/01-product/prd.md`
 
-### Bug fix
+### §5.1.1 — Account CRUD (Delete section)
 
-- **§4.5 Expense entry sides corrected (ERR-1):** The expense rule previously listed the expense category on the "credit side" and the source account on the "debit side" — the reverse of the correct DEB posting. Fixed to: expense category on **debit side**, source account on **credit side**. Consistent with §4.11 Case 1.1 (`Dr EC, Cr A`).
-
-### §4.6 — Universal Balance Formula (replaces asset/liability split)
-
-- Removed separate asset and liability balance formulas.
-- All user-facing accounts now use a single formula: `balance = Σdebit − Σcredit`.
-- Positive balance = asset state; negative balance = liability state.
-- No explicit asset/liability designation field on accounts.
-- UI communicates sign via colour and labelling, not raw sign characters.
-- Income/expense category formulas unchanged (internal only).
-
-### §4.9 — EQ Posting Direction
-
-- Replaced "by account type" with **"by initial balance sign"**:
-  - B > 0: `Dr A, Cr EQ` → balance = +B.
-  - B < 0: `Dr EQ, Cr A` → balance = −|B|.
-  - B = 0: no posting.
-- Updated net-worth exclusion proof to use universal-formula framing.
-
-### §4.10 — Balance Adjustment Direction
-
-- Replaced the separate liability-specific income/expense direction rules with a single universal rule:
-  - Balance ↑ (toward +∞) = income (`Dr A, Cr BAI`).
-  - Balance ↓ (toward −∞) = expense (`Dr BAE, Cr A`).
-  - Applies uniformly to all account types including credit cards.
-
-### §4.11 — Ledger Posting Table
-
-- Renamed cases 2.2a/2.2b from "Asset/Liability Account" to **"initial balance B > 0 / B < 0"**.
-- Removed cases 2.3c, 2.3d, 2.4c, 2.4d (former liability-specific cases — subsumed by 2.3a/2.3b and 2.4a/2.4b under universal formula).
-- Updated trailing note to explain the collapse.
-
-### §5.1.1 — Account CRUD
-
-- **Currency field:** Default changed to home currency. Added immutability note in table.
-- **Currency Immutability section added:** info tooltip + visual change indicator + confirmation dialog before save.
-- **Delete last account:** "Cannot delete" statement expanded to specify that the **delete action is disabled (greyed out)**, not a runtime error, with tooltip text.
-- **New section — Recurring/installment template handling on account deletion:** Blocking warning with "Migrate templates" or "Stop templates" options; default is Stop; fires before the existing balance-transfer flow.
+- **Same-currency account edge case (FG-A29):** When no same-currency account exists for balance transfer on deletion, the transfer offer is skipped entirely. The app goes directly to a net worth warning: "No same-currency account is available to receive this balance. Deleting this account will change your net worth. Are you sure?"
 
 ### §5.1.2 — Account Categories
 
-- **Credit Card:** Removed CVV field. Card number changed from "hashed/masked" to "encrypted; masked display". Linked bank account marked optional.
-- **Debit Card:** Removed CVV field. Card number changed from "hashed/masked" to "encrypted; masked display". Linked bank account marked optional with "metadata only" qualifier.
-- **Loan:** Removed "loan direction (asset — owed to me / liability — owed by me)" field.
-- **New notes block added** after table:
-  - Field encryption: card numbers and bank account numbers encrypted at rest. **CVV never stored in any form in any version.**
-  - Loan account direction: inferred from balance sign (positive = owed to you, negative = you owe).
-  - Linked bank account behaviour by category (Debit Card = metadata only; Credit Card = functional — payment reminders + pre-fill).
-
-### §5.1.3 — Account Balance Model
-
-- Updated case references from `2.3a–2.3d` to `2.3a–2.3b` and `2.4a–2.4d` to `2.4a–2.4b`.
-- Removed "by account type (asset vs. liability)" qualifier — universal formula applies.
+- **Loan account installment suggestion (FG-A28):** Post-save contextual nudge shown when loan opens in liability state (negative initial balance) or EMI amount/EMI date fields are provided. Opens recurring installment template form with pre-filled fields (destination = this loan, amount = EMI amount if set, recurrence = monthly on EMI date if set, start = today). No hard link after creation.
+- **Default Financial category:** Added "Fees & Charges" subcategory under the Financial expense category (required for transfer fee feature).
 
 ### §5.1.4 — Account Balance View
 
-- **New: Negative balance visual treatment** — warning colour for liability-state accounts; no minus sign in primary display; accessibility labelling deferred to UX Flows.
-- **New: Overdraft warning** — non-blocking inline warning when a transaction would push balance below zero. User may dismiss and proceed.
+- **Net worth excluded accounts (FG-A26):** Changed from ambiguous "shown separately or not shown" to **grayed-out inline** below contributing accounts, with an "excluded" visual indicator.
 
-### §5.1.5 — Internal Transfer
+### §5.1.5b — Transfer Fee (new section, FG-A27)
 
-- Updated credit card payment note to use universal-formula language: "Dr CreditCard, Cr SourceAccount" increases credit card balance toward zero (reduces negative outstanding).
+- Optional fees panel on transfer entry form (collapsed by default).
+- Fee entered as flat amount (source currency) or percentage of transfer amount.
+- Fee posted as a **linked expense transaction** in a compound transaction (shared compound ID with the main transfer).
+- Fee category: Financial > Fees & Charges (user-changeable).
+- Compound transaction shown as single entry in list; detail view shows both transfer and fee.
+- Editing/deleting the compound transaction affects both parts together.
+- Cross-currency fee support deferred to v2.
+- New ledger Case 1.3a added (see ledger-entry.md changes below).
 
-### §5.1.6 — Credit Card Balance Model (new section)
+### §5.2.1 — Transaction Entry (Transaction List Display)
 
-- Defines **outstanding balance** (live ledger) and **statement balance** (derived from billing period; not stored separately).
-- Specifies **two-action balance edit screen**: (1) adjust statement balance (dated to billing date), (2) adjust outstanding balance (dated today). Both use standard journal adjustment flow.
+- **Amount colour coding (FG-A24):** Income = green, expense = red, transfer = neutral. Applies uniformly including Balance Adjustment entries (income BA = green, expense BA = red — resolving name collision distinction).
+- **Default sort order (FG-A16):** Date descending (most recent first) confirmed as default. Custom sort available via filter window.
 
-### §5.1.7 — Credit Card Payment Reminders (new section)
+### §5.2.2 — Transaction Immutability & Editing
 
-- Automatic local notification schedule: 1 day after billing date; 7/1/0 days before payment due date.
-- Each notification includes a **Pay** action.
-- **Pay FAB** on credit card detail screen.
-- **Payment entry form**: transfer type, destination = this credit card (fixed), source = linked bank account (pre-filled if set), amount = statement balance (pre-filled; editable).
-- Notifications re-schedule on any billing/payment date edit. Reuses `SCHEDULE_EXACT_ALARM` + `POST_NOTIFICATIONS` permissions.
+- **Soft-deleted category in edit (FG-A25):** Soft-deleted current category always shown as active selection in edit form. Category picker shows soft-deleted category as special "current" entry at top (re-selectable to cancel accidental edits). Once a new active category is saved, the deleted category is no longer accessible. Deleted categories remain hidden for transactions with active categories.
 
-### §5.2.2 — Transaction Editing
+### §5.2.5 — Transaction Search
 
-- **Date/time added to the in-place editable fields list** (alongside title, description, photos). No correcting ledger entries posted for date changes. User responsible for date accuracy.
+- **Fuzzy search redefined (FG-A15):** Now defined as fzf-style model: typo-tolerant (1–2 char errors), substring/contains, nearest-substring ranking, exact string match. Amount fields: exact match only (typing "500" finds ₹500 only, not ₹5,000).
 
-### §5.2.4 — Transaction Categories
+### §5.2.6 — Transaction Filtering
 
-- **New: Recurring/installment template handling on category deletion** — blocking warning (same flow as account deletion) with migrate or stop options; default stop. Fires in addition to the existing transaction-migration prompt.
+- **Amount range filter (FG-A12):** Added to criteria table. Min amount, max amount, or both (inclusive bounds).
+- **Multi-select on category/subcategory (FG-A13):** Noted in criteria table.
+- **Simple vs. advanced filter views (FG-A13):** Simple view (v1) = AND logic across all criteria. Advanced view (v2) = predicate builder with AND/OR/NOT.
+- **Sort controls (FG-A16):** Filter window now exposes sort controls. Options: date desc (default), date asc, amount desc, amount asc.
+- **Filter state persistence (FG-A14):** Filters do NOT persist across navigation. Clear on leaving the transaction list. Saved filter profiles deferred to v2.
 
-### §5.2.7 — Recurring Transactions
+### §5.4.3 — Security
 
-- **New: End-of-month day handling** — if scheduled day doesn't exist in a month, post on the last valid day of that month.
-- **New: Missed transactions on app launch** — all missed auto-post occurrences posted on next launch; remind-and-confirm occurrences past the 24h window are auto-approved and posted; paused-period skips are not retroactively posted.
+- **Lock scope fundamentally clarified (FG-A22):** Security lock applies to **sensitive account detail fields only**. Basic app functionality (transactions, account list, balances) is **never gated**. App-wide lock option removed.
+- **PIN recovery (FG-A22):** PIN reset requires authentication via device security. If no device security is configured, user must set it up first.
+- **Failed PIN lockout (FG-A23):** 5 consecutive fails → 1-hour timeout on sensitive field view. 15 cumulative consecutive fails → encrypted sensitive field data (card/account numbers) deleted. Financial data never deleted.
+- Settings table updated to reflect simplified scope and new lockout policy.
+
+### §5.4.4 — Management
+
+- Added "Backup" entry pointing to new §5.4.6.
+
+### §5.4.5 — Accessibility (new section, FG-A30)
+
+- **Font scaling:** UI adapts to Android system font scale (up to 200%) — v1 requirement.
+- **TalkBack:** Best-effort semantic labelling of interactive elements in v1. Comprehensive coverage deferred to v2/v3.
+- **RTL layout:** Right-to-left layout mirroring via Flutter Directionality — v1 requirement.
+- Non-English and non-Indian localisation not in scope.
+
+### §5.4.6 — Local Data Backup (new section, FG-A31)
+
+- Export all data (transactions, accounts, categories, templates, photos) as zip archive via Android file picker.
+- Manual trigger from Settings > Backup. No auto-backup in v1.
+- One-time in-app backup reminder after first month of use or first 50 transactions.
+- Import/restore: deferred to v2.
+- Cloud backup/sync: deferred to v2.
+
+### §5.4.7 → §5.4.8 — About & Legal
+
+- Renumbered from §5.4.5 to §5.4.8 due to insertion of §5.4.5 Accessibility, §5.4.6 Backup, and §5.4.7 About & Legal.
 
 ### §8 — In-Scope vs. Out-of-Scope
 
-- **Added to v1 in-scope:** Universal balance formula; account currency immutability; negative balance visual treatment + overdraft warning; credit card two-balance model; credit card payment reminder system; recurring/installment template handling on account/category deletion; date/time as in-place editable field.
-- **Added to v2 deferred:** Split transactions (single payment split across multiple categories/accounts).
+- **Added to v1 in-scope:** Transaction amount colour coding; date-desc default sort + custom sort via filter; amount range filter; simple filter view (AND logic); fzf-style fuzzy search with exact amount match; transfer fee feature; loan installment suggestion; PIN security scope + lockout; font scaling; RTL layout; TalkBack best-effort; local backup export; net worth excluded grayed-out inline; soft-deleted category in edit; same-currency deletion edge case.
+- **Added to v2 deferred:** Advanced filter mode (FG-A13), saved filter profiles (FG-A14), backup import/restore (FG-A31), cloud backup/sync (FG-A31), comprehensive TalkBack coverage (FG-A30), cross-currency transfer fee, budget gaps FG-A17–A21 (explicitly listed).
+
+### §9 — Success Criteria
+
+- SC-8 updated to reflect that security lock covers sensitive fields only, not the whole app.
 
 ### §11 — Open Questions
 
-- Updated note to reference FG-A1–A11 resolution (2026-04-14, PRD v0.4.0) and point to remaining open gap items (FG-A12+, FG-B, FG-C).
+- Updated to reference FG-A12–A31 resolution (2026-04-14, PRD v0.5.0).
 
 ---
 
 ## `docs/01-product/ledger-entry.md`
 
-- **Notation table updated:** Removed distinct `L` (liability account) symbol. `A` now represents any user-facing account. Added "Sign meaning" column to balance conventions table. Added universal formula note.
-- **Case 1.1 note:** Updated credit card language to use universal formula ("crediting the credit card decreases its balance — makes it more negative — more owed").
-- **Case 1.2:** Removed obsolete Q41 inconsistency flag (resolved).
-- **Case 1.3 note:** Updated credit card payment language to use universal formula.
-- **Case 2.2b:** Updated from "Liability Account (L), balance B > 0" to **"Account with initial balance B < 0"**. Posting `Dr EQ, Cr A` now explicitly produces a negative balance (−|B|).
-- **Cases 2.3a/2.3b:** Re-framed as "balance ↑ toward +∞" and "balance ↓ toward −∞" (universal, not asset-specific). Examples added covering credit card scenarios.
-- **Cases 2.3c/2.3d removed:** Collapsed into 2.3a/2.3b with a universal coverage note.
-- **Cases 2.4c/2.4d removed:** Collapsed into 2.4a/2.4b with a universal coverage note.
-- **Case 2.5:** Removed "B ≥ 0" qualifier (accounts can now be deleted in liability state).
+### Case 1.3a — Transfer with Fee (new case)
+
+- Documents the two-transaction compound model for transfers with fees.
+- Transaction 1 (transfer): Dr A₂ B, Cr A₁ B.
+- Transaction 2 (fee expense): Dr FC F, Cr A₁ F.
+- Both satisfy Dr = Cr individually.
+- Effect: A₁ decreases by (B+F), A₂ increases by B, fee category balance increases by F.
+- Notes compound transaction behaviour and cross-currency fee deferral.
+
+### Complete Summary Table
+
+- **Row 1.3a added:** Transfer with fee (2 linked txns, 4 entries).
+- **Row 2.2a updated:** Label changed from "Create Asset Account" to "Create Account, initial balance B > 0 (asset state)".
+- **Row 2.2b corrected:** Label changed from "Create Liability Account, balance B > 0" to "Create Account, initial balance B < 0 (liability state)"; posting updated to `Dr EQ, Cr A → balance = −|B|`. Removed incorrect "Cr L" notation.
+- **Rows 2.3c, 2.3d removed:** Already removed from body in previous session; now also removed from summary table.
+- **Rows 2.4c, 2.4d removed:** Same.
+- **Row 3.1 updated:** Note that 1.3a applies when fee is present.
+- **Row 3.3 updated:** Changed from "Unresolved — see Q46" to "Disallowed in v1 — deferred to v2".
+- **Row 3.5 updated:** Budget replenishment noted as "deferred to v2".
+- **Universal formula note added** below the table.
 
 ---
 
 ## `docs/06-helpers/gaps-and-questions.md`
 
-- Frontmatter `last_updated` updated to 2026-04-14.
-- Header note updated to reference PRD v0.4.0 and FG-A1–A11 resolution.
-- **New Part 0 — Internal Errors & Inconsistencies** added: documents ERR-1 (§4.5 expense entry sides bug, identified and fixed in this session).
-- **FG-A1 through FG-A11 removed** from Part 3 FG-A section. Replaced with a single resolved-notice block referencing PRD v0.4.0 and the ideation-tracker.
+- Frontmatter `last_updated` updated to 2026-04-14 (v0.5.0).
+- Header note updated to reference FG-A12–A31 resolution (PRD v0.5.0).
+- **FG-A12 through FG-A31 full text removed.** Replaced with a resolution summary table covering all 20 items.
+- **FG-C3 removed.** Superseded by FG-A16's decision on default sort and custom sort via filter window.
+- FG-B and FG-C sections otherwise unchanged (remain open).
 
 ---
 
 ## `docs/06-helpers/ideation-tracker.md`
 
-- Frontmatter and header `last_updated` updated to 2026-04-14 (PRD v0.4.0).
-- PRD deliverable status updated to v0.4.0.
-- **Key Decisions Log:** 2026-04-14 entry added covering all FG-A1–A11 decisions, the ERR-1 fix, and the ledger-entry.md updates.
+- Frontmatter and header `last_updated` updated to 2026-04-14 (PRD v0.5.0).
+- PRD deliverable row updated to v0.5.0.
+- **New 2026-04-14 key decisions entry** added (before the previous v0.4.0 entry) covering all FG-A12–A31 decisions and the FG-C3 supersession.
+- Document Index updated: PRD version changed to 0.5.0.
+- Readiness gate updated to reference v0.5.0.

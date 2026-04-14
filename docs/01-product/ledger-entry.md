@@ -4,6 +4,7 @@ status: approved
 owner: pm
 created: 2026-04-12
 last_updated: 2026-04-14
+version: 0.5.0
 depends_on: [01-product/prd.md]
 outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 ---
@@ -107,6 +108,39 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 > Entries: `Dr A₂ (credit card), Cr A₁ (bank)`. With the universal formula, Dr on the credit card increases its balance (moves toward zero, reducing the negative outstanding — less owed). ✅
 >
 > ✅ **Q42 Resolved:** Entry confirmed as `Dr CreditCard, Cr Bank` for a credit card payment.
+
+---
+
+### Case 1.3a — Create Transfer Transaction with Fee (amount B, fee F, source A₁, destination A₂, fee category FC)
+
+> *User records: transferred B from A₁ to A₂ with a fee of F charged to A₁.*
+
+The transfer with fee generates **two linked transactions** grouped under a shared compound transaction ID. The UI presents them as a single entry.
+
+**Transaction 1 — Transfer (identical to Case 1.3):**
+
+| Entry | Side | Account/Category | Amount |
+|-------|------|-----------------|--------|
+| 1 | Dr | A₂ (destination) | B |
+| 2 | Cr | A₁ (source) | B |
+
+**Transaction 2 — Fee Expense:**
+
+| Entry | Side | Account/Category | Amount |
+|-------|------|-----------------|--------|
+| 1 | Dr | FC (fee expense category, e.g. Financial > Fees & Charges) | F |
+| 2 | Cr | A₁ (source — fee debited from the same source account) | F |
+
+**Invariant check:** Each transaction individually: Dr = Cr ✅
+
+**Effect:**
+- A₁ balance ↓ (B + F) — the full amount leaves the source account (transfer + fee)
+- A₂ balance ↑ B — destination receives only the transfer amount
+- FC expense balance ↑ F — fee recorded as an expense
+
+**Compound behaviour:** Editing or deleting this compound transaction affects both the transfer and the fee transactions together. The fee component is not independently editable in the transaction list — it is surfaced in the detail view only.
+
+> **Note:** Available on all transfer types in v1. Cross-currency transfer fee support deferred to v2 (cross-currency transfers are blocked in v1).
 
 ---
 
@@ -374,6 +408,7 @@ The new balance edit computes ΔB from the *current* balance (which already incl
 | 1.1 | Create Expense | Dr EC, Cr A | 1 txn, 2 entries |
 | 1.2 | Create Income | Dr A, Cr IC | 1 txn, 2 entries |
 | 1.3 | Create Transfer | Dr A₂, Cr A₁ | 1 txn, 2 entries |
+| 1.3a | Create Transfer with Fee (fee F, category FC) | Transfer: Dr A₂ B, Cr A₁ B + Fee: Dr FC F, Cr A₁ F | 2 linked txns, 4 entries |
 | 1.4 | Modify Expense (financial) | Reversing (Cr EC, Dr A) + Corrected (Dr EC', Cr A') | 2 txns, 4 entries |
 | 1.5 | Modify Income (financial) | Reversing (Cr A, Dr IC) + Corrected (Dr A', Cr IC') | 2 txns, 4 entries |
 | 1.6 | Modify Transfer (financial) | Reversing (Cr A₂, Dr A₁) + Corrected (Dr A₂', Cr A₁') | 2 txns, 4 entries |
@@ -381,23 +416,21 @@ The new balance edit computes ΔB from the *current* balance (which already incl
 | 1.8 | Soft-Delete Income | Cr A, Dr IC | 1 txn, 2 entries |
 | 1.9 | Soft-Delete Transfer | Cr A₂, Dr A₁ | 1 txn, 2 entries |
 | 2.1 | Create Account, balance = 0 | None | 0 |
-| 2.2a | Create Asset Account, balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
-| 2.2b | Create Liability Account, balance B > 0 | Dr EQ, Cr L | 1 txn, 2 entries |
-| 2.3a | Edit Asset Balance ↑ -> record as income | Dr A, Cr BAI | 1 txn, 2 entries |
-| 2.3b | Edit Asset Balance ↓ -> record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
-| 2.3c | Edit Liability Balance ↑ -> record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
-| 2.3d | Edit Liability Balance ↓ -> record as income | Dr L, Cr BAI | 1 txn, 2 entries |
-| 2.4a | Edit Asset Balance ↑ -> do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
-| 2.4b | Edit Asset Balance ↓ -> do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
-| 2.4c | Edit Liability Balance ↑ -> do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
-| 2.4d | Edit Liability Balance ↓ -> do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.2a | Create Account, initial balance B > 0 (asset state) | Dr A, Cr EQ | 1 txn, 2 entries |
+| 2.2b | Create Account, initial balance B < 0 (liability state) | Dr EQ, Cr A → balance = −\|B\| | 1 txn, 2 entries |
+| 2.3a | Edit Balance ↑ (toward +∞) → record as income | Dr A, Cr BAI | 1 txn, 2 entries |
+| 2.3b | Edit Balance ↓ (toward −∞) → record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
+| 2.4a | Edit Balance ↑ (toward +∞) → do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.4b | Edit Balance ↓ (toward −∞) → do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
 | 2.5 | Soft-Delete Account | None | 0 |
-| 3.1 | Recurring auto-post | Same as 1.1–1.3 | Same as type |
+| 3.1 | Recurring auto-post | Same as 1.1–1.3 (or 1.3a if fee applies) | Same as type |
 | 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
-| 3.3 | Cross-currency Transfer | Unresolved — see Q46 | TBD |
+| 3.3 | Cross-currency Transfer | **Disallowed in v1** — deferred to v2 | N/A |
 | 3.4 | Correct a Journal Adjustment | Reversing + Corrected | 2 txns, 4 entries |
-| 3.5 | Budget Replenishment | None (budget layer) | 0 |
+| 3.5 | Budget Replenishment | None (budget layer — deferred to v2) | 0 |
 | 3.6 | Category Soft-Delete | None | 0 |
+
+> **Universal formula note:** All user-facing accounts use `balance = Σ Dr − Σ Cr` regardless of account type. The former separate liability cases (2.3c/d, 2.4c/d) are subsumed by 2.3a/b and 2.4a/b — the ledger entries are identical under the universal formula. The old `L` symbol is retired; `A` denotes any user-facing account.
 
 ---
 

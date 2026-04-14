@@ -4,6 +4,7 @@ status: in progress
 owner: pm
 created: 2026-04-13
 last_updated: 2026-04-14
+version: 0.5.0
 depends_on: [01-product/prd.md]
 outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 ---
@@ -12,13 +13,15 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 > **Last Updated:** 2026-04-14 (PRD v0.4.0)
 >
+> **Last Updated:** 2026-04-14 (PRD v0.5.0)
+>
 > This document is a comprehensive reference for product gaps and questions. It is organized into three parts:
 >
 > - **Part 1 — PRD Questions (Q47–Q76):** ✅ **ALL RESOLVED** in PRD v0.3.0. Question text removed from this document — resolutions are baked into the PRD body; the resolved questions log is in `docs/06-helpers/ideation-tracker.md`.
 >
 > - **Part 2 — UX Flows Pre-Work Topics (UX-1–UX-14):** Interaction design decisions that belong in `docs/02-technical/ux-flows.md`, not the PRD. These do not block the PRD sign-off but must be resolved before the UX Flows document can be completed. Items UX-7 and UX-8 are deferred with budgets to v2.
 >
-> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD identifying (A) existing features with unresolved edge cases or missing detail, (B) features mentioned or implied but never fully specified, and (C) features never discussed that a user would encounter or expect. Budget-related items are marked as deferred to v2. FG-A1 through FG-A11 were resolved on 2026-04-14 (PRD v0.4.0).
+> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD. FG-A1 through FG-A11 resolved on 2026-04-14 (PRD v0.4.0). FG-A12 through FG-A31 resolved on 2026-04-14 (PRD v0.5.0). FG-B and FG-C remain open.
 >
 > The authoritative status of each question is tracked in `docs/06-helpers/ideation-tracker.md`.
 
@@ -107,210 +110,30 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ### FG-A — Existing Features: Edge Cases & Missing Detail
 
-> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into PRD v0.4.0.** Resolutions are in the PRD body (§4.6, §5.1.1–§5.1.7, §5.2.2, §5.2.4, §5.2.7). See `docs/06-helpers/ideation-tracker.md` for the full decision log.
-
----
-
-#### FG-A12 — Transaction Filter: Amount Range Is Missing
-
-§5.2.6 defines the full filter criteria set. There is no amount range filter.
-
-**Gap:** Can the user filter transactions by amount (e.g., "show all expenses above Rs. 1,000" or "between Rs. 500 and Rs. 2,000")? Amount range filtering is one of the most common use cases in personal finance — identifying large purchases, finding specific transactions by value.
-
-**[Policy]**
-
----
-
-#### FG-A13 — Transaction Filter: Multi-Select on Category and Combining Logic
-
-§5.2.6 allows filtering by category (contextual). It does not specify whether multiple categories can be selected simultaneously, or whether filters are combined with AND or OR logic.
-
-**Gap:** (1) Can the user select "Food OR Transportation" as a combined category filter? (2) Are all filter criteria combined with AND (expense AND food AND last month AND has photo)? (3) If the user selects both a category filter and the "Is voided" filter, does the result show voided food transactions?
-
-**[Policy]**
-
----
-
-#### FG-A14 — Transaction Filter: State Persistence
-
-The PRD defines a "dedicated filter view" but doesn't specify whether the applied filter persists when the user navigates away from the transaction list and returns.
-
-**Gap:** Does the filter state reset on navigation (every time you leave the list, filters clear), or persist until the user explicitly clears them? A persistent filter is powerful but confusing ("why does my list look wrong?"). A clearing filter is safer but requires re-applying on every return.
-
-**[Policy]**
-
----
-
-#### FG-A15 — Transaction Search: "Fuzzy" Is Undefined
-
-§5.2.5 says "fuzzy search across all fields." Fuzzy search is an overloaded term.
-
-**Gap:** Define what "fuzzy" means: (a) substring/contains match (typing "groc" finds "Groceries"); (b) typo-tolerant match (typing "grocieries" still finds "Groceries"); (c) full-text search with ranking. The choice affects performance, library selection (SQLite FTS vs. custom), and user expectations. Searching by amount (e.g., "500") also needs definition — does it match exact amounts only, or amounts containing "500" (so 5000 also matches)?
-
-**[SDS]**
-
----
-
-#### FG-A16 — Transaction List Sort Order
-
-The PRD never defines the default sort order for the transaction list, or whether the user can change it.
-
-**Gap:** Is the transaction list always sorted by date descending (most recent first)? Can the user sort by amount, by category, or ascending/descending? Sort order is a basic table UX affordance that's entirely unspecified.
-
-**[Policy]**
-
----
-
-#### FG-A17 — Budget Creation Fields Are Never Specified *(Deferred to v2 with budgets)*
-
-§5.3.1 describes the budget model conceptually but never defines what fields are required to create a budget.
-
-**Gap:** What does the "create budget" form look like? Required fields presumably include: budget name, amount, time horizon (weekly/monthly/quarterly/annual), and whether it's a total budget or a per-category budget (and if per-category, which category). Are there optional fields (notes, start date for the first period)?
-
-**[Policy]**
-
----
-
-#### FG-A18 — Budget Currency: Home Currency Only? *(Deferred to v2 with budgets)*
-
-§5.3.1 defines budgets in terms of amounts, but never specifies what currency a budget is denominated in.
-
-**Gap:** Are budgets always in the home currency? If a user has accounts in USD and INR, and the home currency is INR, does an expense in USD get converted to INR before being counted against the budget? At what rate — the cached exchange rate? If the rate is stale (up to 14 days old per §7), the budget accounting could be meaningfully inaccurate for foreign-currency spenders.
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A19 — Budget Period Start Day *(Deferred to v2 with budgets)*
-
-§5.4.2 has a "week start" setting (Monday/Sunday). Monthly budgets presumably run from the 1st to the last day of the month. But many users are paid mid-month (e.g., the 15th or 25th) and want their budget month to align with their pay cycle.
-
-**Gap:** Is the monthly budget period always the calendar month (1st–last), or can the user configure a custom monthly start day? If configurable, this is a per-budget setting or a global settings option.
-
-**[Policy]**
-
----
-
-#### FG-A20 — Budget Rollover: Overspend Carries Forward Too? *(Deferred to v2 with budgets)*
-
-§5.3.5 says rollover carries "unused remaining budget ($N$ at period end)" forward. This implies rollover only applies to underspend.
-
-**Gap:** If the user overspent by Rs. 500 in January and rollover is enabled, does February's budget start at `M − 500` (penalising the overspend) or simply at `M` (ignoring the overspend)? And is there a maximum rollover cap — to prevent a user who never spends from accumulating years of unused budget that makes the feature meaningless?
-
-**[Policy]**
-
----
-
-#### FG-A21 — Budget: What Transactions Count Against It? *(Deferred to v2 with budgets)*
-
-§5.3.3 says "real-time comparison of budgeted amount vs. actual spending." What exactly counts as "spending"?
-
-**Gap:** (1) Do only expense transactions count, or do transfers also reduce the budget? (2) Does the "Balance Adjustment" protected category count against any budget? (3) Are voided/reversed transactions excluded from the budget calculation? (4) If a child recurring transaction is voided, is the budget retroactively updated? (5) Does a transaction count against the budget of the period when it was *recorded*, or when its *date* falls?
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A22 — Forgotten PIN: No Recovery Path
-
-§5.4.3 defines PIN lock with biometric fallback. There is no mention of what happens when the user forgets their PIN and biometric fails (or biometric is not enrolled).
-
-**Gap:** Since there is no cloud account and no recovery email, forgetting the PIN means the user is permanently locked out of all their financial data. Options: (a) accept this as a consequence of local-only design (user must uninstall, losing all data); (b) offer a recovery via a backup code shown during PIN setup; (c) allow PIN reset via device credential (device pattern/PIN). This is a critical UX and data-safety question.
-
-**[Policy]**
-
----
-
-#### FG-A23 — Failed PIN Attempts: No Lockout Defined
-
-Related to FG-A22: what happens after N consecutive failed PIN attempts?
-
-**Gap:** Is there a lockout delay (increasing delays after each failure)? A temporary full lock? A limit before the app self-destructs data? Or no limit at all (infinite attempts allowed)? No lockout policy means a brute-force attack on a 4-digit PIN requires at most 10,000 attempts.
-
-**[Policy]**
-
----
-
-#### FG-A24 — "Balance Adjustment" in Income and Expense Trees: Name Collision
-
-The protected "Balance Adjustment" category exists in both the income and expense trees. Both are named "Balance Adjustment." They are system-managed and not user-selectable.
-
-**Gap:** When a "Balance Adjustment" transaction appears in the transaction list, how does the user distinguish whether it was an income-direction or expense-direction adjustment? The category name alone is ambiguous. The transaction type (income vs. expense) differentiates them, but this depends on Q53 (title/description display) and Q72 (correction visibility).
-
-**[Policy]**
-
----
-
-#### FG-A25 — Category Picker During Edit: Soft-Deleted Category Is the Current Value
-
-When a user edits a transaction whose category has since been soft-deleted, the category picker no longer shows that deleted category (per §5.2.4: "soft-deleted categories are hidden from the category picker in new transaction entry"). However, the current transaction is referencing it.
-
-**Gap:** In the edit flow, what is shown as the currently selected category when it's soft-deleted? Is it shown as a disabled/greyed entry at the top of the picker? Is the user forced to select a new category before saving? Or is the deleted category shown with a "(deleted)" label?
-
-**[Policy]**
-
----
-
-#### FG-A26 — Net Worth View: Excluded Accounts — Shown Separately or Hidden?
-
-§5.1.4 says accounts flagged as excluded from net worth are "shown separately or not shown." This is ambiguous.
-
-**Gap:** Explicitly define: are excluded accounts (a) shown in a separate "excluded from net worth" section below the main net worth total, (b) hidden entirely from the net worth screen and only accessible from the accounts list, or (c) shown grayed-out inline?
-
-**[Policy]**
-
----
-
-#### FG-A27 — Transfer Fee / Same-Currency Transfer With an Incidental Cost
-
-A bank transfer between two accounts of the same currency may incur a transaction fee (e.g., NEFT/IMPS fee of Rs. 5–25). The transfer transaction itself moves the principal amount, but the fee is a separate expense.
-
-**Gap:** Is there a "transfer fee" field on the Transfer transaction entry form? Or is the user expected to record a separate expense transaction for the fee? If separate, the workflow is two actions for one real-world event. If bundled, the DEB posting is more complex (Dr A₂, Cr A₁ for principal; Dr Expense category, Cr A₁ for fee — combined into one transaction with 3+ entries).
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A28 — Installment and Loan Account: No Defined Connection
-
-The app has a Loan account category (§5.1.2) with EMI amount and interest rate fields. It also has an Installment transaction sub-type (§5.2.8). These two concepts seem naturally related — an installment series should ideally post payments against the Loan account — but the PRD never connects them.
-
-**Gap:** (1) Can an installment transaction template be linked to a Loan account so that each installment auto-generates a transfer payment to the loan? (2) If not, the Loan account's "EMI amount" and "EMI date" fields are metadata with no functional behaviour — the user must manually remember to create a recurring transaction aligned to these values.
-
-**[Policy]**
-
----
-
-#### FG-A29 — Account Deletion: What If the Only Other Account Is a Different Currency?
-
-§5.1.1 describes a flow where the user can transfer their remaining balance to another account before soft-deleting. Cross-currency transfers are blocked in v1 (Q46/§7).
-
-**Gap:** If the user only has one other account and it is in a different currency, the balance transfer option is impossible. The app must handle this case: (a) skip the transfer offer entirely and go straight to the net-worth-change warning, (b) inform the user "no same-currency account available for transfer", or (c) block deletion until the user creates a same-currency account. None of these cases is defined.
-
-**[Policy]**
-
----
-
-#### FG-A30 — Accessibility: Font Scaling, TalkBack, and RTL
-
-§NF-5 states "WCAG 2.1 AA baseline" but nothing else.
-
-**Gap:** Three specific accessibility dimensions are unaddressed:
-1. **Font scaling**: Android allows users to set a system font scale (up to 200%). Does the app's UI adapt gracefully at large font sizes, or do elements overflow/clip?
-2. **TalkBack (screen reader)**: Are interactive elements properly labelled for Android's screen reader? This requires explicit semantic labelling in the UI layer.
-3. **RTL layout**: Android supports right-to-left layouts. Is RTL support in scope? Many Indian users use English UI but if the app is distributed internationally, RTL will matter.
-
-**[Policy]**
-
----
-
-#### FG-A31 — Data Loss on Device Loss: No Backup in v1
-
-§8 explicitly defers "data management: backup/restore, CSV export, CSV import, data wipe" to v2. This means v1 has **zero** data recovery mechanism.
-
-**Gap:** If the user's device is stolen, lost, or factory-reset, all financial history is permanently gone. There is no local backup file, no export, no cloud sync. This is a deliberate constraint but one that users will hit. The app should at minimum surface a clear warning that data is not backed up, and ideally offer some basic local backup in v1 (e.g., a single "export to file" action with no import support). This is worth explicitly calling out as a known gap accepted for v1.
-
-**[Policy]**
+> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into PRD v0.4.0.** See `docs/06-helpers/ideation-tracker.md` for the full decision log.
+>
+> ✅ **FG-A12 through FG-A31 were resolved on 2026-04-14 and baked into PRD v0.5.0.** Resolutions summary:
+>
+> | ID | Resolution |
+> |----|-----------|
+> | FG-A12 | Amount range filter (min/max, inclusive) added to §5.2.6 |
+> | FG-A13 | Simple view (AND logic, v1) and advanced view (predicate builder with AND/OR/NOT, v2) defined in §5.2.6 |
+> | FG-A14 | Filter state does not persist across navigation; clears immediately; saved filter profiles deferred to v2 |
+> | FG-A15 | Fuzzy = fzf-style (typo-tolerant, substring, nearest-substring, exact); amount search = exact match only |
+> | FG-A16 | Default sort = date descending; custom sort (date asc, amount asc/desc) available via filter window |
+> | FG-A17–FG-A21 | Deferred with budgets to v2. No decisions needed for v1. |
+> | FG-A22 | PIN recovery via device security — user must configure device security to reset in-app PIN; only sensitive field view is locked |
+> | FG-A23 | 5 consecutive fails → 1-hour timeout; 15 cumulative consecutive fails → encrypted sensitive field data deleted; financial data never deleted |
+> | FG-A24 | Resolved by amount colour coding: income = green, expense = red, transfer = neutral; Balance Adjustment direction distinguishable by colour |
+> | FG-A25 | In edit mode: soft-deleted category shown as current selection; re-selectable to cancel accidental opens; once changed and saved, cannot revert; deleted categories hidden for transactions with active categories |
+> | FG-A26 | Excluded accounts shown grayed-out inline below net worth contributors |
+> | FG-A27 | Optional transfer fee panel (flat or percentage); fee posted as linked expense (Financial > Fees & Charges); compound transaction shown as single entry; detail view shows fee |
+> | FG-A28 | Loan account: post-save contextual suggestion to create recurring installment template if liability state or EMI fields filled; suggestion pre-fills available fields |
+> | FG-A29 | If no same-currency account available for balance transfer: skip transfer offer; go directly to net worth warning |
+> | FG-A30 | Font scaling (UI adapts to Android system scale, v1); TalkBack best-effort labelling (v1, complex coverage v2/v3); RTL layout support (v1) |
+> | FG-A31 | Local backup export as zip archive via system file picker (v1); import/restore and cloud sync deferred to v2 |
+>
+> See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 
 ---
 
@@ -421,14 +244,6 @@ Recurring transactions auto-post on a schedule. But there is no concept of a "sa
 When a user manually enters a transaction, they may accidentally enter it twice (same amount, same date, same category, same account). No detection or warning mechanism is defined.
 
 **Gap:** Should the app detect probable duplicates and surface a warning? Rule example: if a transaction with the same type, amount, account, and category already exists within a 1-hour window of the submitted date/time, show "A similar transaction already exists. Add anyway?" This is a common UX safeguard in finance apps.
-
----
-
-#### FG-C3 — Transaction List Sorting
-
-The PRD defines filter but never defines sort. The default is presumably date descending (most recent first), but this is never stated.
-
-**Gap:** Can the user sort the transaction list? Candidate sort fields: date (asc/desc), amount (asc/desc), category (alphabetical). Even confirming that "date descending is the only sort and it is not user-changeable" would close this gap.
 
 ---
 

@@ -4,6 +4,7 @@ status: in progress
 owner: pm
 created: 2026-04-13
 last_updated: 2026-04-14
+version: 0.5.0
 depends_on: []
 outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-contracts.md, 03-planning/task-breakdown.md]
 ---
@@ -287,6 +288,7 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
     1. "Would you like to transfer the remaining balance to another account?" — if yes, the user selects a destination account and a **system-generated internal transfer** is posted. This transfer is visible in the transaction list but is marked as system-generated and is not user-editable. If the user later attempts to soft-delete this system transfer, the app warns: *"This transfer was created when you deleted [account name]. Voiding it will reduce your net worth because the source account is no longer active."*
     2. If the user declines: "Deleting this account without transferring the balance will change your net worth. Are you sure?" — if confirmed, the soft-delete proceeds.
 - Cannot delete the last remaining account. When exactly one account exists, the **delete action is disabled** (greyed out and non-interactive) on that account, with a tooltip: *"You cannot delete your only account."* This applies regardless of whether the last account has a zero or non-zero balance.
+- **No same-currency account for balance transfer:** When the user initiates deletion of an account with a non-zero balance and no other account in the same currency exists, the balance transfer offer is **skipped entirely**. The app goes directly to the net worth warning: *"No same-currency account is available to receive this balance. Deleting this account will change your net worth. Are you sure?"* If confirmed, the soft-delete proceeds without posting a transfer.
 
 **Recurring and installment template handling on account deletion:**
 
@@ -325,6 +327,18 @@ Account categories are a fixed, predefined set. Users cannot create, rename, or 
 - *Debit Card*: Metadata only. Linking a bank account has no functional effect on either account. Deleting either does not affect the other.
 - *Credit Card*: Triggers automatic payment reminders and pre-fills the payment source in the payment entry form. See §5.1.7.
 
+**Loan account — installment setup suggestion:** When saving a loan account, if either condition is met — (1) the initial balance is negative (liability state), or (2) EMI amount / EMI date fields are provided — the app displays a post-save contextual suggestion: *"Would you like to set up a recurring installment payment for this loan?"* If the user accepts, the recurring installment template creation form opens with the following fields pre-filled where available:
+
+| Field | Pre-filled value |
+|-------|-----------------|
+| Destination account | This loan account (fixed) |
+| Amount | EMI amount (if provided) |
+| Recurrence | Monthly on EMI date (if provided) |
+| Start date | Today |
+| Source account | Blank — user selects |
+
+The user may modify any field before saving the template. Dismissing the suggestion has no effect on the loan account. This is a convenience nudge only — the loan and installment template are not hard-linked after creation.
+
 ---
 
 #### 5.1.3 Account Balance Model
@@ -342,7 +356,7 @@ An account's balance changes in exactly three ways:
 #### 5.1.4 Account Balance View
 
 - Real-time computed balance per account (derived from ledger).
-- Net worth view: sum of all balances for accounts where "include in net worth" is true and the account is not soft-deleted. Accounts flagged as excluded are shown separately or not shown.
+- Net worth view: sum of all balances for accounts where "include in net worth" is true and the account is not soft-deleted. **Accounts flagged as excluded from net worth are shown grayed-out inline** within the account list on the net worth screen, below the accounts that contribute to the total. They carry a visual "excluded" indicator and their balances are not included in the net worth figure.
 - Balances respect the locale, number format, and currency settings.
 
 **Negative balance visual treatment:**
@@ -357,6 +371,17 @@ When recording a transaction that would push an account balance below zero, or d
 - Both entries post together or neither does.
 - Transfers carry no transaction category.
 - **Credit card payment**: When transferring to a credit card account (paying the outstanding balance), the posting is `Dr CreditCard, Cr SourceAccount`. With the universal asset formula (§4.6), debiting the credit card account increases its balance (moves it toward zero, reducing the amount owed). This is consistent with the standard DEB transfer treatment for all accounts.
+
+#### 5.1.5b Transfer Fee (Optional)
+
+When recording a transfer transaction, the user may optionally specify a fee charged by the bank, card network, or payment service.
+
+- A **fees panel** is exposed alongside the account and amount entry fields on the transfer entry form. The panel is **collapsed by default** (no fee).
+- The fee may be entered as a **flat amount** (in the source account's currency) or as a **percentage** of the transfer amount. These are mutually exclusive — the user picks one mode.
+- **Fee posting:** When a fee is specified, the system posts it as a **linked expense transaction** within the same compound transaction. The transfer and the fee are separate ledger records grouped under a shared compound transaction ID. The transfer's ledger entries are unchanged (`Dr A₂ B, Cr A₁ B`); the fee posts as `Dr FeeCategory F, Cr A₁ F` separately. Both are presented as a **single entry in the transaction list**. The transaction detail view shows both the transfer amount and the fee breakdown.
+- **Fee category:** The fee expense defaults to the **Financial > Fees & Charges** subcategory (see default category list in §5.2.4). The user may change the category before saving.
+- **Compound transaction behaviour:** Editing or deleting a transfer-with-fee affects both parts together. The fee expense component is not independently editable or deletable from the transaction list — it is surfaced only in the detail view.
+- **Scope:** Available on all transfer transactions in v1. Cross-currency transfer fee support is deferred to v2 (cross-currency transfers are blocked in v1 per §7).
 
 #### 5.1.6 Credit Card Balance Model
 
@@ -436,7 +461,14 @@ Each row in the transaction list displays three columns:
 | **C2 — Title & Account** | **Row 1:** Title (blank if not provided; v3 idea: ML/rule-based auto-generated titles). **Row 2:** Account info — for expense: source account name; for income: destination account name; for transfer: source account -> destination account. |
 | **C3 — Amount & Currency** | The transaction amount with currency symbol. For accounts in a foreign currency, both the original currency amount and the home currency equivalent are shown (see §7.1). |
 
-**Grouping and ordering:** Transactions are grouped by date (date header per group). Within each date group, transactions are ordered by time (most recent first). The timestamp is not shown in the list row — it is revealed when the user taps the transaction to open the detail view.
+**Amount colour coding:** Transaction amounts in the list are colour-coded by transaction type:
+- **Income**: Amount displayed in **green**.
+- **Expense**: Amount displayed in **red**.
+- **Transfer**: Amount displayed in the **default neutral colour** (no accent).
+
+This applies uniformly to all transactions, including Balance Adjustment entries — a Balance Adjustment recorded as income (balance ↑) appears green; one recorded as an expense (balance ↓) appears red. This is the primary way users distinguish the direction of Balance Adjustment transactions in the transaction list.
+
+**Grouping and ordering:** Transactions are grouped by date (date header per group). Within each date group, transactions are ordered by time (most recent first). The **default sort order is date descending** (most recent at top, oldest at the bottom). Custom sort options are available via the filter window (§5.2.6). The timestamp is not shown in the list row — it is revealed when the user taps the transaction to open the detail view.
 
 **Transaction List Architecture:**
 - The default view is a **unified transaction list** showing all transactions across all accounts.
@@ -452,6 +484,7 @@ Each row in the transaction list displays three columns:
 
 - All posted transactions are immutable.
 - **Editing amount, account, or category**: A reversing entry is posted (negating the original), followed by the corrected transaction. This applies equally to all three financial fields. A category change is treated identically to an account or amount change — it is a financial correction requiring a reversing + corrected pair. This is consistent with §4.8 and with Cases 1.4 and 1.5 in `docs/01-product/ledger-entry.md`, where the corrected entry already models a changed category (EC', IC').
+- **Editing a transaction whose current category has been soft-deleted:** The soft-deleted category is always shown as the active selection in the edit form — the transaction still belongs to it and no forced re-categorisation is required. If the user opens the category picker, the soft-deleted category appears as a special **"current" entry** at the top of the picker (even though it would otherwise be hidden), allowing the user to re-select it and close without making a change. If the user selects a different (active) category and saves, the change is treated as a standard financial correction (reversing + corrected entries per §4.8). Once saved with a new category, the soft-deleted category is no longer accessible via the category picker for this transaction. **For transactions whose current category is active (non-deleted):** soft-deleted categories are never shown in the category picker, consistent with §5.2.4.
 - **Correction visibility:** Only the **final corrected transaction** is visible in the transaction list. The original transaction and its reversing entry are hidden as internal ledger entries — they maintain ledger integrity but are not shown in normal user-facing views. This preserves full DEB abstraction (§2, G2). The original and reversal are surfaced in the v2 audit view.
 - **In-place edits (no ledger posting)**: Title, description, photos, and **date/time**. None of these fields trigger correcting ledger entries when changed. Changing the transaction date may shift which reporting period the transaction falls in (affecting period-based summaries), but no reversing/corrected entries are posted. The user is responsible for date accuracy.
 - **Soft delete**: The transaction is voided. A reversing entry is posted automatically. The original record is retained but excluded from all normal views and calculations. Voided transactions are surfaced in the v2 audit view.
@@ -536,7 +569,7 @@ Options: **Migrate templates** (select a replacement category) or **Stop templat
 | Social | Movie, Treat, Outing, Gift, Other |
 | Stationery | Books, Art, Craft, Other |
 | Culture | Music, Concert, Museum, Festival, Pujo, Other |
-| Financial | Mobile Bill, WiFi Bill, Electricity Bill, Insurance, Tax, Investments, Other |
+| Financial | Mobile Bill, WiFi Bill, Electricity Bill, Insurance, Tax, Investments, Fees & Charges, Other |
 | Education | Application Fees, Textbooks, Supplies, Tuition Fees, Other |
 | Loan | Education Loan, Home Loan, Personal Loan, Splitwise, Other |
 | Friends & Family | Friends, Parents, Other |
@@ -557,26 +590,51 @@ Options: **Migrate templates** (select a replacement category) or **Stop templat
 
 #### 5.2.5 Transaction Search
 
-- Fuzzy search across all fields: date, amount, account name, category name, subcategory name, title, description, and any searchable metadata. Whether title and description are searched identically or with different weighting is deferred to UX Flows. Title and description display behaviour is defined in §5.2.1 (transaction list display and description display sections).
+Search is accessible from the transaction list. The search engine uses an **fzf-style matching model** (inspired by the `fzf` CLI tool):
+
+- **Typo-tolerant**: Minor spelling errors (1–2 character transpositions or substitutions) are matched. Typing "grociries" returns "Groceries".
+- **Substring / contains**: A query appearing anywhere within a field value matches. Typing "groc" returns "Groceries".
+- **Nearest-substring ranking**: Results are ranked by closeness of match. Exact matches rank highest, prefix matches rank above mid-string matches.
+- **Exact string match**: Typing an exact value matches it with the highest rank.
+
+**Searchable fields:** date, account name, category name, subcategory name, title, and description. Whether title and description are searched with equal or different ranking weight is deferred to UX Flows.
+
+**Amount search:** Amount fields are matched by **exact value only**. Typing "500" returns transactions with an amount of exactly ₹500 — it does not return ₹5,000 or ₹50.
 
 #### 5.2.6 Transaction Filtering
 
-A dedicated filter view (separate from the main transaction list) provides filter controls. Supported filter criteria:
+A dedicated filter view (separate from the main transaction list) provides filter and sort controls. Supported filter criteria:
 
 | Criterion | Notes |
 |-----------|-------|
 | Transaction type | Income / Expense / Transfer |
-| Category | Contextual — only shows income categories for income filter, etc. |
-| Subcategory | Contextual — filtered by the selected category |
+| Category | Contextual — only shows income categories for income filter, etc. Multi-select: one or more categories may be selected. |
+| Subcategory | Contextual — filtered by the selected category. Multi-select. |
 | Account | One or more accounts |
 | Date range | Absolute range or relative presets (this month, last 7 days, etc.) |
+| Amount range | Min amount, max amount, or both (inclusive bounds). Optional. |
 | Has photo | Boolean |
 | Has title | Boolean |
 | Has description | Boolean |
 | Is recurring | Boolean |
 | Is voided | Boolean — shows soft-deleted transactions |
 
-Full UX specification deferred to UX Flows.
+**Filter logic — simple view (v1):** All active filter criteria are combined with **AND logic** — a transaction must satisfy every active criterion to appear in results. This is the only filter mode in v1.
+
+**Filter logic — advanced view (v2 deferred):** Will support a predicate builder allowing the user to compose conditions with AND, OR, and NOT operators, enabling queries like "(Food OR Transportation) AND last 30 days."
+
+**Sort controls:** The filter window also exposes sort controls for the transaction list. The **default sort order is date descending** (most recent first).
+
+| Sort field | Available orders |
+|------------|-----------------|
+| Date | Descending (recent first — **default**) / Ascending (oldest first) |
+| Amount | Descending (largest first) / Ascending (smallest first) |
+
+**Filter state — no persistence:** Applied filters do **not** persist across navigation. When the user navigates away from the transaction list and returns, all filter criteria and sort overrides are **cleared**. The transaction list resets to the unfiltered, default-sorted (date descending) view.
+
+**Saved filter profiles** — storing a named filter configuration for repeated use — is a **v2 feature**.
+
+Full UX specification (filter panel layout, chip display, preset interactions) deferred to UX Flows.
 
 #### 5.2.7 Recurring Transactions
 
@@ -707,26 +765,42 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 
 #### 5.4.3 Security
 
-**Lock mechanism (hierarchical):**
-1. **Device lock** (if set by the user at the OS level) — preferred. The app delegates authentication to the Android Keyguard.
-2. **Device-set app-specific lock** (if the device supports per-app biometric lock) — secondary.
-3. **In-app PIN** — fallback. If neither of the above is available, the app prompts the user to set a PIN within the app on first launch.
+**Fundamental scope of the lock:**
 
-**Lock scope (user-configurable):**
-- The user can choose between two modes:
-  - **App-wide lock**: The entire app is locked. The user must authenticate to access any screen.
-  - **Sensitive details only**: The app is freely accessible, but viewing sensitive account details (card numbers, CVV, account numbers, balances in account detail) requires authentication.
+The security lock in Variance protects **sensitive account detail fields only** (card numbers, bank account numbers, and masked account metadata). **Basic app functionality — recording transactions, viewing the transaction list, browsing account balances, and all core finance features — is always accessible without authentication.** The lock is never applied to the whole app.
+
+**Lock mechanism (hierarchical):**
+1. **Device lock** (if set by the user at the OS level) — preferred. The app delegates authentication to the Android Keyguard (biometrics, device PIN/pattern/password).
+2. **Device-set app-specific lock** (if the device supports per-app biometric lock) — secondary.
+3. **In-app PIN** — fallback. Used only if neither device lock nor device app-specific lock is available. The user is prompted to set a PIN on first launch in this case.
 
 **Lock timing:**
 - The lock activates on **app close or app minimisation** (backgrounding). The timeout before the lock engages is **user-configurable** (options: immediately, 30 seconds, 1 minute, 5 minutes).
-- **Sensitive field authentication** is required regardless of the timeout setting. However, once the user authenticates to view sensitive details in a session, the details remain visible until the app is closed or minimised (the lock timeout resets the sensitive-details unlock as well).
+- Once authenticated to view sensitive details, those details remain visible until the app is closed or minimised (the lock re-engages on backgrounding per the configured timeout).
+
+**PIN recovery:**
+If the user forgets the in-app PIN:
+1. The user is locked out of the **sensitive account details view** only. All other app functionality remains accessible.
+2. To reset the PIN, the user must authenticate via their **device security** (device lock, biometrics, or device PIN). If device security is set up, the device credential verifies the user and unlocks the PIN reset flow.
+3. If the user has no device security configured, they must first set up device security (OS settings), then return to reset the in-app PIN.
+4. The in-app PIN can only be reset through this device-credential path — there is no recovery email or cloud-based recovery (consistent with the local-only design).
+
+**Failed PIN lockout:**
+Applies only to the **sensitive account details view** — not to the rest of the app.
+
+- After **5 consecutive failed PIN attempts**: the sensitive details view is locked out for a **fixed 1-hour timeout**. No further attempts are accepted during the timeout.
+- After the timeout expires, the user gets another 5 attempts.
+- After **15 total consecutive failed attempts** (3 cycles × 5 failures × 1-hour timeouts = accumulating across approximately 3 hours): the app **deletes the stored encrypted sensitive field data** (card numbers, bank account numbers). Transaction history, account balances, and all financial data are **never deleted** — only the encrypted account-critical fields (card/account numbers) are wiped.
+- The 15-failure count resets to zero on any successful authentication.
 
 | Setting | Notes |
 |---------|-------|
 | Lock mechanism | Device lock / device app-specific lock / in-app PIN (hierarchical fallback) |
-| Lock scope | App-wide or sensitive details only (user-configurable) |
+| Lock scope | **Sensitive account detail fields only** — core app functionality is always accessible |
 | Lock timeout | Immediately / 30s / 1m / 5m after app backgrounding (user-configurable) |
-| Sensitive field reveal | Viewing masked card fields (CVV, full card number, account number) requires authentication within the current session |
+| Sensitive field reveal | Requires authentication within the current session; stays unlocked until app is backgrounded |
+| PIN recovery | Via device security credential — user must configure device lock if none exists |
+| Failed PIN lockout | 5 consecutive fails → 1-hour timeout; 15 cumulative consecutive fails → encrypted sensitive field data deleted |
 
 #### 5.4.4 Management
 
@@ -735,8 +809,34 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 | Accounts | View and manage all accounts, including soft-deleted (with reinstatement option); per-account settings |
 | Transaction categories | Manage income and expense category and subcategory trees (excluding protected system categories, which are hidden) |
 | Recurring / Installments | Manage active, paused, and archived recurring transaction and installment templates |
+| Backup | Export all app data as a portable zip archive (see §5.4.6) |
 
-#### 5.4.5 About & Legal
+#### 5.4.5 Accessibility
+
+| Dimension | v1 Behaviour |
+|-----------|--------------|
+| **Font scaling** | The app UI adapts to the Android system font scale (up to 200%). All text elements scale, and layouts reflow to avoid overflow or clipping. This is a v1 requirement. |
+| **TalkBack (screen reader)** | Interactive elements are labelled to the best extent practical in v1 — all buttons, icons, and form fields receive semantic content descriptions. Comprehensive and exhaustive TalkBack coverage (complex custom widgets, financial data tables, chart narration) may extend into v2 or v3. |
+| **RTL layout** | Right-to-left layout mirroring is supported in v1. Flutter's built-in `Directionality` system is used so the UI mirrors correctly for RTL locales. Non-English and non-Indian localisation is out of scope for all foreseeable versions. |
+
+NF-5 (WCAG 2.1 AA baseline) continues to apply as the overall accessibility standard.
+
+#### 5.4.6 Local Data Backup
+
+A local backup action is accessible from Settings > Backup.
+
+**Export:** The app exports all data — transaction ledger, accounts, categories, recurring and installment templates, and attached photos — as a **zip archive** saved to the user-selected location via the Android system file picker (or the device's Downloads folder as default).
+
+- **Contents:** The exact structure of the zip archive (database dump format, file/folder naming, photo inclusion strategy) is deferred to SDS.
+- **Photos:** Attached transaction photos are included in the backup zip.
+- **Trigger:** The user initiates backup manually from Settings > Backup. The app does **not** auto-backup on a schedule in v1.
+- **Reminder:** After the first month of use (or first 50 transactions, whichever comes first), the app surfaces a **one-time in-app prompt** reminding the user to take a backup, given that data is not otherwise protected against device loss.
+
+**Import / Restore:** Restoring from a backup zip is **deferred to v2**. In v1, backup is write-only — no import path exists.
+
+**Cloud backup / sync:** Deferred to v2 (and potentially v3 via Google Drive). Consistent with the offline-first and local-only constraints.
+
+#### 5.4.8 About & Legal
 
 | Section | Contents |
 |---------|----------|
@@ -909,19 +1009,40 @@ When a transaction is created against an account whose currency differs from the
 - **Credit card payment reminder system**: automatic local notifications on billing/payment cycle; Pay FAB on credit card detail screen; payment entry form with pre-filled source account if linked
 - **Recurring/installment template handling on account or category soft-delete**: blocking warning with migrate or stop options; default stop
 - **Date/time as in-place editable field** on transactions (no correcting entries)
+- **Transaction amount colour coding** — green for income, red for expense, neutral for transfer; distinguishes Balance Adjustment income vs. expense entries (FG-A24)
+- **Transaction list default sort** — date descending (most recent first); custom sort (date asc, amount asc/desc) via filter window (FG-A16)
+- **Transaction filter** — amount range criterion (min/max, inclusive bounds); all criteria combined with AND logic; multi-select on category and subcategory; simple filter view (FG-A12, FG-A13)
+- **Filter state** — does not persist across navigation; clears on leaving the transaction list (FG-A14)
+- **fzf-style fuzzy search** — typo-tolerant, substring, nearest-substring, exact string match; amount search = exact value only (FG-A15)
+- **Transfer fee** — optional flat amount or percentage fee on any transfer transaction; fee posted as linked expense (Financial > Fees & Charges); compound transaction shown as single entry in list; fee detail in detail view (FG-A27)
+- **Loan account installment suggestion** — contextual post-save nudge to create recurring installment template when loan opens in liability state or EMI fields are provided (FG-A28)
+- **Security scope** — lock applies to sensitive account detail fields only; basic app functionality never gated; PIN recovery via device security; 5-consecutive-fail lockout (1 hour); 15-cumulative-fail encrypted field deletion (FG-A22, FG-A23)
+- **Font scaling** — UI adapts to Android system font scale (FG-A30)
+- **RTL layout** — right-to-left layout mirroring via Flutter Directionality (FG-A30)
+- **TalkBack labelling** — best-effort semantic labelling of interactive elements (FG-A30)
+- **Local data backup** — export all data (transactions, accounts, categories, templates, photos) as zip archive via system file picker; one-time backup reminder after first month / 50 transactions (FG-A31)
+- **Net worth excluded accounts** — shown grayed-out inline below the net worth contributors (FG-A26)
+- **Soft-deleted category in transaction edit** — current selection always shown even if deleted; re-selectable to cancel accidental edits; hidden from picker for transactions with active categories (FG-A25)
+- **Account deletion — no same-currency account** — skips transfer offer if no same-currency account exists; goes directly to net worth warning (FG-A29)
 
 ### 🔄 Deferred — v2
 
 - **Split transactions** — recording a single bill/payment split across multiple categories (e.g., one supermarket receipt split as Groceries + Toiletries + Snacks). One transaction per split at the ledger level; UI and edit flows to be designed in v2.
-- **Budgeting** (total + per-category budgets, multi-horizon, configurable rollover, alerts, income replenishment) — to be redesigned alongside savings goals
+- **Budgeting** (total + per-category budgets, multi-horizon, configurable rollover, alerts, income replenishment) — to be redesigned alongside savings goals. Also covers: FG-A17 (budget creation fields), FG-A18 (budget currency), FG-A19 (budget period start day), FG-A20 (budget rollover and overspend), FG-A21 (budget transaction counting).
 - Savings goals
+- **Advanced filter mode** — predicate builder with AND/OR/NOT operators (FG-A13)
+- **Saved filter profiles** — naming and persisting a filter configuration for repeated use (FG-A14)
+- **Local backup import / restore** — restoring data from a v1 backup zip (FG-A31)
+- **Cloud backup and sync** (Google Drive or similar) (FG-A31)
+- **Comprehensive TalkBack / screen reader coverage** — exhaustive a11y labelling for complex widgets (FG-A30)
 - Account and category manual reordering
 - Recurring template disable/enable (with backfill option)
 - Subcategory parent reassignment
 - Trends, dashboards, charts, analytics, visualisations
-- Data management: backup/restore (portable file), CSV export, CSV import, data wipe
+- Data management: CSV export, CSV import, data wipe
 - Audit view (surfaces all transactions including voided and journal adjustments)
 - Tags (color, name, icon; assignable to transactions; filterable and searchable)
+- Cross-currency transfer fee handling (deferred with cross-currency transfers to v2)
 
 ### 🔄 Deferred — v3 (or later)
 
@@ -956,7 +1077,7 @@ When a transaction is created against an account whose currency differs from the
 | SC-5 | No uninstructed network call is made during normal app use (verifiable via Android network profiler). |
 | SC-6 | App cold-starts in < 2 seconds on mid-range Android 12+ hardware. |
 | SC-7 | Data survives forced-kill: no transaction is lost after force-closing the app. |
-| SC-8 | Security lock prevents access to app and sensitive fields without correct PIN or biometric. |
+| SC-8 | Security lock prevents access to sensitive account detail fields without correct PIN or biometric; basic app functionality remains accessible at all times. |
 
 ### Failure Criteria
 
@@ -997,6 +1118,6 @@ When a transaction is created against an account whose currency differs from the
 
 ## 11. Open Questions
 
-> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and remaining feature gap items (FG-A12 onward, FG-B, FG-C) are tracked in `docs/06-helpers/gaps-and-questions.md`.
+> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and remaining feature gap items (FG-B, FG-C) are tracked in `docs/06-helpers/gaps-and-questions.md`.
 >
-> Feature gaps FG-A1 through FG-A11 were resolved on 2026-04-14 (PRD v0.4.0) and are now baked into the PRD body. No open product questions remain. The PRD is ready for continued sign-off as gap resolution continues.
+> Feature gaps FG-A1 through FG-A11 were resolved on 2026-04-14 (PRD v0.4.0). Feature gaps FG-A12 through FG-A31 were resolved on 2026-04-14 (PRD v0.5.0) and are baked into the PRD body. Budget-related gaps FG-A17–FG-A21 are deferred with the budgeting feature to v2. No open product questions remain. The PRD is ready for continued sign-off.
