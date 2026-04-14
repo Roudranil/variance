@@ -4,96 +4,74 @@ status: current
 owner: pm
 created: 2026-04-14
 last_updated: 2026-04-14
-depends_on: [01-product/prd.md, 01-product/ledger-entry.md, 06-helpers/gaps-and-questions.md, 06-helpers/ideation-tracker.md]
+depends_on: [01-product/prd.md, 06-helpers/ideation-tracker.md]
 outputs_to: []
 ---
 
-# Ideation Session Diff — 2026-04-14 (Session 5)
+# Ideation Session Diff — 2026-04-14 (Session 6)
 
 > This file records the exact set of changes made to product documents in the current ideation session. It is used as the basis for commit messages. It overwrites the previous session's contents on each new session.
 
-**Session scope:** DEB & ledger entry audit — comprehensive mathematical verification of all double-entry bookkeeping postings, balance formulas, and equation consistency across the PRD and ledger-entry.md. 2 equation errors fixed (ERR-2, ERR-3). 4 missing ledger cases added (LC-1 through LC-4). Sign-based asset/liability inference stress-tested across 11 scenarios — all hold.
+**Session scope:** Settings & Configuration audit — full PRD scan for all user-configurable settings, cross-referenced against §5.4, and complete restructure of §5.4 from a flat grab-bag into a hierarchical Settings screen spec with 12 properly grouped sub-sections.
 
 ---
 
 ## `docs/01-product/prd.md`
 
-### §4.2 — Accounting Equation (ERR-2 fix)
+### TOC
 
-- **Added Equity term** to the expanded accounting equation: `Assets = Liabilities + Equity + Income − Expenses` (was missing Equity).
-- **Added Variance-specific note** explaining that EQ is excluded from user-facing computation; the practical formula is `Net Worth = Σ account balances` (§4.9). The accounting equation is stated for formal DEB completeness.
+- Updated §5.4 sub-entries from 7 items (5.4.1–5.4.8, skipping 5.4.7) to 12 items (5.4.1–5.4.12) reflecting the new structure.
 
-### §4.11 — Ledger Posting Cases (ERR-3 fix + new cases)
+### §5.4 — Settings & Customisation (CORE) — Full Restructure
 
-- **Notation line fixed:** Replaced `A = asset account · L = liability account` with `A = any user-facing account (all types use the universal balance formula, §4.6)`. Added `FC = fee expense category`.
-- **4 new rows added to compact summary table:**
-  - 1.3a — Create Transfer with Fee
-  - 1.6a — Modify Transfer with Fee (financial)
-  - 1.9a — Soft-Delete Transfer with Fee
-  - 2.5a — Account Deletion Balance Transfer (with positive/negative sub-cases)
-  - 3.7 — Batch Category Migration
-- **Row 3.1 updated:** "Same as 1.1–1.3" → "Same as 1.1–1.3 (or 1.3a if fee applies)"
+**Old structure (replaced):**
+- §5.4.1 Appearance
+- §5.4.2 Primary Configuration (flat grab-bag of 10 unrelated settings)
+- §5.4.3 Security
+- §5.4.4 Management (mixed entity management + backup)
+- §5.4.5 Accessibility
+- §5.4.6 Local Data Backup
+- §5.4.7 *(missing — numbering gap)*
+- §5.4.8 About & Legal
 
----
+**New structure:**
+- §5.4.1 **Appearance** — Theme, Color scheme, Font, Animations. Now with Type/Default/Options columns.
+- §5.4.2 **Locale & Format** — Home currency, Number format (decimal separator + thousands grouping split into separate rows), Currency formatting (symbol placement + spacing split into separate rows), Week start, Time format, Percentage precision. Each with explicit Type/Default/Options.
+- §5.4.3 **Transaction Entry** — Description max length, Back button behaviour. Note: duplicate detection is always-on (no toggle).
+- §5.4.4 **Warnings & Limits** — Large transaction warning thresholds (per-account and per-category as separate settings with sub-screen navigation). Precedence rule added: account threshold takes precedence over category when both apply. Note: overdraft and CC limit warnings are not configurable settings.
+- §5.4.5 **Profile** — Display name (single field, own section).
+- §5.4.6 **Security** — Lock timeout (the only configurable setting). Lock mechanism, PIN recovery, and failed lockout unchanged from old §5.4.3.
+- §5.4.7 **Accounts** — Entity management (was part of old §5.4.4). Cross-refs to §5.1.1.
+- §5.4.8 **Transaction Categories** — Entity management (was part of old §5.4.4). Cross-refs to §5.2.4.
+- §5.4.9 **Recurring & Installments** — Entity management (was part of old §5.4.4). Cross-refs to §5.2.7, §5.2.8.
+- §5.4.10 **Data** — Local Data Backup (was old §5.4.6). Path changed to "Settings > Data > Backup".
+- §5.4.11 **Accessibility** — Unchanged from old §5.4.5. Added note that these are system-level, not in-app toggles.
+- §5.4.12 **About & Legal** — Unchanged from old §5.4.8.
 
-## `docs/01-product/ledger-entry.md`
+**Introductory note added** at the top of §5.4 explaining the section's purpose and that per-entity settings are delegated to entity edit forms.
 
-### Notation & Conventions
+### Cross-reference updates
 
-- **Added `FC` symbol** to notation table: `FC = Fee expense category (e.g., Financial > Fees & Charges)`.
+All internal §5.4.X references throughout the PRD updated to match new numbering:
+- §5.4.2 (currency) — unchanged, still §5.4.2
+- §5.4.2 (description max) → §5.4.3
+- §5.4.2 (display name) → §5.4.5
+- §5.4.3 (security) → §5.4.6
+- §5.4.4 (categories) → §5.4.8
+- §5.4.6 (backup) → §5.4.10
 
-### Case 1.6a — Modify Transfer with Fee (NEW, LC-1)
+### New content added
 
-- **New case** added after Case 1.6. Reversing entries negate both the transfer and the fee (4 entries); corrected entries re-post both (4 entries). Total: 4 transactions, 8 entries.
-
-### Case 1.9a — Soft-Delete Transfer with Fee (NEW, LC-2)
-
-- **New case** added after Case 1.9. Reversing entries for both components. 2 linked transactions, 4 entries.
-
-### Case 2.5a — Account Deletion Balance Transfer (NEW, LC-3)
-
-- **New case** added after Case 2.5, with two sub-cases:
-  - 2.5a-i: Positive balance (asset state) — `Dr A₂ B₁, Cr A₁ B₁`.
-  - 2.5a-ii: Negative balance (liability state) — `Dr A₁ |B₁|, Cr A₂ |B₁|` (reversed direction to zero out liability).
-- System-generated, non-editable, with special soft-delete warning.
-- Same-currency constraint noted.
-
-### Case 3.7 — Batch Category Migration (NEW, LC-4)
-
-- **New case** added after Case 3.6. Per migrated transaction: reversing + corrected pair (same as 1.4/1.5 with category changed). Produces 2N transactions and 4N entries for N migrated transactions. Atomicity note for SDS.
-
-### Complete Summary Table
-
-- **6 new rows added:** 1.6a, 1.9a, 2.5a-i, 2.5a-ii, 3.7.
-
-### Questions Table
-
-- **Q42 updated:** Replaced retired `Dr L, Cr A` with `Dr CreditCard, Cr Bank`; updated decision text.
-- **Q44 updated:** Replaced reference to retired cases 2.3c/2.4c and 2.3d/2.4d with universal rule (2.3a/2.4a and 2.3b/2.4b).
-
-### Metadata
-
-- `Last Updated` in header changed from 2026-04-12 to 2026-04-14.
-
----
-
-## `docs/06-helpers/gaps-and-questions.md`
-
-### Part 0 — Internal Errors & Inconsistencies
-
-- **ERR-2 added and resolved:** §4.2 missing Equity term.
-- **ERR-3 added and resolved:** §4.11 notation used retired `L` symbol.
-- Header updated from "All errors resolved" to reflect new items, then back to "All errors resolved" after fixes applied.
-
-### LC — Ledger Case Coverage Gaps (new section)
-
-- **New section added** after Part 0.
-- LC-1 through LC-4 added and resolved: modify/delete transfer-with-fee, account deletion balance transfer, batch category migration.
+- **§5.4.4 Warnings & Limits:** Precedence rule — when both account and category thresholds are exceeded for a single transaction, only one warning is shown (account threshold takes precedence).
+- **§5.4.4 Warnings & Limits:** Explicit note that overdraft and CC limit warnings are not configurable settings.
+- **§5.4.3 Transaction Entry:** Explicit note that duplicate detection (FG-C2) is always active with no toggle.
 
 ---
 
 ## Files NOT changed
 
-- `docs/01-product/prd-v2-draft.md` — no v2 changes in this session.
-- `docs/01-product/ledger-entry.md` notation for `EQ`, `BAI`, `BAE` — unchanged (already correct).
+- `docs/01-product/ledger-entry.md` — no ledger changes in this session.
+- `docs/01-product/prd-v2-draft.md` — no v2 changes.
+- `docs/06-helpers/gaps-and-questions.md` — no new gaps found. All settings are accounted for.
 - `docs/06-helpers/ideation-folder-structure.md` — no new files created.
+- `docs/06-helpers/ideation-tracker.md` — historical key decisions log entries retain old §5.4.X references (correct — they are historical records).

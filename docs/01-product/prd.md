@@ -62,12 +62,17 @@ outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-con
       - [5.3.5 Budget Rollover](#535-budget-rollover)
     - [5.4 Settings \& Customisation (CORE)](#54-settings--customisation-core)
       - [5.4.1 Appearance](#541-appearance)
-      - [5.4.2 Primary Configuration](#542-primary-configuration)
-      - [5.4.3 Security](#543-security)
-      - [5.4.4 Management](#544-management)
-      - [5.4.5 Accessibility](#545-accessibility)
-      - [5.4.6 Local Data Backup](#546-local-data-backup)
-      - [5.4.8 About \& Legal](#548-about--legal)
+      - [5.4.2 Locale \& Format](#542-locale--format)
+      - [5.4.3 Transaction Entry](#543-transaction-entry)
+      - [5.4.4 Warnings \& Limits](#544-warnings--limits)
+      - [5.4.5 Profile](#545-profile)
+      - [5.4.6 Security](#546-security)
+      - [5.4.7 Accounts](#547-accounts)
+      - [5.4.8 Transaction Categories](#548-transaction-categories)
+      - [5.4.9 Recurring \& Installments](#549-recurring--installments)
+      - [5.4.10 Data](#5410-data)
+      - [5.4.11 Accessibility](#5411-accessibility)
+      - [5.4.12 About \& Legal](#5412-about--legal)
     - [5.5 Contextual Action Menus](#55-contextual-action-menus)
       - [5.5.1 Confirmed Contextual Menu Actions](#551-confirmed-contextual-menu-actions)
       - [5.5.2 Deferred Contextual Menu Cases (v2)](#552-deferred-contextual-menu-cases-v2)
@@ -425,7 +430,7 @@ Account categories are a fixed, predefined set. Users cannot create, rename, or 
 | **Investment** | Investment type (FD, Mutual Fund, Stocks, PPF, NPS, Other), institution name, current value (manually entered — see §5.1.3 for balance model) |
 | **Other** | None — generic miscellaneous account |
 
-**Field encryption:** Sensitive account fields — card numbers (Credit Card, Debit Card) and bank account numbers (Bank Account) — are **encrypted at rest** on the device. Authentication is required to reveal the unmasked value in the UI (§5.4.3 sensitive field reveal). **CVV is never stored in any form in any version of the app.**
+**Field encryption:** Sensitive account fields — card numbers (Credit Card, Debit Card) and bank account numbers (Bank Account) — are **encrypted at rest** on the device. Authentication is required to reveal the unmasked value in the UI (§5.4.6 sensitive field reveal). **CVV is never stored in any form in any version of the app.**
 
 **Loan account direction:** The loan direction (asset vs. liability) is not a stored field. The balance sign conveys direction: a positive loan balance means the loan is owed **to you** (asset state); a negative balance means **you owe** (liability state). Set the initial balance to a positive value if you lent money out; set it to a negative value if you borrowed. See §4.6.
 
@@ -605,7 +610,7 @@ This applies uniformly to all transactions, including Balance Adjustment entries
 
 **Transaction Description Display:**
 - Description appears **only in the transaction detail view**, never in the transaction list.
-- Character limit is configurable in Settings (§5.4.2) from a predefined set: 500, 1000, or 2000 characters. Default: 1000.
+- Character limit is configurable in Settings (§5.4.3) from a predefined set: 500, 1000, or 2000 characters. Default: 1000.
 
 **Transaction Detail View**
 
@@ -673,7 +678,7 @@ Each category (both parent and child) has exactly two fields:
 No other fields (colour, description, etc.) exist on categories.
 
 **Category management UX:**
-Category management is accessed from Settings (§5.4.4). The flow is:
+Category management is accessed from Settings (§5.4.8). The flow is:
 1. The category management screen displays a list of **parent categories only** (separately for Income and Expense trees).
 2. A **+ button** at the parent list level allows the user to add a new parent category (providing icon and name).
 3. Tapping a parent category navigates to a child list view showing all subcategories under that parent.
@@ -921,31 +926,65 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 
 ### 5.4 Settings & Customisation (CORE)
 
+> The Settings screen is the central hub for app-level configuration, entity management, and data operations. This section defines every settings group, its contents, and the configurable fields within each. The groups are listed in the order they appear on the Settings screen.
+>
+> **Per-entity settings** (per-account fields, per-template fields) are managed through their respective edit forms, accessed from the entity management screens below (§5.4.7, §5.4.9). They are not duplicated here.
+
 #### 5.4.1 Appearance
 
-| Setting | Options |
-|---------|---------|
-| Theme | Light / Dark / System default |
-| Color scheme | Material You dynamic color (from wallpaper, API 31+), or custom seed color |
-| Font | Bundled curated font OR system default |
-| Animations | Enable / Disable |
+| Setting | Type | Default | Options | Notes |
+|---------|------|---------|---------|-------|
+| Theme | Enum | System default | Light, Dark, System default | |
+| Color scheme | Enum | Material You dynamic | Material You dynamic color (from wallpaper, API 31+), Custom seed color | Dynamic color requires API 31+. On lower API levels, falls back to custom seed color. |
+| Font | Enum | System default | Bundled curated font, System default | Exact bundled font deferred to UX Flows. |
+| Animations | Boolean | Enabled | Enable, Disable | Disabling animations removes transitions and micro-interactions app-wide. |
 
-#### 5.4.2 Primary Configuration
+#### 5.4.2 Locale & Format
 
-| Setting | Notes |
-|---------|-------|
-| Display name | Optional. Used in home screen greeting (§5.8). If empty, greeting shows "Hi!" with no name. |
-| Currency | Selected from a bundled ISO 4217 list; sets symbol and locale format |
-| Week start | Monday / Sunday |
-| Time format | 12-hour / 24-hour |
-| Number format | Decimal separator (comma or period), thousands grouping style. **Indian numbering (lakh/crore)** — the 2-2-3 grouping pattern (e.g., ₹10,00,000 = 10 lakh) — is explicitly supported. Default grouping style is **inferred from device locale**: Indian locale → Indian grouping; Western locales → standard 3-digit grouping. The user may override the locale-inferred default at any time. (FG-C11) |
-| Currency formatting | Configurable display format for currency amounts. Controls symbol placement (prefix/suffix), spacing, and grouping style. Defaults are inferred from the home currency's locale conventions. The user may override. (FG-C11) |
-| Percentage precision | 0, 1, or 2 decimal places for percentage display |
-| Description max length | Configurable character limit for transaction descriptions. Options: 500, 1000, 2000. Default: 1000. |
-| Large transaction warning | Per-account and per-category configurable warning threshold. When a transaction amount exceeds the threshold set for the relevant account or category, a non-blocking warning is shown: *"This is a large transaction — [amount]. Confirm?"* Thresholds are optional (disabled by default). Configured in Settings > Large Transaction Warnings, where the user can set individual limits per account and per category. (FG-C18) |
-| Back button behaviour | Controls what happens when the user presses the Android back button while a transaction entry form has unsaved data. Options: **Ask before discarding** (default) — shows a confirmation dialog *"Discard changes?"*; **Auto-save as draft** — saves the partial entry as a draft (accessible from a Drafts section); **Discard immediately** — discards without confirmation. (FG-C20) |
+| Setting | Type | Default | Options | Notes |
+|---------|------|---------|---------|-------|
+| Home currency | ISO 4217 | Inferred from device locale (fallback: INR) | Bundled ISO 4217 list | Set during onboarding (§5.6.2). Changeable at any time. Affects net worth display, exchange rate reference, and new account default currency. |
+| Number format — decimal separator | Enum | Inferred from locale | Comma (,) or Period (.) | |
+| Number format — thousands grouping | Enum | Inferred from locale | Standard 3-digit grouping, **Indian numbering (lakh/crore)** — 2-2-3 grouping (e.g., ₹10,00,000 = 10 lakh) | Indian locale → Indian grouping by default. Western locales → standard grouping. User may override. (FG-C11) |
+| Currency formatting — symbol placement | Enum | Inferred from home currency locale | Prefix (e.g., $100), Suffix (e.g., 100€) | |
+| Currency formatting — symbol spacing | Enum | Inferred from home currency locale | No space (e.g., $100), Space (e.g., $ 100) | |
+| Week start | Enum | Monday | Monday, Sunday | Affects date grouping headers and any period-based displays. |
+| Time format | Enum | Inferred from device | 12-hour, 24-hour | Affects all time displays (transaction detail, template schedules). |
+| Percentage precision | Enum | 0 | 0, 1, or 2 decimal places | Controls decimal places for percentage displays (e.g., fee percentage entry, future budget %). |
 
-#### 5.4.3 Security
+#### 5.4.3 Transaction Entry
+
+| Setting | Type | Default | Options | Notes |
+|---------|------|---------|---------|-------|
+| Description max length | Enum | 1000 | 500, 1000, 2000 | Maximum character limit for the transaction description field (§5.2.1). Applies to new and edited transactions. |
+| Back button behaviour | Enum | Ask before discarding | **Ask before discarding** — confirmation dialog *"Discard changes?"*; **Auto-save as draft** — saves partial entry as a draft (accessible from a Drafts section); **Discard immediately** — discards without confirmation | Controls behaviour when the Android back button is pressed while a transaction entry form has unsaved data. (FG-C20) |
+
+> **Duplicate transaction detection** (FG-C2, §5.2.1) is always active — there is no user toggle. The non-blocking duplicate warning fires whenever the detection criteria are met.
+
+#### 5.4.4 Warnings & Limits
+
+This section contains configurable warning thresholds that trigger non-blocking confirmations during transaction entry.
+
+**Large transaction warning (FG-C18):**
+
+Per-account and per-category configurable warning thresholds. When a transaction amount exceeds the threshold set for the relevant account or category, a non-blocking warning is shown: *"This is a large transaction — [amount]. Confirm?"*
+
+| Setting | Type | Default | Notes |
+|---------|------|---------|-------|
+| Per-account threshold | Amount (nullable) | Disabled (no threshold) | Set individually for each account. Accessed via Settings > Warnings & Limits > Per-Account Limits. Each account row shows its current threshold (or "Not set"). |
+| Per-category threshold | Amount (nullable) | Disabled (no threshold) | Set individually for each expense category. Accessed via Settings > Warnings & Limits > Per-Category Limits. Each category row shows its current threshold (or "Not set"). |
+
+**Behaviour:** If both an account threshold and a category threshold apply to a single transaction, and both are exceeded, only **one warning** is shown (the more specific — account threshold takes precedence). The user confirms once.
+
+> **Overdraft warning** (§5.1.4) and **credit card limit warning** (§5.1.4, FG-C18) are not configurable — they are always active when the relevant conditions are met (negative balance or credit limit exceeded). They are not settings.
+
+#### 5.4.5 Profile
+
+| Setting | Type | Default | Notes |
+|---------|------|---------|-------|
+| Display name | Text (optional) | Empty | Used in the home screen greeting (§5.8.1): *"Hi, [display name]!"*. If empty, greeting shows *"Hi!"* with no name. |
+
+#### 5.4.6 Security
 
 **Fundamental scope of the lock:**
 
@@ -956,9 +995,11 @@ The security lock in Variance protects **sensitive account detail fields only** 
 2. **Device-set app-specific lock** (if the device supports per-app biometric lock) — secondary.
 3. **In-app PIN** — fallback. Used only if neither device lock nor device app-specific lock is available. The user is prompted to set a PIN on first launch in this case.
 
-**Lock timing:**
-- The lock activates on **app close or app minimisation** (backgrounding). The timeout before the lock engages is **user-configurable** (options: immediately, 30 seconds, 1 minute, 5 minutes).
-- Once authenticated to view sensitive details, those details remain visible until the app is closed or minimised (the lock re-engages on backgrounding per the configured timeout).
+| Setting | Type | Default | Options | Notes |
+|---------|------|---------|---------|-------|
+| Lock timeout | Enum | Immediately | Immediately, 30 seconds, 1 minute, 5 minutes | Time after app backgrounding before the lock re-engages. |
+
+**Lock timing:** The lock activates on **app close or app minimisation** (backgrounding). Once authenticated to view sensitive details, those details remain visible until the app is closed or minimised (the lock re-engages on backgrounding per the configured timeout).
 
 **PIN recovery:**
 If the user forgets the in-app PIN:
@@ -975,25 +1016,38 @@ Applies only to the **sensitive account details view** — not to the rest of th
 - After **15 total consecutive failed attempts** (3 cycles × 5 failures × 1-hour timeouts = accumulating across approximately 3 hours): the app **deletes the stored encrypted sensitive field data** (card numbers, bank account numbers). Transaction history, account balances, and all financial data are **never deleted** — only the encrypted account-critical fields (card/account numbers) are wiped.
 - The 15-failure count resets to zero on any successful authentication.
 
-| Setting | Notes |
-|---------|-------|
-| Lock mechanism | Device lock / device app-specific lock / in-app PIN (hierarchical fallback) |
-| Lock scope | **Sensitive account detail fields only** — core app functionality is always accessible |
-| Lock timeout | Immediately / 30s / 1m / 5m after app backgrounding (user-configurable) |
-| Sensitive field reveal | Requires authentication within the current session; stays unlocked until app is backgrounded |
-| PIN recovery | Via device security credential — user must configure device lock if none exists |
-| Failed PIN lockout | 5 consecutive fails → 1-hour timeout; 15 cumulative consecutive fails → encrypted sensitive field data deleted |
+#### 5.4.7 Accounts
 
-#### 5.4.4 Management
+View and manage all accounts, including soft-deleted accounts (with reinstatement option per §5.1.1).
 
-| Section | Contents |
-|---------|----------|
-| Accounts | View and manage all accounts, including soft-deleted (with reinstatement option). "Per-account settings" is the account edit form (§5.1.1 Edit) — accessible from both Settings > Accounts and from the account contextual menu in the account list. There are no additional per-account settings beyond the edit form. |
-| Transaction categories | Manage income and expense category and subcategory trees (excluding protected system categories, which are hidden) |
-| Recurring / Installments | Manage active, paused, and archived recurring transaction and installment templates |
-| Backup | Export all app data as a portable zip archive (see §5.4.6) |
+"Per-account settings" is the account edit form (§5.1.1 Edit) — accessible from both Settings > Accounts and from the account contextual menu in the account list. There are no additional per-account settings beyond the edit form. Per-account fields include: name, notes, include-in-net-worth flag, and all category-specific fields (§5.1.2).
 
-#### 5.4.5 Accessibility
+#### 5.4.8 Transaction Categories
+
+Manage income and expense category and subcategory trees. The category management UX is defined in §5.2.4: parent list → tap for children → + button at each level. Protected system categories ("Balance Adjustment") are hidden from this screen.
+
+#### 5.4.9 Recurring & Installments
+
+Manage active, paused, and archived recurring transaction and installment templates. Per-template configuration (posting behaviour, pause duration, recurrence definition) is managed through the template edit form (§5.2.7, §5.2.8).
+
+#### 5.4.10 Data
+
+**Local Data Backup**
+
+A local backup action is accessible from Settings > Data > Backup.
+
+**Export:** The app exports all data — transaction ledger, accounts, categories, recurring and installment templates, and attached photos — as a **zip archive** saved to the user-selected location via the Android system file picker (or the device's Downloads folder as default).
+
+- **Contents:** The exact structure of the zip archive (database dump format, file/folder naming, photo inclusion strategy) is deferred to SDS.
+- **Photos:** Attached transaction photos are included in the backup zip.
+- **Trigger:** The user initiates backup manually from Settings > Data > Backup. The app does **not** auto-backup on a schedule in v1.
+- **Reminder:** After the first month of use (or first 50 transactions, whichever comes first), the app surfaces a **one-time in-app prompt** reminding the user to take a backup, given that data is not otherwise protected against device loss.
+
+**Import / Restore:** Restoring from a backup zip is **deferred to v2**. In v1, backup is write-only — no import path exists.
+
+**Cloud backup / sync:** Deferred to v2 (and potentially v3 via Google Drive). Consistent with the offline-first and local-only constraints.
+
+#### 5.4.11 Accessibility
 
 | Dimension | v1 Behaviour |
 |-----------|--------------|
@@ -1003,22 +1057,9 @@ Applies only to the **sensitive account details view** — not to the rest of th
 
 NF-5 (WCAG 2.1 AA baseline) continues to apply as the overall accessibility standard.
 
-#### 5.4.6 Local Data Backup
+> **Note:** Accessibility settings are system-level (Android Settings). Variance does not expose in-app accessibility toggles in v1 — it respects the system configuration.
 
-A local backup action is accessible from Settings > Backup.
-
-**Export:** The app exports all data — transaction ledger, accounts, categories, recurring and installment templates, and attached photos — as a **zip archive** saved to the user-selected location via the Android system file picker (or the device's Downloads folder as default).
-
-- **Contents:** The exact structure of the zip archive (database dump format, file/folder naming, photo inclusion strategy) is deferred to SDS.
-- **Photos:** Attached transaction photos are included in the backup zip.
-- **Trigger:** The user initiates backup manually from Settings > Backup. The app does **not** auto-backup on a schedule in v1.
-- **Reminder:** After the first month of use (or first 50 transactions, whichever comes first), the app surfaces a **one-time in-app prompt** reminding the user to take a backup, given that data is not otherwise protected against device loss.
-
-**Import / Restore:** Restoring from a backup zip is **deferred to v2**. In v1, backup is write-only — no import path exists.
-
-**Cloud backup / sync:** Deferred to v2 (and potentially v3 via Google Drive). Consistent with the offline-first and local-only constraints.
-
-#### 5.4.8 About & Legal
+#### 5.4.12 About & Legal
 
 | Section | Contents |
 |---------|----------|
@@ -1106,7 +1147,7 @@ The home screen is the primary surface the user sees on every app open. It provi
 
 #### 5.8.1 Greeting
 
-The home screen displays a personalised greeting: **"Hi, [display name]!"** where the display name is the optional text field configured in Settings (§5.4.2). If no display name is set, the greeting shows **"Hi!"** with no name.
+The home screen displays a personalised greeting: **"Hi, [display name]!"** where the display name is the optional text field configured in Settings (§5.4.5). If no display name is set, the greeting shows **"Hi!"** with no name.
 
 #### 5.8.2 Financial Summary
 
@@ -1147,7 +1188,7 @@ The home screen includes an **alerts section** that surfaces actionable in-app n
 |------------|---------|---------|--------|
 | **Pending recurring confirmation** | A "remind and confirm" recurring template (§5.2.7) has a scheduled occurrence awaiting user confirmation | Template name, scheduled date, amount, account, category | Confirm (post), Edit before confirming, Dismiss (skips this occurrence) |
 | **Credit card payment due** | A credit card payment reminder fires per the notification schedule in §5.1.7 | Card name, amount due, due date | Opens the credit card payment entry form (§5.1.7) |
-| **Backup reminder** | First month of use or first 50 transactions reached, and no backup has been taken (§5.4.6) | One-time reminder to back up data | Navigate to Settings > Backup |
+| **Backup reminder** | First month of use or first 50 transactions reached, and no backup has been taken (§5.4.10) | One-time reminder to back up data | Navigate to Settings > Backup |
 
 Alerts are **also delivered as OS-level local notifications** (for recurring confirmations per §5.2.7 and credit card reminders per §5.1.7). The home screen alerts section mirrors these in-app so the user sees them even if they dismissed the OS notification.
 
