@@ -327,6 +327,8 @@ When the template's transaction type is "Transfer," the following fee fields are
 
 Installments share all fields from §4.1 (Recurring Template Creation) with one key difference: the `end_date` field inherited from §4.1 is **computed and read-only** on installment templates (not user-settable). It is derived from `start_date + (number_of_installments × recurrence_period)`. Number of installments is the sole termination signal.
 
+> **Transaction type support (TC-022 resolved):** Installment templates support all three transaction types: income, expense, and transfer. Transfer-type installments expose source and destination account fields (identical to §4.1 transfer templates). Transfer-with-fee installments additionally expose the fee panel (§4.1 Transfer Fee Fields). This enables the loan repayment use case (bank → loan account transfer installment).
+
 Additional installment-specific fields:
 
 | Field | Type | Req? | Default | Edit Rule | Notes |

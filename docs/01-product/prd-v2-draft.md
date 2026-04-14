@@ -197,7 +197,7 @@ All FG-C items were resolved on 2026-04-14. Items are categorized by disposition
 
 **Baked into v1 PRD:** FG-C2 (duplicate detection), FG-C6 (balance reconciliation — all accounts), FG-C11 (Indian numbering), FG-C12 (exchange rate estimate in entry), FG-C13 (currency symbol disambiguation), FG-C18 (large transaction warning + credit card limit validation), FG-C20 (back button behaviour).
 
-**Deferred to v2:** FG-C4 (combined search + filter — with advanced filter), FG-C5 (balance history — with analytics), FG-C8 (budget period start day), FG-C9 (income budgets), FG-C10 (app data wipe — with data management), FG-C14 (account statement export — with CSV export), FG-C21 (auto-detect transactions from SMS/email).
+**Deferred to v2:** FG-C4 (combined search + filter — with advanced filter), FG-C5 (balance history — with analytics), FG-C8 (budget period start day), FG-C9 (income budgets), FG-C10 (app data wipe — with data management), FG-C14 (account statement export — with CSV export), FG-C21 (auto-detect transactions from SMS/email), **TC-050 v2 scope** (navigation search — search across screens/features within the app; settings screen search).
 
 **Deferred to v3:** FG-C7 (Android home screen widget — privacy concerns).
 

@@ -394,6 +394,10 @@ This requires a founder decision on the acceptable range and final approval of t
 
 The escalation is warranted. The 200-300 icon range is reasonable for a finance app. The decoupling of curation (founder approval) from bundling architecture (SDS) is correct -- the SDS can proceed with the ~250 placeholder count. The note that default category icons must be part of the curated set is an important dependency to track.
 
+**Founder Resolution (2026-04-14): RESOLVED — Option A.**
+
+Option A confirmed (~200-300 icons). The founder notes that the curation pass requires additional work and should be tracked as a separate task. The SDS proceeds with ~250 placeholder count. The icon curation task is a dependency for category seeding (SS5.6.1) and the category picker (UX-11) but does not block schema or business logic work.
+
 ---
 
 ### TC-015: Soft-delete reversing entry -- visible or invisible?
@@ -608,6 +612,10 @@ Escalating to founder for confirmation.
 **LE Verdict: ESCALATION CONFIRMED.**
 
 The escalation is warranted. Option A (installments support all three types) is the only correct resolution from a DEB perspective. A loan repayment is unambiguously a transfer (funds move from a source account to the loan account), not an expense. Option B would produce incorrect ledger entries. The PM's recommendation is correct. The SDS should plan for transfer-type installments (including the Case 1.3a variant for transfer-with-fee installments) in the schema and scheduler.
+
+**Founder Resolution (2026-04-14): RESOLVED — Option A (all three types).**
+
+Installments support income, expense, and transfer transaction types. Case 3.2 in `ledger-entry.md` updated to reference Cases 1.1, 1.2, 1.3, and 1.3a. The loan repayment use case (bank → loan transfer installment) is confirmed working under the universal formula. The installment 4-amount tracking is type-agnostic and requires no special casing. Transfer-type installment templates expose source + destination account fields; transfer-with-fee installments additionally expose the fee panel (fee mode, fee amount/percentage, fee category). TC-038 (duplicate) is also resolved by this decision.
 
 ---
 
@@ -872,6 +880,12 @@ Escalating to founder: this is a product decision about acceptable data fidelity
 
 This is a critical product decision with deep data model implications. The PM's analysis of both options is thorough. Option B with `home_currency_at_capture` is the correct engineering approach -- it preserves data lineage without requiring expensive recalculation. The SDS author should note: the `exchange_rate_to_home` field on transactions becomes semantically ambiguous after a home currency change (it refers to the old home currency). Storing `home_currency_at_capture` alongside every rate makes this unambiguous and supports future chain-conversion if needed. The warning text should make clear that historical home-currency equivalents may be approximate.
 
+**Founder Resolution (2026-04-14): RESOLVED — simpler than anticipated.**
+
+The founder's key insight: account currencies are immutable at creation. Transaction currencies are derived from accounts (not independent). Therefore, at the **data level**, changing the home currency affects nothing retroactively. The only product-level implication of changing home currency is that the **default currency for new account creation** changes to the new home currency.
+
+The display/aggregation concern (net worth, category balances, home-currency equivalents on transaction cards) is an **engineering decision**, delegated to the LE. The LE will define exchange rate storage and display recalculation strategy in the SDS. The proposed approach: two-field model (`exchange_rate_to_home` + `home_currency_at_capture`) with chain-conversion in the display layer for stale rates. No warning dialog is required — this is a straightforward settings change. No transaction records are modified on home currency change.
+
 ---
 
 ### TC-030: Recurring "remind and confirm" -- what happens when multiple occurrences stack up?
@@ -927,6 +941,10 @@ Escalating to founder: this is a core UX architecture decision that must be reso
 **LE Verdict: ESCALATION CONFIRMED.**
 
 This is the highest-priority founder decision. The entire UX flow document, GoRouter route structure, and scaffold architecture depend on this. The PM's options are well-framed. Option C (3 tabs: Home, Accounts, Settings) is the cleanest from an engineering perspective -- it maps to 3 top-level routes and avoids a drawer. The SDS is blocked on this decision for the navigation/routing architecture but can proceed with most other schema and business logic work.
+
+**Founder Resolution (2026-04-14): RESOLVED — Option A (bottom navigation bar).**
+
+Bottom navigation bar confirmed. The founder notes this should have been an LE decision, not a founder escalation — going forward, the LE owns navigation structure decisions unless the feature map is affected. The LE proposes 3 tabs: Home (transaction list + summary + FAB), Accounts (account list + net worth), Settings. Pending Confirmations is accessible from Settings rather than a top-bar overflow menu. The GoRouter route hierarchy maps to a `StatefulShellRoute` with 3 branches. This unblocks the UX Flows document and GoRouter architecture.
 
 ---
 
@@ -1094,11 +1112,11 @@ The clarification is sufficient. Currency is silently defaulted to home currency
 
 **PM Response: CLARIFIED -- see TC-022.**
 
-This is the same issue as TC-022. The resolution proposed in TC-022 applies here: installments should support all three transaction types (income, expense, transfer) to enable the loan repayment use case. Ledger-entry.md Case 3.2 will be updated to: "same as 1.1, 1.2, or 1.3 (or 1.3a if fee applies)." Pending founder confirmation on TC-022.
+This is the same issue as TC-022. The resolution proposed in TC-022 applies here: installments should support all three transaction types (income, expense, transfer) to enable the loan repayment use case. Ledger-entry.md Case 3.2 has been updated to: "same as 1.1, 1.2, or 1.3 (or 1.3a if fee applies)." ✅ Resolved by founder on 2026-04-14 (see TC-022).
 
 **LE Verdict: ACCEPTED.**
 
-Correctly identified as a duplicate of TC-022. The resolution (installments support all three types, Case 3.2 updated) is the same. Pending founder confirmation on TC-022 as the primary item.
+Correctly identified as a duplicate of TC-022. The resolution (installments support all three types, Case 3.2 updated) is the same. ✅ Resolved by founder on 2026-04-14 (see TC-022).
 
 ---
 
@@ -1430,6 +1448,12 @@ The options for the founder:
 
 The escalation is warranted. From an engineering perspective, Option B (search overrides month filter) is straightforward to implement -- the search query simply omits the month predicate when search is active. The performance impact is minimal within NF-3 targets. Option A (month-scoped search) is a significant UX limitation that would generate user friction. The PM's recommendation for Option B is correct. The account detail screen provides all-time per-account search as a partial mitigation if Option A is chosen, but Option B is clearly superior.
 
+**Founder Resolution (2026-04-14): RESOLVED — global search (neither Option A nor B as framed).**
+
+The founder corrects the framing: search was never intended to be month-scoped. Transaction search is a **global search across all transactions to date**. The user taps the search action and performs a fuzzy search across the entire transaction history. Engineering owns the performance/efficiency strategy. The SS5.8.4 text stating search operates on "currently displayed (month-filtered) set" is **incorrect** and must be corrected.
+
+**v2 scope note:** Navigation search (search bar that navigates to screens/features within the app) and Settings screen search are deferred to v2.
+
 ---
 
 ### TC-051: Soft-delete of the last active category in a tree
@@ -1556,7 +1580,7 @@ This will be clarified in SS5.2.8 (early close flow, step 2) in the next revisio
 
 **LE Verdict: ACCEPTED.**
 
-The final payment specification is complete: same transaction type as the template, standard entry form pre-filled with template configuration, user-editable before save, posted as a child transaction linked to the series, followed by the mismatch check. This covers all the cases (expense, income, and transfer installments pending TC-022 resolution).
+The final payment specification is complete: same transaction type as the template, standard entry form pre-filled with template configuration, user-editable before save, posted as a child transaction linked to the series, followed by the mismatch check. This covers all the cases (expense, income, and transfer installments — TC-022 resolved by founder on 2026-04-14).
 
 ---
 
@@ -1671,22 +1695,22 @@ TC-007, TC-013, TC-015, TC-016, TC-035, TC-048, TC-051, TC-054
 |---|---|---|
 | **CLARIFIED** | 7 | TC-013, TC-015, TC-037, TC-038, TC-042, TC-048, TC-056 |
 | **ACKNOWLEDGED -- PM can resolve** | 40 | TC-001, TC-002, TC-004, TC-005, TC-007, TC-008, TC-010, TC-011, TC-012, TC-016, TC-017, TC-018, TC-019, TC-020, TC-021, TC-023, TC-024, TC-025, TC-026, TC-027, TC-028, TC-030, TC-032, TC-034, TC-036, TC-039, TC-040, TC-043, TC-044, TC-045, TC-046, TC-047, TC-049, TC-051, TC-052, TC-053, TC-054, TC-055, TC-057, TC-058 |
-| **ACKNOWLEDGED -- Escalate to founder** | 5 | TC-014, TC-022, TC-029, TC-031, TC-050 |
+| **ACKNOWLEDGED -- Escalate to founder** | 5 | TC-014, TC-022, TC-029, TC-031, TC-050 — **all 5 resolved by founder (2026-04-14)** |
 | **DEFERRED TO SDS** | 5 | TC-003, TC-006, TC-009, TC-033, TC-041 |
 | **PUSHBACK** | 1 | TC-035 |
 | **Total** | 58 | |
 
 > *Note: TC-038 is resolved by reference to TC-022. TC-056 is resolved by reference to TC-043. TC-008 has a sub-item (pending transaction deletion semantics) noted as needing founder confirmation but the overall item is PM-resolvable. Some items in ACKNOWLEDGED -- PM can resolve have sub-items that touch on founder decisions noted inline but are not classified as full escalations because the PM proposed a concrete resolution.*
 
-### Items requiring founder decisions (5 items)
+### Items requiring founder decisions (5 items) — ✅ ALL RESOLVED (2026-04-14)
 
-| TC | Decision needed | PM recommendation |
+| TC | Decision needed | Founder Decision |
 |---|---|---|
-| TC-014 | Icon subset count for category picker (~200-300 icons?) | PM to produce candidate list for approval; SDS can proceed with ~250 placeholder count |
-| TC-022 | Should installments support transfer transaction type (for loan repayments)? | Yes -- Option A. Installments support income, expense, and transfer. |
-| TC-029 | What happens to stored exchange rates when home currency changes? | Option B -- allow change with a warning; store `home_currency_at_capture` alongside rate for future conversion |
-| TC-031 | App navigation model (bottom nav, drawer, or hybrid)? | Bottom navigation bar with 3-4 tabs |
-| TC-050 | Should home screen search override the month filter? | Yes -- Option B. Search ignores month filter when active. |
+| TC-014 | Icon subset count for category picker | ✅ Option A (~200-300 icons). Curation is a separate task. |
+| TC-022 | Should installments support transfer transaction type? | ✅ Yes — all three types (income, expense, transfer). |
+| TC-029 | What happens to stored exchange rates when home currency changes? | ✅ Home currency change only affects default for new account creation. Exchange rate storage is LE-owned (SDS decision). |
+| TC-031 | App navigation model? | ✅ Bottom navigation bar. LE owns this decision going forward. |
+| TC-050 | Search scope on home screen? | ✅ Global search across all transactions. Not month-scoped. Navigation/settings search deferred to v2. |
 
 ### Items requiring PRD text updates (documentation fixes)
 
@@ -1728,7 +1752,7 @@ The following items identified text that needs correction or addition in the pro
 | **ACCEPTED** | 38 | TC-001, TC-004, TC-007, TC-010, TC-011, TC-012, TC-013, TC-015, TC-016, TC-017, TC-018, TC-019, TC-020, TC-023, TC-025, TC-027, TC-030, TC-032, TC-034, TC-035, TC-036, TC-037, TC-038, TC-040, TC-042, TC-043, TC-045, TC-047, TC-048, TC-049, TC-051, TC-052, TC-053, TC-054, TC-055, TC-056, TC-057, TC-058 |
 | **ACCEPTED WITH NOTE** | 10 | TC-002, TC-005, TC-008, TC-021, TC-024, TC-026, TC-028, TC-039, TC-044, TC-046 |
 | **DISAGREE -- needs further discussion** | 0 | *(none)* |
-| **ESCALATION CONFIRMED** | 5 | TC-014, TC-022, TC-029, TC-031, TC-050 |
+| **ESCALATION CONFIRMED** | 5 | TC-014, TC-022, TC-029, TC-031, TC-050 — **all 5 resolved by founder (2026-04-14)** |
 | **DEFERRAL ACCEPTED** | 5 | TC-003, TC-006, TC-009, TC-033, TC-041 |
 | **Total** | 58 | |
 

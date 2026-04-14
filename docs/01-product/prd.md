@@ -332,7 +332,7 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 | 2.5 | Soft-Delete Account | None | 0 |
 | 2.5a | Account Deletion Balance Transfer | Dr A₂ B₁, Cr A₁ B₁ (positive) or Dr A₁ \|B₁\|, Cr A₂ \|B₁\| (negative) | 1 txn, 2 entries (system-generated) |
 | 3.1 | Recurring auto-post | Same as 1.1–1.3 (or 1.3a if fee applies) | Same as type |
-| 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
+| 3.2 | Installment single post | Same as 1.1, 1.2, 1.3, or 1.3a per template type | Same as type |
 | 3.3 | Cross-currency Transfer | Disallowed in v1 — deferred to v2 | N/A |
 | 3.4 | Correct a Journal Adjustment | Reversing + Corrected | 2 txns, 4 entries |
 | 3.5 | Budget Replenishment | None (budget layer) | 0 |
@@ -716,7 +716,7 @@ Separate trees exist for **Income** and **Expense**. Transfers have no category.
 
 **Category fields:**
 Each category (both parent and child) has exactly two fields:
-- **Icon**: Selected from the `material_symbols_icons` Flutter package (^4.2928.1 from pub.dev). The full icon set is large; a curated subset will be bundled for the category picker. The exact subset and bundling strategy (tree-shaking, selective import) are deferred to SDS for efficiency analysis.
+- **Icon**: Selected from the `material_symbols_icons` Flutter package (^4.2928.1 from pub.dev). A **curated subset of ~200-300 icons** will be bundled for the category picker (TC-014 resolved). The icon curation pass is a separate task — the PM will produce a candidate icon list (organized by theme) for founder approval. The SDS proceeds with ~250 placeholder count for bundling architecture (tree-shaking, selective import). The default category icons (§5.6.1) must be drawn from the curated set.
 - **Name**: Free-form text label.
 No other fields (colour, description, etc.) exist on categories.
 
@@ -910,11 +910,13 @@ Installments are a sub-type of recurring transaction representing a fixed total 
 
 Parameters:
 - Total amount, recurrence definition (same as 5.2.7), number of installments (derived from total / recurrence, or manually set).
+- **Transaction type:** Installments support all three transaction types: **income, expense, and transfer** (including transfer-with-fee). This is consistent with recurring templates (§5.2.7). The loan repayment use case (bank → loan account transfer installment) requires transfer-type installments. Each installment occurrence posts ledger entries identical to the underlying type: Case 1.1 (expense), 1.2 (income), 1.3 (transfer), or 1.3a (transfer-with-fee). See `ledger-entry.md` Case 3.2.
 - **End date is computed, not user-settable.** The end date of an installment template is always derived from `start_date + (number_of_installments × recurrence_period)`. The `end_date` field from the recurring template base (§5.2.7) is displayed as read-only on installment templates. Number of installments is the sole termination signal.
 - **Installment occurrences are materialized at creation time.** Individual installment records are created as scheduled occurrence records based on the computed series. Each materialized installment has an ID, scheduled date, amount, status, and link to the child transaction once posted. This enables per-period amount editing after creation.
 - The system auto-calculates the per-installment amount (total ÷ number of installments).
 - The user may manually adjust individual installment amounts after the auto-calculation stage.
 - If the sum of manually adjusted amounts does not equal the total amount, the app surfaces a **non-blocking warning at save time** of the payment plan. The user may still save and proceed.
+- **Transfer-type installment form:** When the installment template type is "Transfer," the creation form exposes source and destination account fields (identical to the transfer form). The transfer fee panel (§5.1.5b) is available for transfer-with-fee installments. Fee fields follow the same editability rules as other template fields (IP — future occurrences only).
 - Whether installments are implemented as a tagged sub-type within the templates table or as a separate entity within that table is deferred to SDS schema design. The PRD treats installments as a distinct concept under the same template generation mechanism as recurring transactions.
 
 **Installment running total tracking (Q48):**
@@ -1020,13 +1022,13 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 
 **Font:** The app uses a curated combination of fonts for different UI elements (headings, body, numeric displays, etc.). This is a design-level decision, not user-configurable. The exact font pairing is deferred to UX Flows.
 
-**Color scheme preview:** A **"Preview color scheme"** action is accessible from the app's navigation options menu (alongside Pending Confirmations). It renders a preview screen showing the active Material You 3 color palette — primary, secondary, tertiary, surface, and on-surface tokens — as generated from the device wallpaper (dynamic color) or the user's selected custom seed color. This allows the user to see the full palette at a glance before committing to a seed color change.
+**Color scheme preview:** A **"Preview color scheme"** action is accessible from Settings > Appearance (§5.7a). It renders a preview screen showing the active Material You 3 color palette — primary, secondary, tertiary, surface, and on-surface tokens — as generated from the device wallpaper (dynamic color) or the user's selected custom seed color. This allows the user to see the full palette at a glance before committing to a seed color change.
 
 #### 5.4.2 Locale & Format
 
 | Setting | Type | Default | Options | Notes |
 |---------|------|---------|---------|-------|
-| Home currency | ISO 4217 | Inferred from device locale (fallback: INR) | Bundled ISO 4217 list | Set during onboarding (§5.6.2). Changeable at any time. Affects net worth display, exchange rate reference, and new account default currency. |
+| Home currency | ISO 4217 | Inferred from device locale (fallback: INR) | Bundled ISO 4217 list | Set during onboarding (§5.6.2). Changeable at any time. **Primary effect:** changes the default currency for new account creation. Since account currencies are immutable at creation and transaction currencies derive from their accounts, changing the home currency does not affect existing data. The display/aggregation layer (net worth, category balances, home-currency equivalents) is recalculated using the exchange rate cache — the engineering strategy for this is defined in the SDS. |
 | Number format — decimal separator | Enum | Inferred from locale | Comma (,) or Period (.) | |
 | Number format — thousands grouping | Enum | Inferred from locale | Standard 3-digit grouping, **Indian numbering (lakh/crore)** — 2-2-3 grouping (e.g., ₹10,00,000 = 10 lakh) | Indian locale → Indian grouping by default. Western locales → standard grouping. User may override. (FG-C11) |
 | Currency formatting — symbol placement | Enum | Inferred from home currency locale | Prefix (e.g., $100), Suffix (e.g., 100€) | |
@@ -1246,6 +1248,28 @@ A **Skip** button is available on steps 2–4. Skipping bypasses remaining wizar
 
 ---
 
+### 5.7a App Navigation Model
+
+The app uses a **bottom navigation bar** (Material 3 `NavigationBar`) with three primary tabs:
+
+| Tab | Label | Content |
+|-----|-------|---------|
+| 1 | **Home** | Transaction list + monthly financial summary + quick-entry FAB (§5.8) |
+| 2 | **Accounts** | Account list + net worth display. Tapping an account navigates to the account detail screen (§5.1.4a). |
+| 3 | **Settings** | Settings hub (§5.4). Also provides access to Pending Confirmations, category management, and color scheme preview. |
+
+The bottom navigation bar is always visible at the root level. Each tab maintains its own navigation stack — navigating within a tab (e.g., Home → Transaction Detail) pushes onto that tab's stack; the bottom bar remains visible. Deep screens (e.g., transaction edit form) may hide the bottom bar as a full-screen modal.
+
+**Transaction creation entry point:** A **quick-entry FAB** (Floating Action Button) is present on the Home tab for creating new transactions. The exact FAB design (single button, speed dial with income/expense/transfer split) is deferred to UX Flows (UX-2).
+
+**Pending Confirmations:** Accessible from Settings (not a top-bar overflow menu). A dedicated screen showing all unconfirmed recurring occurrences.
+
+**Color scheme preview:** Accessible from Settings > Appearance.
+
+> **Note:** The LE owns navigation structure decisions going forward. The tab set and route hierarchy are engineering/architecture concerns unless the feature map is affected.
+
+---
+
 ### 5.8 Home Screen & Dashboard
 
 The home screen is the primary surface the user sees on every app open. It provides an at-a-glance summary of the user's finances and quick access to the most frequent actions.
@@ -1281,7 +1305,9 @@ The selector does **not** affect the net worth figure. The default selected mont
 
 The home screen includes a **transaction list filtered to the selected month**. This list follows the same display rules as the unified transaction list (§5.2.1): 3-column layout, date-grouped, date-descending, amount colour coding.
 
-**Search and filter** controls are accessible from this list — they operate on the currently displayed (month-filtered) set. The search and filter behaviour is identical to §5.2.5 and §5.2.6, applied on top of the month filter.
+**Search** is accessible from this list and operates **globally across all transactions to date** — it is not scoped to the selected month. When search is active, the month filter is effectively suspended and results may include transactions from any month. Results are displayed with date grouping headers (same as §5.2.1). When search is cleared, the month filter re-engages and the list returns to the selected month's transactions. Search behaviour follows §5.2.5. **v2 scope:** Navigation search (searching for screens/features within the app) and Settings search are deferred to v2.
+
+**Filter** controls are accessible from this list and operate on the currently displayed set. The filter behaviour is identical to §5.2.6.
 
 #### 5.8.5 Alerts
 
@@ -1299,7 +1325,7 @@ Alerts are **also delivered as OS-level local notifications** (for recurring con
 
 **Alert dismissal:** Pending recurring confirmations remain in the alerts section until acted upon (confirmed, edited, or dismissed) or auto-approved after 24 hours. Credit card payment alerts clear once the due date passes or a payment is recorded. The backup reminder clears once a backup is taken or the user explicitly dismisses it (shown only once).
 
-**Pending Confirmations screen:** A dedicated **Pending Confirmations** view showing all unconfirmed recurring occurrences is accessible from the app's navigation overflow menu (e.g., "More options" in the nav bar). This screen shows the same information as the home screen alert cards but as a full list, allowing bulk review. Each item supports: Confirm, Edit before confirming, and Dismiss.
+**Pending Confirmations screen:** A dedicated **Pending Confirmations** view showing all unconfirmed recurring occurrences is accessible from the Settings tab (§5.7a). This screen shows the same information as the home screen alert cards but as a full list, allowing bulk review. Each item supports: Confirm, Edit before confirming, and Dismiss.
 
 **Dismiss semantics:** "Dismiss" permanently skips the occurrence. The transaction is NOT posted. The occurrence is marked as "manually handled" on the template schedule (same mechanism as editing/deleting a child transaction, per §5.2.7 Q47 resolution). The 24-hour auto-post timer is cancelled for this dismissed occurrence. The 24-hour auto-post (§5.2.7) applies only when the user does not interact with the confirmation at all — any user action (Confirm, Edit, or Dismiss) cancels the auto-post timer. Because Dismiss is a significant action, a brief confirmation dialog is shown: *"Skip this occurrence? It will not be posted."* with Confirm/Cancel options.
 
@@ -1428,7 +1454,7 @@ When recording a transaction against an account whose currency differs from the 
 - **Account deletion — no same-currency account** — skips transfer offer if no same-currency account exists; goes directly to net worth warning (FG-A29)
 - **Transaction detail view** — full detail screen on tap: amount, date/time, type, account, category, description, fee breakdown, photo carousel, contextual menu; v2 additions (correction history, recurring link, installment status) noted (FG-B1)
 - **Home screen dashboard** — personalised greeting (display name from Settings), net worth, current month income/expense/net, month selector for transaction list, search and filter, alerts section, quick-entry FAB (FG-B2)
-- **Home screen alerts** — pending recurring confirmations, credit card payment due reminders, one-time backup reminder; alerts section + dedicated Pending Confirmations screen via nav overflow (FG-B4)
+- **Home screen alerts** — pending recurring confirmations, credit card payment due reminders, one-time backup reminder; alerts section + dedicated Pending Confirmations screen via Settings tab (FG-B4)
 - **Category usage count on deletion** — informational count of active transactions shown before soft-delete proceeds; must be efficient (single aggregate query) (FG-B5)
 - **Installment early close** — "Mark series as complete" with optional final lump-sum payment; mismatch warning with option to update target total (FG-B7)
 - **Per-account settings clarified** — "per-account settings" = account edit form, accessible from Settings > Accounts and from account contextual menu; no additional settings (FG-B8)

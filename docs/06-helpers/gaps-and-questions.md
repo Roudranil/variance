@@ -148,82 +148,34 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ## Part 4 — Founder Decisions (from TC Review)
 
-> 5 items were escalated from the Technical Clarifications review because they require founder decisions. The PM and LE agree on the framing and options for each item; the founder decides. PM recommendations are marked below. Source: `docs/01-product/technical-clarifications.md`.
+> ✅ **All 5 items resolved by founder on 2026-04-14.** Resolutions are baked into the TC doc and product documents. Summary below for reference.
 
 ---
 
-### TC-014: Category Icon Subset Size
+### TC-014: Category Icon Subset Size — ✅ RESOLVED
 
-| Field | Detail |
-|-------|--------|
-| **ID** | TC-014 |
-| **Title** | Category icon subset size for the category picker |
-| **The Problem** | Categories use icons from the `material_symbols_icons` Flutter package. The PRD says a "curated subset" will be bundled for the category picker, but neither the number of icons nor the selection criteria are defined. Someone needs to decide how many icons to include and which ones. |
-| **Why it matters (Product)** | If the subset is too small, users cannot find an icon that matches their category (e.g., "Groceries" but no shopping cart icon). If the subset is too large, the picker becomes overwhelming and slow to browse. The default icon assignments for the built-in category tree also depend on this subset being defined. |
-| **Why it matters (Engineering)** | The icon bundling strategy (tree-shaking individual icons vs. importing the full icon font) depends on the count. Binary size scales roughly linearly with the number of bundled icons. The category picker grid layout and any search/filter within it also depend on knowing the approximate count. |
-| **Options** | **(A) ~200-300 icons** -- Covers all major spending/income categories with room for personal customization. Keeps the picker browsable with a search bar. Moderate binary size impact. **(PM recommendation.)** | 
-| | **(B) ~100 icons** -- Minimal set. Smaller binary. Risk of users not finding appropriate icons for niche categories. |
-| | **(C) ~500+ icons** -- Comprehensive. Larger binary (~1-2 MB additional). Picker needs robust search/filter to be usable. |
-| **Blocks** | Default category icon assignments (PRD SS5.2.4, SS5.6.1). Category picker UX design (UX-11). Icon bundling strategy in SDS. |
+**Founder decision:** Option A (~200-300 icons). The curation pass is a separate task to be tracked independently. SDS proceeds with ~250 placeholder count.
 
 ---
 
-### TC-022: Should Installments Support Transfer Transaction Type?
+### TC-022: Installments Support Transfer Type — ✅ RESOLVED
 
-| Field | Detail |
-|-------|--------|
-| **ID** | TC-022 |
-| **Title** | Installment support for transfer transactions (loan repayments) |
-| **The Problem** | The PRD says installments generate entries "identical to Case 1.1 (expense) or 1.2 (income)" -- limiting them to expense and income types only. But the loan account installment suggestion (SS5.1.2) pre-fills a destination account (the loan account), which implies a transfer. Recurring templates already support all three types. The loan repayment use case -- arguably the primary reason installments exist -- is broken without transfer support. TC-038 is a duplicate of this same issue. |
-| **Why it matters (Product)** | Loan repayment is a core installment use case. If you set up a loan account and want to create an installment plan to pay it off, you need a transfer from your bank account to your loan account. Without transfer support, there is no way to automate loan payments through installments, making the loan account feature significantly less useful. |
-| **Why it matters (Engineering)** | Case 3.2 in `ledger-entry.md` needs to be updated to reference Cases 1.1, 1.2, AND 1.3 (or 1.3a if fee applies). The installment form needs source and destination account fields when the type is transfer. The template schema needs to accommodate all three transaction types. This also affects TC-038 (which is the same issue surfaced from a different angle). |
-| **Options** | **(A) Installments support all three types: income, expense, transfer.** Consistent with how recurring templates already work. Enables the loan repayment use case. Requires updating Case 3.2 and the installment form to handle transfers. **(PM recommendation.)** |
-| | **(B) Loan repayments modeled as expenses.** Conceptually incorrect from a double-entry bookkeeping perspective (a loan repayment is not an expense -- it reduces a liability). Would require rethinking the loan installment suggestion in SS5.1.2. |
-| **Blocks** | Installment template schema design. Ledger-entry.md Case 3.2 update. Loan installment suggestion form (SS5.1.2). TC-038 resolution (duplicate). |
+**Founder decision:** Installments support all three transaction types (income, expense, transfer). Case 3.2 updated in `ledger-entry.md`. The loan repayment use case (bank → loan transfer installment) is confirmed working under the universal DEB formula. Transfer-with-fee installments also supported (Case 1.3a). TC-038 (duplicate) resolved.
 
 ---
 
-### TC-029: What Happens When Home Currency Changes?
+### TC-029: Home Currency Change Effect — ✅ RESOLVED
 
-| Field | Detail |
-|-------|--------|
-| **ID** | TC-029 |
-| **Title** | Impact of home currency change on historical exchange rates |
-| **The Problem** | The PRD says the home currency is "changeable at any time in Settings," but it does not address what happens to existing transactions. Every foreign-currency transaction stores an `exchange_rate_to_home` field -- that rate is relative to the home currency at the time of capture. If you change your home currency from USD to EUR, all those stored rates are now rates-to-USD, not rates-to-EUR. The app has no way to know the difference. |
-| **Why it matters (Product)** | After changing home currency, all historical foreign-currency amounts would display incorrect home-currency equivalents. Net worth would be wrong. Category balance totals (which aggregate across currencies using these rates) would be wrong. Users may not understand why their numbers suddenly changed. |
-| **Why it matters (Engineering)** | The `exchange_rate_to_home` field on every transaction becomes ambiguous after a currency change -- the app cannot tell which home currency the rate was captured against. Category balance computation (which sums amounts converted via these rates) would produce incorrect results. The schema needs to either prevent this scenario or store enough metadata to handle it. TC-046 (LE note) confirms that `home_currency_at_capture` is essential for correct category balance computation. |
-| **Options** | **(A) Preserve stored rates as historical; refetch/recompute for new currency.** Expensive -- requires fetching historical exchange rates for every past transaction. May be impossible for old dates where rate data is unavailable. |
-| | **(B) Allow change with a warning; store `home_currency_at_capture` alongside the rate.** Future logic can detect stale rates and either recompute or display with a caveat. Does not require retroactive refetching. Adds one field per transaction. **(PM recommendation.)** |
-| | **(C) Restrict home currency changes when foreign-currency accounts exist.** Simplest engineering path. Prevents the problem entirely. May frustrate users who relocate or whose financial situation changes. |
-| **Blocks** | `exchange_rate_to_home` schema design. Category balance computation logic. Net worth display logic. Any multi-currency aggregation. |
+**Founder decision:** Account currencies are immutable. Transaction currencies derive from accounts. The only product-level effect of changing home currency is that the default currency for new account creation changes. Exchange rate storage strategy is delegated to the LE (SDS decision). No warning dialog needed — it is a straightforward settings change.
 
 ---
 
-### TC-031: App Navigation Model
+### TC-031: App Navigation Model — ✅ RESOLVED
 
-| Field | Detail |
-|-------|--------|
-| **ID** | TC-031 |
-| **Title** | Top-level app navigation structure |
-| **The Problem** | The PRD describes individual screens (home, settings, account detail, pending confirmations) but never specifies how the user moves between them. There is no defined top-level navigation structure -- no bottom bar, no drawer, no tab layout. Every "navigate to X" reference in the PRD is ungrounded. |
-| **Why it matters (Product)** | This is the skeleton of the entire app. Every screen layout, every user journey, and every "navigate to X" reference depends on this decision. The entire UX Flows document (which is the next deliverable after PRD sign-off) cannot be started until this is resolved. UX-1, UX-2, and UX-3 all depend on this. |
-| **Why it matters (Engineering)** | The GoRouter route hierarchy, the app's scaffold architecture (shell routes, nested navigation), and navigation state management all depend on this choice. It determines the top-level widget tree structure for the entire Flutter app. |
-| **Options** | **(A) Bottom navigation bar with 3-4 tabs (e.g., Home, Accounts, Settings) plus a FAB or speed dial for transaction creation.** Standard Material 3 pattern. Always-visible tabs provide instant access to major sections. The transaction creation entry point (the most frequent user action) gets a prominent, persistent FAB. **(PM recommendation.)** |
-| | **(B) Single primary screen (Home) with drawer navigation.** Simpler but less discoverable -- secondary screens are hidden behind a hamburger menu. Works for apps with one dominant screen but makes multi-section apps feel cramped. |
-| | **(C) Bottom nav with 3 tabs (Home, Accounts, Settings) plus a floating action button for entry.** Similar to (A) but with a fixed 3-tab layout and a dedicated FAB rather than a speed dial. Slightly simpler than (A). |
-| **Blocks** | UX Flows document (entirely -- cannot begin without this). GoRouter route hierarchy. Scaffold architecture. All screen-to-screen navigation references in the PRD. UX-1, UX-2, UX-3. |
+**Founder decision:** Bottom navigation bar. The founder notes this should be an LE decision going forward. LE proposes 3 tabs: Home, Accounts, Settings. Pending Confirmations accessible from Settings. GoRouter route hierarchy unblocked.
 
 ---
 
-### TC-050: Should Home Screen Search Override the Month Filter?
+### TC-050: Search Scope — ✅ RESOLVED
 
-| Field | Detail |
-|-------|--------|
-| **ID** | TC-050 |
-| **Title** | Home screen search scope -- month-filtered or global |
-| **The Problem** | The PRD says search on the home screen operates on the "currently displayed (month-filtered) set." This means if you are viewing March and search for a transaction you made in February, you will not find it. The only way to search across all time is via the account detail screen, which only shows transactions for one account at a time. There is no cross-account, all-time search surface in v1. |
-| **Why it matters (Product)** | Users frequently do not remember which month a transaction was in. Forcing them to navigate month-by-month to find a transaction is a significant usability limitation. The account detail screen provides a partial workaround (all-time search for a single account) but not a full solution. This is one of the most common frustrations in expense tracking apps. |
-| **Why it matters (Engineering)** | If search overrides the month filter, the search query scope changes from "transactions in month X" to "all transactions." This is manageable within the 500ms performance target for 10k records. The search engine needs to support both scoped and global query modes. The home screen transaction list display needs to handle showing results from multiple months (date grouping headers, scroll position). |
-| **Options** | **(A) Keep current spec -- home search is month-scoped.** Global cross-account search is deferred to v2 (FG-C4). Simpler to implement. Users must navigate month-by-month or use account detail for broader search. |
-| | **(B) Home search ignores month filter when active; month filter re-engages when search is cleared.** Much better UX for the "find that transaction" use case. Manageable performance. Requires the transaction list to display results from multiple months with appropriate date grouping. **(PM recommendation.)** |
-| **Blocks** | Search engine scope design (scoped vs. global query modes). Home screen search implementation. Home screen transaction list display (multi-month results handling). |
+**Founder decision:** Transaction search is **global across all transactions to date** — never month-scoped. The SS5.8.4 text stating month-filtered scope is incorrect and has been corrected. Engineering owns performance optimization. v2 scope: navigation search (across screens/features) and settings search.
