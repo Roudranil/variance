@@ -155,7 +155,7 @@ No additional fields.
 | Billing date | Day of month (1–28) | **Yes** | — | **IP** | Required — enables payment reminders (§5.1.7) and statement balance computation (§5.1.6). Editing triggers notification reschedule. |
 | Payment due date | Day of month (1–28) | **Yes** | — | **IP** | Required — enables payment reminders. Editing triggers notification reschedule. |
 | Credit limit | Decimal ≥ 0 | No | — | **IP** | Enables credit card limit warning (§5.1.4, FG-C18) when configured. |
-| Linked bank account | Account ref | No | None | **IP** | Optional. Links to a bank account for payment source pre-fill. Editing triggers notification reschedule. Only bank accounts shown in picker. |
+| Linked bank account | Account ref | No | None | **IP** | Optional. Links to a bank account for payment source pre-fill. The payment form reads the linked bank account at the time the user taps "Pay," not at notification schedule time — changing this field does not trigger a notification reschedule. Only bank accounts shown in picker. |
 
 #### Debit Card
 
@@ -238,7 +238,7 @@ Not a form per se, but a multi-step flow with user inputs:
 | Step | Input | Type | Notes |
 |------|-------|------|-------|
 | 1 (if templates exist) | Template handling | Enum: Migrate / Stop | **Migrate:** select replacement account. **Stop:** archive all. Default: Stop. |
-| 1a (if Migrate) | Replacement account | Account ref | Must be same type (for account field) or compatible. |
+| 1a (if Migrate) | Replacement account | Account ref | Must be same account category AND same currency. If no valid replacement exists, "Migrate templates" is disabled (greyed out). |
 | 2 (if balance ≠ 0 and same-currency account exists) | Transfer balance? | Boolean: Yes / No | If Yes: select destination account. If No: net worth warning + confirm. |
 | 2a (if Yes) | Destination account | Account ref | Must be same currency. |
 | 3 (if declined transfer or no same-currency account) | Confirm deletion | Boolean | Final confirmation with net worth impact warning. |
@@ -296,7 +296,20 @@ Not a form per se, but a multi-step flow with user inputs:
 | End date | Date | No | None (indefinite) | **IM** | Cannot be changed after creation. No end date = runs until paused/archived. |
 | Posting behaviour | Enum: Auto-post / Remind and confirm | Yes | Auto-post | **IP** | Editable. "Remind and confirm" can be switched to "Auto-post" via contextual menu (§5.2.7). |
 
-> **Edit rule summary:** Amount, accounts, category, title, description, and posting behaviour are editable (**IP**). Recurrence structure (N, unit, constraints) and schedule boundaries (start date, end date) are immutable (**IM**). Transaction type is immutable (**IM**). To change the schedule, the user must archive the current template and create a new one.
+**Transfer Fee Fields (for transfer-type templates only):**
+
+When the template's transaction type is "Transfer," the following fee fields are available (same as §1.3 Transfer Fee Fields on transactions). The fees panel is collapsed by default (no fee).
+
+| Field | Type | Req? | Default | Edit Rule | Notes |
+|-------|------|------|---------|-----------|-------|
+| Fee mode | Enum: Flat / Percentage | No | None (panel collapsed) | **IP** | Mutually exclusive. Selecting one clears the other. |
+| Fee amount | Decimal > 0 | Conditional (if Flat) | — | **IP** | In the source account's currency. |
+| Fee percentage | Decimal > 0 | Conditional (if Percentage) | — | **IP** | Computed fee = amount x percentage / 100. |
+| Fee category | Category ref | No | Financial > Fees & Charges | **IP** | User may change before saving. |
+
+> Auto-posted transfers with fees produce compound transactions (Case 1.3a in `ledger-entry.md`) exactly as they would for manually created transfers with fees.
+
+> **Edit rule summary:** Amount, accounts, category, fee fields (transfer-type only), title, description, and posting behaviour are editable (**IP**). Recurrence structure (N, unit, constraints) and schedule boundaries (start date, end date) are immutable (**IM**). Transaction type is immutable (**IM**). To change the schedule, the user must archive the current template and create a new one.
 
 ### 4.2 Pause Template
 
@@ -312,13 +325,16 @@ Not a form per se, but a multi-step flow with user inputs:
 
 ### 5.1 Template Creation
 
-Installments share all fields from §4.1 (Recurring Template Creation) plus:
+Installments share all fields from §4.1 (Recurring Template Creation) with one key difference: the `end_date` field inherited from §4.1 is **computed and read-only** on installment templates (not user-settable). It is derived from `start_date + (number_of_installments × recurrence_period)`. Number of installments is the sole termination signal.
+
+Additional installment-specific fields:
 
 | Field | Type | Req? | Default | Edit Rule | Notes |
 |-------|------|------|---------|-----------|-------|
-| Total amount | Decimal > 0 | Yes | — | **IM** | The target total. Immutable after creation (§5.2.8). |
+| Total amount | Decimal > 0 | Yes | — | **IM** | The target total. Immutable after creation except during early close (§5.2.8), where the user may update it to match the running total. |
 | Number of installments | Integer > 0 | Yes | Derived (total ÷ per-period, or manual) | **IP** (future only) | User can add or remove future (unposted) installments after creation. Total configured remains immutable. |
 | Per-installment amounts | Decimal[] | Yes | Auto-calculated (total ÷ count) | **IP** (future only) | User may manually adjust individual future installment amounts. Mismatch warning at save if Projected final total ≠ Total configured. |
+| End date | Date | — | Computed | **Read-only** | Derived from `start_date + (number_of_installments × recurrence_period)`. Not user-settable on installment templates. |
 
 > **Editable future installments:** The user can add new future installments or remove unposted ones. This changes the Projected final total but not Total configured. The 4 tracked amounts (§5.2.8) update accordingly.
 
@@ -393,7 +409,7 @@ This matrix summarises the editability of every field on a **posted transaction*
 | Category / Subcategory | ✅ | **IP** (future occurrences only) |
 | Title / Description | ✅ | **IP** |
 | Recurrence (N, unit, constraints) | ✅ | **IM** |
-| Start date / End date | ✅ | **IM** |
+| Start date / End date | ✅ | **IM** (recurring) / End date is computed and read-only for installments |
 | Posting behaviour | ✅ | **IP** |
 | Total configured (installment) | ✅ | **IM** |
 | Number of installments | ✅ | **IP** (add/remove future only) |

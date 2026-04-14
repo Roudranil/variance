@@ -469,6 +469,8 @@ The recurring mechanism is a scheduling layer. No new ledger pattern. ✅
 
 **Ledger entries:** Identical to Case 1.1 (expense) or 1.2 (income).
 
+> **Pending founder confirmation (TC-022):** If installments support the transfer transaction type (for loan repayments), this case extends to include Cases 1.3 and 1.3a (transfer and transfer-with-fee). The PM recommends Option A (installments support all three types: income, expense, transfer). Until confirmed, the SDS should plan for transfer-type installments in the schema and scheduler.
+
 No new ledger pattern. ✅
 
 ---
@@ -567,7 +569,7 @@ Each migrated transaction generates a **reversing + corrected pair**, identical 
 | 2.5a-i | Account Deletion Balance Transfer (B₁ > 0) | Dr A₂ B₁, Cr A₁ B₁ | 1 txn, 2 entries (system-generated) |
 | 2.5a-ii | Account Deletion Balance Transfer (B₁ < 0) | Dr A₁ \|B₁\|, Cr A₂ \|B₁\| | 1 txn, 2 entries (system-generated) |
 | 3.1 | Recurring auto-post | Same as 1.1–1.3 (or 1.3a if fee applies) | Same as type |
-| 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
+| 3.2 | Installment single post | Same as 1.1 or 1.2 (or 1.3 / 1.3a if transfer — pending TC-022) | Same as type |
 | 3.3 | Cross-currency Transfer | **Disallowed in v1** — deferred to v2 | N/A |
 | 3.4 | Correct a Journal Adjustment | Reversing + Corrected | 2 txns, 4 entries |
 | 3.5 | Budget Replenishment | None (budget layer — deferred to v2) | 0 |

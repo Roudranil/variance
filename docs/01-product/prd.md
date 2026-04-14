@@ -185,6 +185,8 @@ $$\text{Assets} = \text{Liabilities} + \text{Equity} + \text{Income} - \text{Exp
 
 ### 4.3 Data Model
 
+> **Scope note:** This subsection defines the **ledger entry model** only — the minimal structure required to express and validate the DEB invariant. The full entity schemas for transactions, accounts, categories, and templates (including all user-facing and system fields) are defined in `docs/01-product/input-fields.md` and will be consolidated in the SDS data model (`docs/02-technical/data-model.md`).
+
 **Transaction:**
 - `id`
 - `type` ∈ { income, expense, transfer }
@@ -242,6 +244,8 @@ There is no explicit asset/liability designation field on any account. The direc
 - Income category: $\text{balance} = \sum \text{credit} - \sum \text{debit}$
 - Expense category: $\text{balance} = \sum \text{debit} - \sum \text{credit}$
 
+> **Multi-currency note:** Categories are currency-agnostic containers — a single category can receive entries from accounts in different currencies. Category balances are meaningful only in the home currency. When computing a category balance for display, entries in foreign currencies are converted to the home currency using the transaction's stored `exchange_rate_to_home` (§7.1). The formula is: `Σ (entry_amount × exchange_rate_to_home)`, respecting debit/credit sides per the formulas above. Per-currency category breakdowns are not a v1 feature.
+
 ### 4.7 Transaction Validity
 
 A transaction is valid if and only if:
@@ -254,13 +258,15 @@ A transaction is valid if and only if:
 
 - All posted transactions are **permanently immutable**.
 - Correcting a transaction's financial fields — including **amount, account, and category** — posts a **new reversing transaction** (negates the original) followed by a **new corrected transaction**. This is consistent with Cases 1.4 and 1.5 in `docs/01-product/ledger-entry.md`, where the corrected entry already uses EC' and IC' to represent a changed category.
-- **In-place edits are limited to: title, description, and photos only.** These fields carry no ledger significance.
+- **In-place edits are limited to: title, description, photos, and date/time.** These fields carry no ledger significance.
 - **Soft delete** of a transaction posts an automatic reversing entry to neutralise it. The original transaction record is retained.
 - No entity (transaction, account, category) is ever permanently deleted.
 
 ### 4.9 Initial Balance & Equity Account
 
 When an account is created with an initial balance, the system implicitly posts a transaction against an internal **Opening Balance equity account** (EQ). This equity account is **never visible to the user under any circumstances** — it does not appear in any user-facing views, account lists, or reports.
+
+**EQ is per-currency with lazy creation.** Each currency in use has its own EQ account (e.g., `EQ_USD`, `EQ_INR`). When an account with currency X is created with a non-zero initial balance, the system uses (or creates on demand) the EQ account for currency X. If no account in a given currency ever has a non-zero initial balance, no EQ account is created for that currency. All EQ accounts are invisible and excluded from net worth. The same per-currency EQ is used for invisible journal adjustments (Cases 2.4a/2.4b in §4.11).
 
 **EQ posting direction by initial balance sign:**
 - Initial balance B > 0 (asset state): `Dr A, Cr EQ` → account balance = +B.
@@ -387,6 +393,8 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
 
 **Delete**: Soft delete only. Ledger entries are retained. A soft-deleted account's balance is excluded from net worth. Hard delete and transaction migration to another account are deferred to a future version.
 
+> **"Not user-editable" vs. soft-deletable (system-generated transactions):** When the PRD states a transaction is "not user-editable" (e.g., the system-generated balance transfer on account deletion), this means the user cannot modify any fields (amount, account, title, description, date, photos) — the Edit action is not available. However, the user CAN initiate a soft-delete on such transactions, with the appropriate warning dialog. Editability (changing fields) and deletability (voiding) are separate concepts. System-generated transfers are non-editable but deletable-with-warning.
+
 **Soft-deleted account behaviour (FG-B9):**
 - A soft-deleted account is **frozen**: no new transactions can be posted against it, and no existing transactions can be edited to reference it (the account is excluded from the account picker in transaction edit forms).
 - The account is **hidden from the account list** on the home screen and the account picker in new transaction forms.
@@ -499,6 +507,22 @@ When recording a transaction that would push an account balance below zero, or d
 **Credit card limit warning (FG-C18):**
 When recording an expense or transfer against a credit card account, if the transaction would cause the outstanding balance to exceed the configured **credit limit** (§5.1.2), a **non-blocking inline warning** is shown: *"This transaction will exceed the credit limit of [limit] for [Card Name]. Outstanding will be [projected amount]."* The user may dismiss and proceed — there is no hard block. This warning is only shown when a credit limit is configured on the account.
 
+#### 5.1.4a Account Detail Screen
+
+The account detail screen is the primary view for a single account, reached by tapping an account in the account list or net worth view.
+
+| Section | Content | Notes |
+|---------|---------|-------|
+| **Header** | Account name, account category badge, currency | |
+| **Balance** | Current computed balance (from ledger). For credit cards: outstanding balance AND statement balance (§5.1.6). | Negative balance styled per §5.1.4. |
+| **Account metadata** | All category-specific fields (§5.1.2) displayed as read-only. Sensitive fields (card numbers, account numbers) masked with reveal-on-auth (§5.4.6). | |
+| **Net worth inclusion** | "Included in net worth" / "Excluded from net worth" indicator. | |
+| **Per-account transaction list** | Transactions filtered to this account. Same display rules as the unified list (§5.2.1). Search and filter available, scoped to this account. Not month-filtered — shows all transactions across all months. | |
+| **Contextual actions** | Edit Account, Delete Account, Reconcile (§5.1.3a). | Via app bar or contextual menu. |
+| **Credit card only: Pay FAB** | Floating action button for credit card payment (§5.1.7). | Only on credit card accounts. |
+
+---
+
 #### 5.1.5 Internal Transfer
 
 - A Transfer transaction atomically debits the destination account and credits the source account.
@@ -526,7 +550,15 @@ Two balance figures are meaningful for credit cards:
 | Balance | Definition | Source |
 |---------|------------|--------|
 | **Outstanding balance** | Current total ledger balance — the total amount owed across all billing cycles. | Live ledger computation |
-| **Statement balance** | Net change to the credit card account between the last billing date and the current date — the amount due by the payment due date. | Derived on demand from the ledger filtered by billing period. Not stored separately. |
+| **Statement balance** | Net change to the credit card account between the last billing date and the current date — the amount due by the payment due date. | Derived on demand from the ledger filtered by billing period. Not stored separately. See billing period boundary rules below. |
+
+**Billing period boundary semantics:**
+
+- The billing period is a **half-open interval** `(previous_billing_date, current_billing_date]`. Transactions on the billing date itself are included; transactions on the previous billing date are excluded (they belonged to the prior period).
+- The "previous billing date" is computed by subtracting one month from the current billing date, applying the same end-of-month clamping rule as recurring transactions (§5.2.7).
+- **First billing cycle:** When the account is newly created and no full billing cycle has elapsed yet, the statement balance covers all transactions from account creation through the first billing date: `(account_creation_date, first_billing_date]`.
+- **Current date before billing date:** If today is the 10th and the billing date is the 25th, the "current billing period" runs from the 25th of last month through today. The statement balance shown is the running total for the current open period (a projection). The notification that fires "1 day after billing date" (§5.1.7) reports the finalized statement balance for the just-closed period.
+- **Transaction date matching:** Transactions are matched by their user-specified date (not creation timestamp).
 
 **Balance edit screen for credit cards:**
 
@@ -561,7 +593,9 @@ Each notification exposes a **Pay** action that opens the credit card payment en
 | Source account | Linked bank account if set (pre-filled); empty otherwise |
 | Amount | Statement balance (pre-filled; user may edit before confirming) |
 
-**Notification lifecycle:** Notifications are re-scheduled whenever the billing date, payment due date, or linked bank account field is updated. This feature reuses the same `SCHEDULE_EXACT_ALARM` and `POST_NOTIFICATIONS` permissions already required by recurring transaction reminders (§5.2.7).
+**Notification suppression:** Payment reminder notifications are **suppressed when the statement balance is zero** (no amount due for the current billing cycle). The notification schedule still runs internally, but no notification is delivered to the user. The home screen alert card for credit card payment is also suppressed when the statement balance is zero. Outstanding balance is not relevant for payment reminders — the "amount due" is always the statement balance (the billed amount for the cycle). The Pay FAB on the credit card detail screen remains always visible regardless of the statement balance.
+
+**Notification lifecycle:** Notifications are re-scheduled whenever the billing date or payment due date is updated. Changing the linked bank account does not trigger a reschedule — the payment form reads the linked bank account at the time the user taps "Pay." This feature reuses the same `SCHEDULE_EXACT_ALARM` and `POST_NOTIFICATIONS` permissions already required by recurring transaction reminders (§5.2.7).
 
 ---
 
@@ -603,6 +637,13 @@ Each row in the transaction list displays three columns:
 This applies uniformly to all transactions, including Balance Adjustment entries — a Balance Adjustment recorded as income (balance ↑) appears green; one recorded as an expense (balance ↓) appears red. This is the primary way users distinguish the direction of Balance Adjustment transactions in the transaction list.
 
 **Grouping and ordering:** Transactions are grouped by date (date header per group). Within each date group, transactions are ordered by time (most recent first). The **default sort order is date descending** (most recent at top, oldest at the bottom). Custom sort options are available via the filter window (§5.2.6). The timestamp is not shown in the list row — it is revealed when the user taps the transaction to open the detail view.
+
+**Account Picker Display Rules (shared across all account pickers):**
+
+All account pickers (transaction entry, transfer source/destination, template creation, account deletion balance transfer, etc.) follow these display rules:
+- Each account row shows: **account name** (primary text), **account category badge** (secondary text, e.g., "Bank Account", "Credit Card"), and **currency symbol** (if the user has accounts in multiple currencies).
+- Accounts are **grouped by account category** in the fixed order: Cash, Bank Account, Credit Card, Debit Card, Top-Up Wallet, Loan, Investment, Other. **Alphabetical by name within each group.**
+- Each group has a visible **section header** if there are multiple groups. If all accounts are the same category, no header is shown.
 
 **Transaction List Architecture:**
 - The default view is a **unified transaction list** showing all transactions across all accounts.
@@ -703,6 +744,7 @@ Category management is accessed from Settings (§5.4.8). The flow is:
   - **No migration (default):** Existing transactions retain the soft-deleted category label. The category is hidden from pickers and filters but the label persists on historical transactions.
   - **Yes — migrate all:** The user selects a destination category. All transactions referencing the deleted category are re-categorised to the destination (this is a financial edit — reversing + corrected entry pairs are posted per §4.8).
   - **Yes — choose specific transactions:** The user is presented with the list of transactions referencing the category and selects which ones to migrate. Selected transactions are re-categorised; unselected transactions retain the old category (same as "no migration" for those).
+  - **Batch migration UX:** For migrations of more than 10 transactions, a progress dialog is shown: "Migrating transactions... [X of N]". For 10 or fewer, no progress indicator is needed. Cancellation is **not supported** — the batch migration is atomic (NF-8). For migrations of more than 50 transactions, an additional confirmation is shown before proceeding: *"This will migrate [N] transactions. This may take a moment and cannot be undone. Continue?"*
 - Soft-deleted categories are **hidden from the category picker** in new transaction entry and are not available for selection when creating a new transaction. However, soft-deleted categories **remain visible in filter dropdowns** (§5.2.6) so users can filter to historical transactions that reference a deleted category. This mirrors the treatment of soft-deleted accounts in the account filter (see §5.1.1 soft-deleted account behaviour).
 - Existing (non-voided) transactions that reference a soft-deleted category continue to display that category's name exactly as it was at the time of the transaction. The soft-deleted category label is shown as-is in the transaction detail view.
 - **Reinstatement of soft-deleted categories:** The same reinstatement logic described in §5.1.1 for accounts applies to categories. When creating a new category whose name matches a soft-deleted category within the same tree and parent, the app offers to reinstate the deleted category instead. Category names must be unique including across soft-deleted categories.
@@ -713,7 +755,16 @@ The same template warning and migration flow described in §5.1.1 applies when a
 
 > *"[N] recurring/installment template(s) are scheduled to use this category. What would you like to do?"*
 
-Options: **Migrate templates** (select a replacement category) or **Stop templates** (archive all affected templates). The **default is Stop templates**. This warning fires in addition to the existing transaction-migration prompt (§5.2.4 category mutability rules) — both flows may be active if the category has both historical transactions and future template occurrences.
+Options: **Migrate templates** (select a replacement category) or **Stop templates** (archive all affected templates). The **default is Stop templates**.
+
+**Category deletion step ordering:** The complete deletion flow executes in the following fixed order:
+
+1. **Step 1 — Template handling** (if templates reference this category): "Migrate templates" or "Stop templates" prompt. This fires first because it is a blocking prerequisite.
+2. **Step 2 — Usage count display** (if N > 0 active transactions reference the category): Informational count shown.
+3. **Step 3 — Transaction migration prompt**: "No migration" / "Migrate all" / "Choose specific" prompt.
+4. **Step 4 — Soft-delete proceeds** after all prompts are resolved.
+
+This mirrors the account deletion flow (templates first, then data handling). The user can migrate templates to category X and transactions to category Y — these are independent operations.
 
 ---
 
@@ -722,6 +773,7 @@ Options: **Migrate templates** (select a replacement category) or **Stop templat
 - Cannot be selected by the user when creating a transaction.
 - Assigned automatically when a journal adjustment is recorded as income/expense.
 - Visible in the transaction list when such transactions exist. Balance Adjustment transactions are **visually indistinguishable** from normal transactions in the list. Full UI treatment is deferred to UX Flows.
+- **Icon:** `balance` from the `material_symbols_icons` package. This applies to both the income and expense tree instances. The founder may override the icon choice during the icon curation pass (TC-014).
 - **Completely hidden from the category management screen.** The user cannot see, rename, change the icon of, or soft-delete this category. It is fully immutable and system-managed.
 - **Protected entity pattern:** The "Balance Adjustment" category and the internal equity account (§4.9) are both protected system entities. The DB schema must support a `is_protected` flag (or equivalent) on categories and accounts to distinguish system-managed entities from user-managed ones. This pattern may expand in future versions as additional protected entities are introduced.
 
@@ -767,7 +819,7 @@ Search is accessible from the transaction list. The search engine uses an **fzf-
 - **Nearest-substring ranking**: Results are ranked by closeness of match. Exact matches rank highest, prefix matches rank above mid-string matches.
 - **Exact string match**: Typing an exact value matches it with the highest rank.
 
-**Searchable fields:** date, account name, category name, subcategory name, title, and description. Whether title and description are searched with equal or different ranking weight is deferred to UX Flows. Transactions referencing **soft-deleted accounts or soft-deleted categories** are included in search results — the deleted entity's name remains searchable (see §5.1.1 soft-deleted account behaviour and §5.2.4 soft-deleted category behaviour).
+**Searchable fields:** date, account name, category name, subcategory name, title, and description. Title and account name should rank higher than description and category name; the exact weights are deferred to SDS. Transactions referencing **soft-deleted accounts or soft-deleted categories** are included in search results — the deleted entity's name remains searchable (see §5.1.1 soft-deleted account behaviour and §5.2.4 soft-deleted category behaviour).
 
 **Amount search:** Amount fields are matched by **exact value only**. Typing "500" returns transactions with an amount of exactly ₹500 — it does not return ₹5,000 or ₹50.
 
@@ -778,7 +830,7 @@ A dedicated filter view (separate from the main transaction list) provides filte
 | Criterion | Notes |
 |-----------|-------|
 | Transaction type | Income / Expense / Transfer |
-| Category | Contextual — only shows income categories for income filter, etc. Multi-select: one or more categories may be selected. |
+| Category | Contextual — dynamically filtered by the current transaction type selection. Multi-select: one or more categories may be selected. See category filter interaction rules below. |
 | Subcategory | Contextual — filtered by the selected category. Multi-select. |
 | Account | One or more accounts. **Includes soft-deleted accounts** so users can filter to historical transactions from a deleted account (see §5.1.1 soft-deleted account behaviour). |
 | Date range | Absolute range or relative presets (this month, last 7 days, etc.) |
@@ -788,6 +840,15 @@ A dedicated filter view (separate from the main transaction list) provides filte
 | Has description | Boolean |
 | Is recurring | Boolean |
 | Is voided | Boolean — shows soft-deleted transactions |
+
+**Category filter interaction with transaction type filter:**
+
+- The category picker is **dynamically filtered** by the current transaction type selection. If "Income" only is selected, the picker shows income categories. If "Expense" only, expense categories. If both are selected, the picker shows both trees (grouped with a visual separator). If "Transfer" is selected (alone or with others), transfers have no category — the category criterion is disabled for transfer results but still applies to income/expense results.
+- **Adding a type** to the type filter does NOT clear already-selected categories. Expense categories become additionally available if "Expense" is added.
+- **Removing a type** from the type filter removes its categories from the selection. If "Income" is deselected, all selected income categories are automatically deselected.
+- **No transaction type selected** (all cleared): the category picker shows all categories from both trees.
+
+**"Is recurring" filter semantics:** "Is recurring = true" matches any transaction with a non-null `parent_template_id`. This includes transactions generated by both recurring templates and installment templates, from templates in any state (active, paused, archived, deleted), and includes manually handled (edited/deleted) child transactions. "Is recurring = false" matches all other transactions (manually created, system-generated, journal adjustments).
 
 **Filter logic — simple view (v1):** All active filter criteria are combined with **AND logic** — a transaction must satisfy every active criterion to appear in results. This is the only filter mode in v1.
 
@@ -817,6 +878,7 @@ Users can define recurring transaction templates. Parameters:
 - **End-of-month day handling:** If a recurring transaction is scheduled for a calendar day that does not exist in a given month (e.g., the 29th, 30th, or 31st in February; the 31st in April, June, September, or November), it is posted on the **last valid day of that month** (e.g., 28 February in non-leap years; 30 April). This applies to all month- and year-unit recurrences.
 
 - **Missed transactions on app launch:** If the device was powered off, the app was force-stopped, or the scheduler was otherwise unable to run on a scheduled date, all missed recurring auto-post transactions are **posted automatically the next time the app launches**. For "remind and confirm" templates, if the 24-hour confirmation window has already elapsed, the missed occurrence is auto-approved and posted at launch. Occurrences skipped during a pause period are **not** retroactively posted when the template resumes.
+- **Stacked "remind and confirm" missed occurrences:** When multiple "remind and confirm" occurrences have been missed (e.g., the user did not open the app for a week on a daily template), the following rules apply: (1) Missed occurrences are posted in **chronological order** with their original scheduled dates. (2) **Duplicate detection does not fire** for auto-approved missed occurrences — these are expected recurring transactions, not user-initiated entries. (3) **Overdraft warnings do not fire** for auto-approved missed occurrences — the warnings would be unactionable since the user was not present. (4) A **one-time summary notification** is shown at launch: *"[N] recurring transactions were auto-posted while you were away. [View details]."* Tapping "View details" navigates to the relevant transactions. This applies only to "remind and confirm" templates; "auto-post" templates are handled by the scheduler on time (or on next launch).
 
 - **Posting behaviour** (configurable per template):
   - **Auto-post**: Transaction is posted automatically on the scheduled date.
@@ -848,6 +910,8 @@ Installments are a sub-type of recurring transaction representing a fixed total 
 
 Parameters:
 - Total amount, recurrence definition (same as 5.2.7), number of installments (derived from total / recurrence, or manually set).
+- **End date is computed, not user-settable.** The end date of an installment template is always derived from `start_date + (number_of_installments × recurrence_period)`. The `end_date` field from the recurring template base (§5.2.7) is displayed as read-only on installment templates. Number of installments is the sole termination signal.
+- **Installment occurrences are materialized at creation time.** Individual installment records are created as scheduled occurrence records based on the computed series. Each materialized installment has an ID, scheduled date, amount, status, and link to the child transaction once posted. This enables per-period amount editing after creation.
 - The system auto-calculates the per-installment amount (total ÷ number of installments).
 - The user may manually adjust individual installment amounts after the auto-calculation stage.
 - If the sum of manually adjusted amounts does not equal the total amount, the app surfaces a **non-blocking warning at save time** of the payment plan. The user may still save and proceed.
@@ -859,7 +923,7 @@ The installment template maintains four tracked amounts:
 
 | Amount | Definition |
 |--------|-----------|
-| **Total configured** | The target total amount set when the installment was created. Immutable after creation. |
+| **Total configured** | The target total amount set when the installment was created. Immutable after creation **except during early close** (see below), where the user may choose to update it to match the running total. |
 | **Running total** | Sum of all posted (non-voided) child transaction amounts to date. If a child is soft-deleted, its amount is subtracted from the running total. If a child's amount is edited (corrected), the running total reflects the corrected amount. |
 | **Total remaining** | Sum of all future scheduled installment amounts (not yet posted). |
 | **Projected final total** | Running total + Total remaining. May differ from Total configured if individual installments have been manually adjusted, deleted, or corrected. |
@@ -868,7 +932,7 @@ The non-blocking mismatch warning (at save time) applies when Projected final to
 
 **Installment editability:**
 
-- **Total configured** is immutable after creation.
+- **Total configured** is immutable during normal operation. The only code path that modifies `total_configured` after creation is the early close flow (step 4 below), where the user may choose to update it to match the running total.
 - The user may **add new future installments** or **remove unposted future installments** after creation. This changes the Projected final total and Total remaining but not Total configured. Mismatch warning surfaces if Projected final total ≠ Total configured.
 - **Per-installment amounts** for future (unposted) installments may be manually adjusted at any time. Same mismatch warning applies.
 - All other template editability rules from §5.2.7 apply (amount, account, category, title, description, posting behaviour are editable; recurrence structure and schedule boundaries are immutable).
@@ -880,7 +944,7 @@ The user may close an installment series early before all scheduled installments
 The early close flow:
 
 1. The app displays the current payment progress (the 4 tracked amounts above) and asks: *"Would you like to record a final payment before closing this series?"*
-2. **If yes — final lump-sum payment:** The user enters a final payment amount. A new transaction is posted and linked to the installment series (same as a regular installment child transaction). All remaining future scheduled installments are cancelled and the template is archived.
+2. **If yes — final lump-sum payment:** The final payment uses the **same transaction type as the installment template** (expense, income, or transfer). The standard transaction entry form opens pre-filled with the template's configuration (accounts, category, title, description) and the user-entered final payment amount. The user can modify any field before saving. The transaction is posted as a child transaction linked to the installment series (`parent_template_id` set). All remaining future scheduled installments are cancelled and the template is archived.
 3. **If no — close without final payment:** All remaining future scheduled installments are cancelled and the template is archived. No new transaction is posted.
 4. **Mismatch warning:** After the early close (with or without a final payment), if the resulting Running total ≠ Total configured, the app warns: *"The total paid ([running total]) differs from the original target ([total configured]). Would you like to update the target total to match the actual paid amount?"*
    - **Update target:** Total configured is updated to match Running total. The mismatch is resolved.
@@ -951,7 +1015,7 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 | Setting | Type | Default | Options | Notes |
 |---------|------|---------|---------|-------|
 | Theme | Enum | System default | Light, Dark, System default | |
-| Color scheme | Enum | Material You dynamic | Material You dynamic color (from wallpaper, API 31+), Custom seed color | Dynamic color requires API 31+. On lower API levels, falls back to custom seed color. |
+| Color scheme | Enum | Material You dynamic | Material You dynamic color (from wallpaper), Custom seed color | Users may choose dynamic color or custom seed color. If dynamic color is unavailable on the device (e.g., OEM restriction), custom seed color is used automatically. |
 | Animations | Boolean | Enabled | Enable, Disable | Disabling animations removes transitions and micro-interactions app-wide. |
 
 **Font:** The app uses a curated combination of fonts for different UI elements (headings, body, numeric displays, etc.). This is a design-level decision, not user-configurable. The exact font pairing is deferred to UX Flows.
@@ -978,6 +1042,16 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 | Description max length | Enum | 1000 | 500, 1000, 2000 | Maximum character limit for the transaction description field (§5.2.1). Applies to new and edited transactions. |
 | Back button behaviour | Enum | Ask before discarding | **Ask before discarding** — confirmation dialog *"Discard changes?"*; **Auto-save as draft** — saves partial entry as a draft (accessible from a Drafts section); **Discard immediately** — discards without confirmation | Controls behaviour when the Android back button is pressed while a transaction entry form has unsaved data. (FG-C20) |
 
+**Draft lifecycle (for "Auto-save as draft" mode):**
+
+Drafts are a lightweight persistence mechanism, not a first-class entity. A draft is a serialized snapshot of the transaction entry form's current state (all filled fields, including partial data), stored as a single JSON record in a separate `drafts` table — not as a transaction entity and not part of the ledger.
+
+- **Limit:** Maximum **5 drafts** at any time. If the limit is reached and a new draft is auto-saved, the **oldest draft is silently discarded** (FIFO eviction).
+- **Expiration:** Drafts have **no expiration** — they persist until explicitly deleted or resumed.
+- **Resuming:** Tapping a draft populates the transaction entry form with the saved state and deletes the draft record.
+- **Deletion:** Drafts can be explicitly deleted from the Drafts section.
+- **Entry point:** A "Drafts" entry point is accessible from the quick-entry FAB menu (or transaction entry screen). It shows a simple list of saved drafts with date, transaction type, and partial amount/title (if available).
+
 > **Duplicate transaction detection** (FG-C2, §5.2.1) is always active — there is no user toggle. The non-blocking duplicate warning fires whenever the detection criteria are met.
 
 #### 5.4.4 Warnings & Limits
@@ -992,6 +1066,10 @@ Per-account and per-category configurable warning thresholds. When a transaction
 |---------|------|---------|-------|
 | Per-account threshold | Amount (nullable) | Disabled (no threshold) | Set individually for each account. Accessed via Settings > Warnings & Limits > Per-Account Limits. Each account row shows its current threshold (or "Not set"). |
 | Per-category threshold | Amount (nullable) | Disabled (no threshold) | Set individually for each expense category. Accessed via Settings > Warnings & Limits > Per-Category Limits. Each category row shows its current threshold (or "Not set"). |
+
+**Currency handling for thresholds:**
+- **Per-account thresholds:** Compared against the transaction amount in the **account's native currency**. Since each account has one currency, this is unambiguous.
+- **Per-category thresholds:** Compared against the transaction amount converted to the **home currency** (using the current cached exchange rate). Since categories span multiple currencies, the threshold is implicitly in the home currency. In Settings > Warnings & Limits > Per-Category Limits, the threshold amount is shown with the home currency symbol. If no exchange rate is available for the foreign currency, the per-category threshold check is **skipped** for that transaction.
 
 **Behaviour:** If both an account threshold and a category threshold apply to a single transaction, and both are exceeded, only **one warning** is shown (the more specific — account threshold takes precedence). The user confirms once.
 
@@ -1057,7 +1135,7 @@ A local backup action is accessible from Settings > Data > Backup.
 
 **Export:** The app exports all data — transaction ledger, accounts, categories, recurring and installment templates, and attached photos — as a **zip archive** saved to the user-selected location via the Android system file picker (or the device's Downloads folder as default).
 
-- **Contents:** The exact structure of the zip archive (database dump format, file/folder naming, photo inclusion strategy) is deferred to SDS.
+- **Contents:** The exact structure of the zip archive (database dump format, file/folder naming, photo inclusion strategy) is deferred to SDS. However, the backup zip **must include a version manifest file** (e.g., `manifest.json`) at the root of the archive containing at minimum: `backup_format_version` (integer, starting at 1), `app_version` (semantic version string), `created_at` (UTC timestamp), and `schema_version` (database schema version). This ensures forward compatibility — the v2 import/restore feature will read this manifest to determine the backup format and apply any necessary migrations.
 - **Photos:** Attached transaction photos are included in the backup zip.
 - **Trigger:** The user initiates backup manually from Settings > Data > Backup. The app does **not** auto-backup on a schedule in v1.
 - **Reminder:** After the first month of use (or first 50 transactions, whichever comes first), the app surfaces a **one-time in-app prompt** reminding the user to take a backup, given that data is not otherwise protected against device loss.
@@ -1156,6 +1234,14 @@ A **Skip** button is available on steps 2–4. Skipping bypasses remaining wizar
 - Are automatically posted on the scheduled date (or on the next app open after the date passes).
 - An **info popup** is shown at save time when the user selects a future date: *"This transaction is dated in the future. It will be held as pending and posted on [date]."*
 
+**Pending transaction visibility and interaction:**
+- **Visibility:** Pending transactions appear in the transaction list **only when the user navigates to a future month** via the month selector (§5.8.3). They are visually distinguished with a "Pending" badge or muted styling (exact treatment deferred to UX Flows). There is no separate "Pending" section for future-dated transactions — the "Pending Confirmations" screen (§5.8.5) is exclusively for "remind and confirm" recurring templates.
+- **Editability:** A pending transaction can be **edited freely** — all fields are in-place editable since it has not been posted to the ledger yet. No correction model applies. Amount, account, category, date, title, description, and photos can all be changed.
+- **Deletion:** A pending transaction can be **soft-deleted** (status set to `voided`) without needing a reversing entry, since it was never posted to the ledger.
+- **Contextual menu:** Pending transactions in the future month view have: Edit, Delete (with confirmation: *"This transaction has not been posted yet. Delete it?"*).
+
+**Pending transaction auto-void on account deletion:** When the scheduler attempts to post a pending transaction and finds that any referenced account has been soft-deleted, the pending transaction is **automatically voided** (no reversing entry needed since it was never posted). A notification is shown at the next app launch: *"A pending transaction for [title/amount] on [date] was cancelled because [account name] has been deleted."* Compound pending transactions (transfer-with-fee) are voided if either source or destination account is soft-deleted. Soft-deleted categories do NOT trigger voiding — transactions with soft-deleted categories are still posted normally.
+
 > **Schema implication:** Transactions require a `status` field with at least two values: `posted` and `pending`. The transition from `pending` to `posted` is handled by the same scheduler that processes recurring auto-posts.
 
 ---
@@ -1175,9 +1261,9 @@ The following summary figures are shown prominently:
 | Element | Content | Notes |
 |---------|---------|-------|
 | **Net worth** | Sum of all included account balances (per §5.1.4) | Always reflects the current (latest) state. Currency formatting per locale. |
-| **Current month income** | Sum of all income transactions posted in the currently selected month | Green-tinted or income-styled |
-| **Current month expenses** | Sum of all expense transactions posted in the currently selected month | Red-tinted or expense-styled |
-| **Current month net** | Income − Expenses for the selected month | Positive = surplus, negative = deficit |
+| **Current month income** | Sum of all income transactions posted in the currently selected month | Green-tinted or income-styled. Aggregated in home currency (foreign-currency amounts converted using stored `exchange_rate_to_home`). |
+| **Current month expenses** | Sum of all expense transactions posted in the currently selected month | Red-tinted or expense-styled. Aggregated in home currency (same conversion). |
+| **Current month net** | Income − Expenses for the selected month | Positive = surplus, negative = deficit. In home currency. |
 
 Net worth is **not** affected by the month selector — it always shows the current total. The income, expense, and net figures shift when the user changes the selected month.
 
@@ -1214,6 +1300,8 @@ Alerts are **also delivered as OS-level local notifications** (for recurring con
 **Alert dismissal:** Pending recurring confirmations remain in the alerts section until acted upon (confirmed, edited, or dismissed) or auto-approved after 24 hours. Credit card payment alerts clear once the due date passes or a payment is recorded. The backup reminder clears once a backup is taken or the user explicitly dismisses it (shown only once).
 
 **Pending Confirmations screen:** A dedicated **Pending Confirmations** view showing all unconfirmed recurring occurrences is accessible from the app's navigation overflow menu (e.g., "More options" in the nav bar). This screen shows the same information as the home screen alert cards but as a full list, allowing bulk review. Each item supports: Confirm, Edit before confirming, and Dismiss.
+
+**Dismiss semantics:** "Dismiss" permanently skips the occurrence. The transaction is NOT posted. The occurrence is marked as "manually handled" on the template schedule (same mechanism as editing/deleting a child transaction, per §5.2.7 Q47 resolution). The 24-hour auto-post timer is cancelled for this dismissed occurrence. The 24-hour auto-post (§5.2.7) applies only when the user does not interact with the confirmation at all — any user action (Confirm, Edit, or Dismiss) cancels the auto-post timer. Because Dismiss is a significant action, a brief confirmation dialog is shown: *"Skip this occurrence? It will not be posted."* with Confirm/Cancel options.
 
 #### 5.8.6 Quick Entry
 
@@ -1253,7 +1341,12 @@ In v1, each account holds a currency. The app maintains a home currency (set in 
 When the user has accounts in two or more currencies that share the same display symbol (e.g., "$" for USD, SGD, AUD; "£" for GBP and others), the app displays the **3-letter ISO 4217 code** alongside the symbol in all views where both currencies appear in context — including the account list, net worth view, transaction list, and transaction detail view. If only one currency with that symbol is in use, the symbol alone is sufficient. The disambiguation is automatic and requires no user action.
 
 **Cross-currency transfers:**
-- In v1, **transfers between accounts of different currencies are disallowed**. The UI must prevent the user from selecting a destination account whose currency differs from the source account during a transfer. This constraint is deferred for resolution in v2.
+- In v1, **transfers between accounts of different currencies are disallowed**. The transfer form enforces this as follows:
+  1. **Source account selected first:** The transfer form requires the source account to be selected before the destination account picker becomes available.
+  2. **Destination picker filtering:** The destination account picker shows **only accounts with the same currency as the selected source account** (excluding the source itself). Mismatched-currency accounts are not shown at all.
+  3. **No valid destination:** If no other active account in the same currency exists after selecting the source, the destination picker shows an empty state: *"No other account in [currency] is available. Create another account to make transfers."* The Save button is disabled.
+  4. **Transfer type availability:** The Transfer option in the transaction type selector is **always available** regardless of account count. Validation failure occurs at the destination picker level, not at type selection.
+- This constraint is deferred for resolution in v2.
 
 ### 7.1 Transaction-Level Exchange Rate Capture
 
