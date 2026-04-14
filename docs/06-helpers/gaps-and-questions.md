@@ -113,26 +113,6 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 > ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into PRD v0.4.0.** See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 >
 > ✅ **FG-A12 through FG-A31 were resolved on 2026-04-14 and baked into PRD v0.5.0.** Resolutions summary:
->
-> | ID | Resolution |
-> |----|-----------|
-> | FG-A12 | Amount range filter (min/max, inclusive) added to §5.2.6 |
-> | FG-A13 | Simple view (AND logic, v1) and advanced view (predicate builder with AND/OR/NOT, v2) defined in §5.2.6 |
-> | FG-A14 | Filter state does not persist across navigation; clears immediately; saved filter profiles deferred to v2 |
-> | FG-A15 | Fuzzy = fzf-style (typo-tolerant, substring, nearest-substring, exact); amount search = exact match only |
-> | FG-A16 | Default sort = date descending; custom sort (date asc, amount asc/desc) available via filter window |
-> | FG-A17–FG-A21 | Deferred with budgets to v2. No decisions needed for v1. |
-> | FG-A22 | PIN recovery via device security — user must configure device security to reset in-app PIN; only sensitive field view is locked |
-> | FG-A23 | 5 consecutive fails → 1-hour timeout; 15 cumulative consecutive fails → encrypted sensitive field data deleted; financial data never deleted |
-> | FG-A24 | Resolved by amount colour coding: income = green, expense = red, transfer = neutral; Balance Adjustment direction distinguishable by colour |
-> | FG-A25 | In edit mode: soft-deleted category shown as current selection; re-selectable to cancel accidental opens; once changed and saved, cannot revert; deleted categories hidden for transactions with active categories |
-> | FG-A26 | Excluded accounts shown grayed-out inline below net worth contributors |
-> | FG-A27 | Optional transfer fee panel (flat or percentage); fee posted as linked expense (Financial > Fees & Charges); compound transaction shown as single entry; detail view shows fee |
-> | FG-A28 | Loan account: post-save contextual suggestion to create recurring installment template if liability state or EMI fields filled; suggestion pre-fills available fields |
-> | FG-A29 | If no same-currency account available for balance transfer: skip transfer offer; go directly to net worth warning |
-> | FG-A30 | Font scaling (UI adapts to Android system scale, v1); TalkBack best-effort labelling (v1, complex coverage v2/v3); RTL layout support (v1) |
-> | FG-A31 | Local backup export as zip archive via system file picker (v1); import/restore and cloud sync deferred to v2 |
->
 > See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 
 ---
