@@ -19,7 +19,6 @@ Every document in the `docs/` hierarchy must include a YAML frontmatter block at
 ```yaml
 ---
 name: <string>
-version: <semver>
 status: <enum>
 owner: <enum>
 created: <date>
@@ -28,6 +27,8 @@ depends_on: [<relative-path>, ...]   # upstream documents
 outputs_to: [<relative-path>, ...]   # downstream documents
 ---
 ```
+
+> **Note:** Versioning is controlled centrally via the `version` file at the repo root. Individual documents do not carry version fields in their frontmatter.
 
 ---
 
