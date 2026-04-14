@@ -8,123 +8,110 @@ depends_on: [01-product/prd.md, 06-helpers/gaps-and-questions.md, 06-helpers/ide
 outputs_to: []
 ---
 
-# Ideation Session Diff — 2026-04-14 (Session 3)
+# Ideation Session Diff — 2026-04-14 (Session 4)
 
 > This file records the exact set of changes made to product documents in the current ideation session. It is used as the basis for commit messages. It overwrites the previous session's contents on each new session.
 
-**Session scope:** Feature gap resolution — FG-B1 through FG-B9 (Part 3, Group B of `gaps-and-questions.md`). PRD bumped to **the current version**. v2 draft PRD created.
+**Session scope:** Feature gap resolution — FG-C1 through FG-C21 (Part 3, Group C of `gaps-and-questions.md`). 7 items baked into v1 PRD, 7 deferred to v2, 1 deferred to v3, 3 rejected, 2 no action needed. FG-C21 (auto-detect transactions from SMS/email) is a new item added during this session. v2 draft PRD updated with new §21 and resolved FG-C table.
 
 ---
 
 ## `docs/01-product/prd.md`
 
-### Frontmatter & Version
+### TOC
 
-- Version bumped from 0.5.0 to **0.6.0**.
+- Added §5.1.3a Balance Reconciliation entry.
 
-### §2 — Version Roadmap
+### §5.1.3a — Balance Reconciliation (new sub-section, FG-C6)
 
-- v1 scope updated: "home summary" replaced with "home screen dashboard (greeting, net worth, monthly summary, alerts, search/filter)".
+- **New "Balance Reconciliation" sub-section** added after §5.1.3.
+- Reconcile action available on all accounts (not just cash).
+- Flow: display computed balance → user enters actual balance → app computes discrepancy → standard journal adjustment prompt (§4.10).
+- Access from account contextual menu and account detail screen.
 
-### §5.2.1 — Transaction Entry (Transaction Detail View, FG-B1)
+### §5.1.4 — Account Balance View (Credit Card Limit Warning, FG-C18)
 
-- **New "Transaction Detail View" block** added after the "Transaction Description Display" paragraph.
-- v1 contents defined: header (type badge, colour-coded), amount (with exchange rate for foreign currency), date & time, title, description, account info (source/destination, including soft-deleted accounts), category info, fee breakdown (compound transfer-with-fee), photo carousel (horizontally scrollable, tap for full-screen), contextual menu (edit, delete).
-- v2 additions noted: correction history, recurring template link, installment/loan status.
+- **New "Credit card limit warning" paragraph** added after overdraft warning.
+- Non-blocking inline warning when expense/transfer would exceed configured credit limit.
 
-### §5.2.4 — Transaction Categories (Soft-Deleted Categories in Filter, FG-B9 consistency)
+### §5.2.1 — Transaction Entry (Duplicate Detection, FG-C2)
 
-- **Soft-deleted categories in filter dropdowns:** Changed from "hidden from filter dropdowns" to "visible in filter dropdowns for historical transaction lookup." Mirrors soft-deleted account treatment in §5.1.1.
+- **New "Duplicate Transaction Detection" block** added before §5.2.2.
+- Same type + amount + account + category on the same calendar day triggers non-blocking warning.
+- User confirms or cancels. No auto-delete.
 
-### §5.2.4 — Transaction Categories (Category Usage Count, FG-B5)
+### §5.4.2 — Primary Configuration (FG-C11, FG-C18, FG-C20)
 
-- **New "Category usage count on deletion" bullet** added before the transaction migration prompt.
-- Shows count of active (non-voided) transactions referencing the category before soft-delete proceeds.
-- Must be efficient (single aggregate query). Skipped if count is zero.
+- **Number format row updated:** Indian numbering (lakh/crore, 2-2-3 grouping) explicitly supported. Default inferred from device locale.
+- **New "Currency formatting" row** added. Configurable symbol placement, spacing, grouping. Defaults from home currency locale.
+- **New "Large transaction warning" row** added. Per-account and per-category configurable thresholds. Non-blocking confirmation when exceeded.
+- **New "Back button behaviour" row** added. Configurable: ask before discarding (default), auto-save as draft, discard immediately.
 
-### §5.2.5 — Transaction Search (FG-B9)
+### §5.5.1 — Confirmed Contextual Menu Actions
 
-- **Searchable fields note updated:** Explicitly states that transactions referencing soft-deleted accounts or soft-deleted categories are included in search results.
+- **Account row updated:** Added "Reconcile" action (opens §5.1.3a flow).
 
-### §5.2.6 — Transaction Filtering (FG-B9)
+### §7 — Multi-Currency Model (Currency Symbol Disambiguation, FG-C13)
 
-- **Account filter criterion updated:** Explicitly states that soft-deleted accounts are included in the account filter picker.
+- **New "Currency symbol disambiguation" paragraph** added before cross-currency transfers.
+- 3-letter ISO code shown alongside symbol when multiple accounts share the same currency symbol.
 
-### §5.2.8 — Installments (Installment Early Close, FG-B7)
+### §7.1 — Transaction-Level Exchange Rate Capture (FG-C12)
 
-- **New "Installment early close" block** added after the running total tracking section.
-- Flow: "Mark series as complete" → optional final lump-sum payment → cancel future installments → archive template → mismatch warning with option to update target total or keep original.
-
-### §5.1.1 — Account CRUD (Soft-Deleted Account Behaviour, FG-B9)
-
-- **New "Soft-deleted account behaviour" block** added to the Delete section.
-- Frozen state: no new transactions, excluded from account pickers in transaction forms.
-- Hidden from account list on home screen and new transaction pickers.
-- Visible in Settings > Accounts and grayed-out in net worth view.
-- Historical transactions remain visible, searchable, and filterable.
-- Soft-deleted accounts included in filter account picker.
-- Does not extend to soft-deleted (voided) transactions.
-
-### §5.4.2 — Primary Configuration (Display Name, FG-B2)
-
-- **New "Display name" setting** added. Optional text field. Used in home screen greeting (§5.8). If empty, greeting shows "Hi!" with no name.
-
-### §5.4.4 — Management (Per-Account Settings, FG-B8)
-
-- **Accounts row clarified:** "Per-account settings" is the account edit form (§5.1.1 Edit). Accessible from both Settings > Accounts and from the account contextual menu. No additional per-account settings.
-
-### §5.8 — Home Screen & Dashboard (new section, FG-B2, FG-B4)
-
-- **§5.8.1 Greeting:** "Hi, [display name]!" or "Hi!" if no display name set.
-- **§5.8.2 Financial Summary:** Net worth (always current, not affected by month selector), current month income, expense, and net.
-- **§5.8.3 Month Selector:** Left/right arrows. Controls income/expense/net summary and transaction list. Does not affect net worth. Default: current calendar month.
-- **§5.8.4 Transaction List:** Month-filtered transaction list following unified list display rules. Search and filter accessible, operating on the month-filtered set.
-- **§5.8.5 Alerts:** Three v1 alert types — pending recurring confirmations, credit card payment due, backup reminder. Alerts section on home screen + dedicated Pending Confirmations screen via nav overflow. Alert dismissal rules defined per type.
-- **§5.8.6 Quick Entry:** FAB on home screen. Exact design deferred to UX Flows (UX-2).
+- **New "Exchange rate estimate during transaction entry" paragraph** added.
+- Home currency estimate shown below amount field for foreign-currency accounts.
+- Staleness warning if cached rate > 14 days old. "Exchange rate unavailable" if no cached rate.
 
 ### §8 — In-Scope vs. Out-of-Scope
 
-- **v1 in-scope updated:** "Basic home summary" replaced with full §5.8 reference. Nine new FG-B bullets added: transaction detail view, home screen dashboard, home screen alerts, category usage count, installment early close, per-account settings, soft-deleted account behaviour, soft-deleted categories in filter.
-- **v2 deferred updated:** Two new bullets: transaction detail view v2 additions (FG-B1), home screen v2 additions (FG-B2).
+- **v1 in-scope updated:** Eight new FG-C bullets added: duplicate transaction detection, balance reconciliation, Indian numbering format, exchange rate estimate in entry, currency symbol disambiguation, large transaction warning, back button behaviour.
+- **v2 deferred updated:** Seven new bullets: combined search + filter, balance history, budget period start day, income categories in budget context, app data wipe, account statement export, auto-detect transactions from SMS/email.
+- **v3 deferred updated:** One new bullet: Android home screen widget.
 
 ### §11 — Open Questions
 
-- Updated to reference FG-B1–B9 resolution (PRD the current version). Notes FG-B3 and FG-B6 deferred with budgets. References new v2 draft PRD. FG-C items remain open.
-
-### Table of Contents
-
-- Added §5.8 Home Screen & Dashboard with subsections (§5.8.1–§5.8.6).
+- Updated to reference full FG-C resolution. Feature gap analysis marked as complete. UX design decisions (UX-1 through UX-14) and ERR-1 noted as remaining open items.
 
 ---
 
-## `docs/01-product/prd-v2-draft.md` (new file)
+## `docs/01-product/prd-v2-draft.md`
 
-- **Created** as a consolidation of all v2-deferred features, decisions, questions, and ideas.
-- 20 sections covering: budgeting (full feature + FG items), savings goals, split transactions, advanced filter, saved filter profiles, backup import/restore, cloud backup, comprehensive TalkBack, reordering, recurring disable/enable, subcategory reassignment, analytics/charts, data management, audit view, tags, cross-currency transfers, transaction detail v2 additions, home screen v2 additions, v3+ items, FG-C items.
+### §19 — v3+ Items
+
+- Added Android home screen widget (FG-C7) as v3 item.
+
+### §20 — FG-C Items (table replaced)
+
+- Former "Unresolved — Pending Product Decisions" table replaced with **"Resolved — Decision Log"** summary.
+- All 21 FG-C items categorized by disposition (v1, v2, v3, rejected, no action needed).
+
+### §21 — Auto-Detect Transactions from SMS & Email Notifications (new section, FG-C21)
+
+- **New major section** added as §21.
+- Core use cases: UPI payments, credit card transactions, bank debits/credits.
+- Design considerations table: permission model, pattern matching, account matching, merchant-to-category mapping, user review flow, duplicate handling, error handling, Gmail integration.
+- Marked as high-priority v2 feature.
 
 ---
 
 ## `docs/06-helpers/gaps-and-questions.md`
 
-- Frontmatter version updated to 0.6.0.
-- Header updated to reference FG-B1–B9 resolution (PRD the current version).
-- Part 3 description updated: FG-B resolved, FG-C remains open.
-- **FG-B1 through FG-B9 full text removed.** Replaced with a resolution summary note. FG-B3 and FG-B6 noted as deferred with budgets to v2.
+- Header updated: Part 3 marked as fully resolved.
+- Part 3 description replaced with resolution summary.
+- **FG-C1 through FG-C20 full text removed.** Replaced with categorized resolution summary note.
+- FG-C21 (new item) included in resolution summary.
+- Part 0 (ERR-1) marked as resolved — §4.5 was already fixed in a prior session.
 
 ---
 
 ## `docs/06-helpers/ideation-tracker.md`
 
-- Frontmatter version updated to 0.6.0.
-- Header updated to PRD the current version.
-- PRD deliverable row updated to the current version with FG-B complete note.
-- **New 2026-04-14 key decisions entry** added (before the previous session's entry) covering all FG-B1–B9 decisions, display name setting, and v2 draft PRD creation.
-- Readiness gate updated to reference the current version.
-- Document Index updated: PRD version 0.6.0, new PRD v2 Draft row added.
+- PRD deliverable row updated: FG-C1–FG-C21 resolution noted. Feature gap analysis marked complete.
+- **New 2026-04-14 key decisions entry** added (before the FG-B entry) covering all FG-C1–FG-C21 decisions with per-item summaries. Feature gap analysis marked as complete.
 
 ---
 
-## `docs/06-helpers/ideation-folder-structure.md`
+## Files NOT changed
 
-- Tree updated: `prd-v2-draft.md` added under `01-product/`.
-- Document Index: new row for PRD v2 Draft.
+- `docs/01-product/ledger-entry.md` — no ledger posting changes in this session.
+- `docs/06-helpers/ideation-folder-structure.md` — no new files created (v2 draft already existed).

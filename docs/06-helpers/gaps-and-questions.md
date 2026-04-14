@@ -18,7 +18,7 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 >
 > - **Part 2 — UX Flows Pre-Work Topics (UX-1–UX-14):** Interaction design decisions that belong in `docs/02-technical/ux-flows.md`, not the PRD. These do not block the PRD sign-off but must be resolved before the UX Flows document can be completed. Items UX-7 and UX-8 are deferred with budgets to v2.
 >
-> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD. FG-A1 through FG-A11 resolved on 2026-04-14. FG-A12 through FG-A31 resolved on 2026-04-14. FG-B1 through FG-B9 resolved on 2026-04-14; FG-B3 and FG-B6 deferred with budgets to v2. FG-C remains open.
+> - **Part 3 — Feature Gap Analysis:** ✅ **ALL RESOLVED.** FG-A1 through FG-A31 resolved on 2026-04-14. FG-B1 through FG-B9 resolved on 2026-04-14; FG-B3 and FG-B6 deferred with budgets to v2. FG-C1 through FG-C21 resolved on 2026-04-14; 7 baked into v1, 7 deferred to v2, 1 deferred to v3, 3 rejected, 2 no action needed.
 >
 > The authoritative status of each question is tracked in `docs/06-helpers/ideation-tracker.md`.
 
@@ -85,29 +85,24 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ## Part 0 — Internal Errors & Inconsistencies
 
-> Errors found in existing documents that need to be fixed.
+> ✅ All errors resolved.
 
-| ID | Document | Section | Error |
-|----|----------|---------|-------|
-| ERR-1 | `docs/01-product/prd.md` | §4.5 Transaction Rules by Type — Expense | Debit/credit sides are reversed. PRD says "expense category entry (credit side), account entry (debit side)" but §4.11 Case 1.1 and `ledger-entry.md` Case 1.1 both record `Dr EC, Cr A` — expense category is **debited**, source account is **credited**. **Fix: swap the side labels in §4.5.** |
+| ID | Document | Section | Error | Status |
+|----|----------|---------|-------|--------|
+| ERR-1 | `docs/01-product/prd.md` | §4.5 Transaction Rules by Type — Expense | Debit/credit sides were reversed. | ✅ Fixed — §4.5 now correctly reads "debit side" for expense category and "credit side" for account. |
 
 ---
 
 ## Part 3 — Feature Gap Analysis
 
-> This section is a user-perspective audit of the PRD. It is organized into three groups:
->
-> - **FG-A** — Existing features that are underspecified, missing edge case handling, or have details that need to be fleshed out before SDS/UX can proceed.
-> - **FG-B** — Features mentioned or implied in the PRD but never fully discussed.
-> - **FG-C** — Features never considered that a user would reasonably expect.
->
-> Each item has a user-impact note. Items marked **[SDS]** have schema or architectural implications. Items marked **[Policy]** require a product decision before proceeding.
+> ✅ **All feature gap items (FG-A, FG-B, FG-C) are resolved.** Resolutions are baked into the PRD and tracked in `docs/06-helpers/ideation-tracker.md`. Full text of resolved items has been removed from this document. All v2-deferred decisions are consolidated in `docs/01-product/prd-v2-draft.md`.
 
 ---
 
 ### FG-A — Existing Features: Edge Cases & Missing Detail
 
-> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into the PRD.** See `docs/06-helpers/ideation-tracker.md` for the full decision log.
+> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into the PRD.** 
+> See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 >
 > ✅ **FG-A12 through FG-A31 were resolved on 2026-04-14 and baked into the PRD.** Resolutions summary:
 > See `docs/06-helpers/ideation-tracker.md` for the full decision log.
@@ -116,160 +111,20 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ### FG-B — Features Implied or Mentioned But Never Specified
 
-> ✅ **FG-B1 through FG-B9 were resolved on 2026-04-14 and baked into the PRD.** FG-B3 and FG-B6 deferred with budgets to v2. All v2-deferred decisions consolidated in `docs/01-product/prd-v2-draft.md`. See `docs/06-helpers/ideation-tracker.md` for the full decision log.
+> ✅ **FG-B1 through FG-B9 were resolved on 2026-04-14 and baked into the PRD.** FG-B3 and FG-B6 deferred with budgets to v2. 
+> All v2-deferred decisions consolidated in `docs/01-product/prd-v2-draft.md`. 
+> See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 
 ---
 
 ### FG-C — Features Never Discussed
 
-#### FG-C1 — Transaction Quick-Entry Templates (Not Recurring)
-
-Recurring transactions auto-post on a schedule. But there is no concept of a "saved template" for manual quick-entry. A user who buys coffee every few days at roughly the same amount wants to tap a template, adjust the amount if needed, and confirm — without filling in all fields from scratch every time.
-
-**Gap:** Should v1 support user-saved transaction templates for manual reuse? This is distinct from recurring (no schedule, no auto-post — purely a form pre-fill). Could be implemented as a "Save as template" action in the transaction entry form.
-
----
-
-#### FG-C2 — Duplicate Transaction Detection
-
-When a user manually enters a transaction, they may accidentally enter it twice (same amount, same date, same category, same account). No detection or warning mechanism is defined.
-
-**Gap:** Should the app detect probable duplicates and surface a warning? Rule example: if a transaction with the same type, amount, account, and category already exists within a 1-hour window of the submitted date/time, show "A similar transaction already exists. Add anyway?" This is a common UX safeguard in finance apps.
-
----
-
-#### FG-C4 — Combined Search + Filter
-
-Search and filter are defined as separate features (§5.2.5 and §5.2.6). Their interaction is never defined.
-
-**Gap:** Can the user apply a text search AND a filter simultaneously (e.g., search for "coffee" within expense transactions in the last 30 days)? Or are search and filter mutually exclusive modes?
-
----
-
-#### FG-C5 — Balance History / Mini Chart Per Account
-
-Many personal finance apps show a simple line chart of balance over time for each account. This gives users a quick visual of spending trends without needing full analytics (a v2 feature).
-
-**Gap:** Is a per-account balance history chart in scope for v1? It is derivable purely from the ledger with no new data — the chart data is the account balance at the start of each day, computed from existing entries. If deferred to v2, call it out explicitly.
-
----
-
-#### FG-C6 — Cash Reconciliation Workflow
-
-For cash accounts, the computed balance (from ledger entries) and the physical cash in hand frequently diverge. Users periodically count their cash and reconcile.
-
-**Gap:** Is there a "reconcile" shortcut for cash accounts? A reconcile flow would: (1) prompt the user to enter the physical cash amount; (2) compute the difference; (3) post a journal adjustment for the discrepancy. This is essentially a faster path to the existing direct balance edit, but optimised for the reconciliation use case. Without it, users must manually calculate the difference and use the journal adjustment flow.
-
----
-
-#### FG-C7 — Android Home Screen Widget
-
-An Android app widget showing key figures (current balance, today's spending, net worth) is a standard companion feature for finance apps. Users want a glanceable view without opening the app.
-
-**Gap:** Is a home screen widget in scope for v1 or v2? If v2, note it. If never, note why (privacy concern — widget visible on lock screen without PIN?).
-
----
-
-#### FG-C8 — Budget Period Start Day Configuration *(Deferred to v2 with budgets)*
-
-§5.4.2 has a "week start" setting. There is no analogous "budget month start day" setting.
-
-**Gap:** Many users receive income on a non-1st date (e.g., the 25th of every month). Their natural "spending month" runs from the 25th to the 24th. Should the user be able to configure when a monthly budget period begins? Without this, the budget resets on the 1st regardless of the user's pay cycle, making the budget-to-income comparison less meaningful.
-
----
-
-#### FG-C9 — Income Categories in Budget Context *(Deferred to v2 with budgets)*
-
-Budgets track expense spending. Income is added to a budget pool via "Add to Budget." But the PRD never addresses whether income categories are relevant to budget reporting.
-
-**Gap:** Should there be an "income budget" or "savings target" — a goal for how much income to earn in a period, separate from the expense budget? This may be v2, but it's a common feature in finance apps and worth explicitly deferring.
-
----
-
-#### FG-C10 — App Data Wipe / Factory Reset
-
-"Data wipe" is deferred to v2 (§8). In v1, there is no way for the user to clear all their data without uninstalling the app.
-
-**Gap:** This means if a user wants to start over (e.g., they were testing the app, or they want to hand their device to someone else), they must uninstall and reinstall. Is there a "reset all data" option accessible from Settings even in v1? Consider also: what happens to app-private photo storage when the app is uninstalled — is it also deleted (yes, by Android design) or does it persist?
-
----
-
-#### FG-C11 — Indian Numbering Format (Lakh/Crore)
-
-The default expense categories (Food, Transportation, Household, etc.) and subcategories (IFSC, Splitwise, Auto, Metro, etc.) are clearly designed for an Indian user base. The Indian numbering system groups numbers as `xx,xx,xxx` (lakh/crore format, e.g., ₹10,00,000 = 10 lakh), not the Western `x,xxx,xxx`.
-
-**Gap:** §5.4.2 defines "number format: decimal separator and thousands grouping style" but doesn't explicitly list Indian grouping (2-2-3 from the right) as an option. This must be explicitly supported if the primary audience is Indian.
-
----
-
-#### FG-C12 — Offline Exchange Rate Freshness in Transaction Entry
-
-§7 defines a staleness indicator in the net worth view when the cached rate is older than 14 days. But exchange rates are also used when displaying multi-currency balances elsewhere.
-
-**Gap:** When recording a transaction against a foreign-currency account, the user may want to know the current approximate exchange rate for context. Is there any exchange rate reference shown during transaction entry? What if the rate is stale or unavailable — is there any indication at the point of entry?
-
----
-
-#### FG-C13 — Currency Symbol Ambiguity
-
-The ISO 4217 list includes currencies with ambiguous or shared symbols (e.g., multiple countries use "$", "£" is shared by GBP and several others historically, "R" is used by ZAR and BRL).
-
-**Gap:** When displaying amounts for two accounts with the same symbol but different currencies, how are they distinguished in the UI? Is the 3-letter ISO code (USD, SGD, AUD) shown alongside the symbol, or just the symbol?
-
----
-
-#### FG-C14 — Account Statement Export (Basic, Even Without Full CSV)
-
-The PRD defers all data export to v2. But an "account statement" (a printable or shareable per-account transaction history) is a basic feature even in simple finance apps — used when splitting bills, sharing expense summaries, or providing transaction records.
-
-**Gap:** Is a basic "share account statement as text/PDF" feature entirely out of v1? If so, explicitly note this as a known gap.
-
----
-
-#### FG-C15 — Undo for Recently Created Transactions
-
-The soft-delete model gives the user a way to "undo" a posted transaction — but only by explicitly deleting it (navigating to it, opening it, soft-deleting it). There is no immediate undo affordance at the moment of creation.
-
-**Gap:** After saving a new transaction, should there be a brief "Undo" snackbar (e.g., 5 seconds) that removes the just-posted transaction? This is a standard mobile UX pattern for irreversible-feeling actions, and a misfired transaction (wrong amount, wrong account) is one of the most common user errors in finance apps.
-
----
-
-#### FG-C16 — Photo Storage on App Uninstall
-
-§5.2.3 says photos are stored in a "dedicated app-private data folder." Android's app-private storage is automatically deleted when the app is uninstalled.
-
-**Gap:** This interacts with FG-A31 (no backup in v1). The PRD should explicitly state: photos are stored in app-private storage and are permanently lost if the app is uninstalled. This is acceptable given the offline-first constraint, but it should be a documented known limitation — especially since photos may be receipts or important records.
-
----
-
-#### FG-C17 — Recurring Transaction: "Pause / Disable" Feature
-
-Q57 asks about pausing recurring templates as an open question on the contextual menu. But the underlying product question — whether pause is a feature at all — belongs in the PRD, not just as a menu action question.
-
-**Gap:** Should the app support pausing a recurring template (temporarily suspending auto-post without archiving the template)? Real-world need: a user's monthly gym subscription is suspended for 2 months. They don't want to delete the recurring template (they'd need to recreate it), but they also don't want it to post for 2 months. A pause-with-resume-date or pause-until-manually-resumed would address this.
-
----
-
-#### FG-C18 — Transaction Amount: Validation Upper Bound
-
-§4.4 requires amount > 0. There is no defined upper bound.
-
-**Gap:** Is there a maximum transaction amount? In theory no, but in practice very large amounts can result from typos (entering 1000000 instead of 10000). Should there be a soft warning for transactions above a configurable threshold (e.g., "This is a large transaction — Rs. 10,00,000. Confirm?")? Or is validation limited to > 0 only?
-
----
-
-#### FG-C19 — Default Account on Transaction Entry
-
-When the user opens the transaction entry form, is there a default account pre-selected? If yes, what is the default — the most recently used account, the account with the highest balance, the first account created?
-
-**Gap:** A pre-selected default saves taps for users who primarily use one account. The default selection logic is entirely undefined.
-
----
-
-#### FG-C20 — Keyboard Behavior and Back Navigation During Transaction Entry
-
-When the user is partway through entering a transaction and presses the Android back button, what happens?
-
-**Gap:** Options: (a) the form is discarded immediately with no warning (data loss); (b) a "Discard changes?" confirmation dialog appears; (c) the partial entry is auto-saved as a draft. Finance apps frequently show (b). This is a UX flow topic but the policy (discard vs. draft) is a product decision.
-
-**[Policy]**
+> ✅ **FG-C1 through FG-C21 were resolved on 2026-04-14.** Resolutions:
+>
+> - **Baked into v1 PRD:** FG-C2 (duplicate detection), FG-C6 (balance reconciliation — all accounts), FG-C11 (Indian numbering), FG-C12 (exchange rate estimate in entry), FG-C13 (currency symbol disambiguation), FG-C18 (large transaction warning + credit card limit validation), FG-C20 (back button behaviour).
+> - **Deferred to v2:** FG-C4 (combined search + filter), FG-C5 (balance history), FG-C8 (budget period start day), FG-C9 (income budgets), FG-C10 (app data wipe), FG-C14 (account statement export), FG-C21 (auto-detect transactions from SMS/email — new item).
+> - **Deferred to v3:** FG-C7 (Android home screen widget).
+> - **Rejected:** FG-C1 (quick-entry templates — no value, UI clutter), FG-C15 (undo snackbar — standard delete suffices), FG-C19 (default account — no pre-selection).
+> - **No action needed:** FG-C16 (photo storage on uninstall — accept Android default), FG-C17 (already resolved in prior sessions).
+>
+> See `docs/06-helpers/ideation-tracker.md` for the full decision log. All v2-deferred decisions consolidated in `docs/01-product/prd-v2-draft.md`.

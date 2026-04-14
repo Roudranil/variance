@@ -37,6 +37,7 @@ outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-con
         - [Create Account — Fields](#create-account--fields)
       - [5.1.2 Account Categories (Fixed Set — No Custom Categories)](#512-account-categories-fixed-set--no-custom-categories)
       - [5.1.3 Account Balance Model](#513-account-balance-model)
+      - [5.1.3a Balance Reconciliation (FG-C6)](#513a-balance-reconciliation-fg-c6)
       - [5.1.4 Account Balance View](#514-account-balance-view)
       - [5.1.5 Internal Transfer](#515-internal-transfer)
       - [5.1.5b Transfer Fee (Optional)](#515b-transfer-fee-optional)
@@ -451,6 +452,24 @@ An account's balance changes in exactly three ways:
 2. **Recorded transaction against this account**: A normal income/expense/transfer entry referencing this account. Displayed in the transaction list.
 3. **Deletion (soft-delete) of an existing transaction**: Posts an invisible reversing entry to neutralise the original transaction's effect on the account balance. The reversal is not displayed in normal transaction views.
 
+#### 5.1.3a Balance Reconciliation (FG-C6)
+
+A **Reconcile** action is available on every account (not just cash). It provides a streamlined flow for correcting balance drift — when the user's actual balance (e.g., from their bank app or physical cash count) diverges from the computed ledger balance.
+
+**Reconciliation flow:**
+
+1. The app displays the current **computed balance** (from the ledger).
+2. The user enters the **actual balance** (the real-world figure they have verified).
+3. The app computes the **discrepancy**: `actual − computed`.
+4. If the discrepancy is zero, the app shows "Balance is already correct" and exits.
+5. If non-zero, the standard journal adjustment prompt (§4.10) fires: *"Record this balance change as income/expense?"*
+   - If **Yes**: A visible Balance Adjustment transaction is posted (Cases 2.3a/2.3b in `docs/01-product/ledger-entry.md`).
+   - If **No**: An invisible journal entry against EQ is posted (Cases 2.4a/2.4b).
+
+This is functionally identical to a direct balance edit (§5.1.3) but optimized for the reconciliation use case — the user enters the target balance rather than computing the difference manually.
+
+**Access:** The Reconcile action is available from the account contextual menu (§5.5.1) and from the account detail screen.
+
 #### 5.1.4 Account Balance View
 
 - Real-time computed balance per account (derived from ledger).
@@ -462,6 +481,9 @@ When an account balance is negative (liability state per §4.6), it is displayed
 
 **Overdraft warning:**
 When recording a transaction that would push an account balance below zero, or deepen an existing negative balance, a **non-blocking inline warning** is shown at the point of entry: *"This transaction will result in a negative balance of [amount] for [Account Name]."* The user may dismiss and proceed — there is no hard block.
+
+**Credit card limit warning (FG-C18):**
+When recording an expense or transfer against a credit card account, if the transaction would cause the outstanding balance to exceed the configured **credit limit** (§5.1.2), a **non-blocking inline warning** is shown: *"This transaction will exceed the credit limit of [limit] for [Card Name]. Outstanding will be [projected amount]."* The user may dismiss and proceed — there is no hard block. This warning is only shown when a credit limit is configured on the account.
 
 #### 5.1.5 Internal Transfer
 
@@ -601,6 +623,17 @@ Tapping a transaction in the list opens its detail view. The detail view surface
 - **Correction history:** "This transaction was corrected on [date]" with link to original and reversal entries (surfaces in v2 audit view).
 - **Recurring template link:** Which template generated this transaction; past and future occurrences of the series.
 - **Installment and loan status:** If part of an installment series linked to a loan account — series progress, remaining amount, loan balance.
+
+**Duplicate Transaction Detection (FG-C2)**
+
+When saving a new transaction, the app checks for a **probable duplicate**: an existing posted (non-voided) transaction with the same **type, amount, account, and category** on the **same calendar day**. If a match is found, a non-blocking warning is shown:
+
+> *"A similar transaction already exists today ([amount], [category], [account]). Add anyway?"*
+
+- The user may **confirm** (the transaction is saved normally) or **cancel** (returns to the entry form).
+- The check is informational only — there is no auto-delete, no merge, and no block.
+- If the user confirms, the duplicate is treated as intentional and no further warnings are surfaced for that pair.
+- The detection applies to income and expense transactions. Transfers are checked by type, amount, source account, and destination account on the same day.
 
 #### 5.2.2 Transaction Immutability & Editing
 
@@ -898,9 +931,12 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 | Currency | Selected from a bundled ISO 4217 list; sets symbol and locale format |
 | Week start | Monday / Sunday |
 | Time format | 12-hour / 24-hour |
-| Number format | Decimal separator (comma or period), thousands grouping style |
+| Number format | Decimal separator (comma or period), thousands grouping style. **Indian numbering (lakh/crore)** — the 2-2-3 grouping pattern (e.g., ₹10,00,000 = 10 lakh) — is explicitly supported. Default grouping style is **inferred from device locale**: Indian locale → Indian grouping; Western locales → standard 3-digit grouping. The user may override the locale-inferred default at any time. (FG-C11) |
+| Currency formatting | Configurable display format for currency amounts. Controls symbol placement (prefix/suffix), spacing, and grouping style. Defaults are inferred from the home currency's locale conventions. The user may override. (FG-C11) |
 | Percentage precision | 0, 1, or 2 decimal places for percentage display |
 | Description max length | Configurable character limit for transaction descriptions. Options: 500, 1000, 2000. Default: 1000. |
+| Large transaction warning | Per-account and per-category configurable warning threshold. When a transaction amount exceeds the threshold set for the relevant account or category, a non-blocking warning is shown: *"This is a large transaction — [amount]. Confirm?"* Thresholds are optional (disabled by default). Configured in Settings > Large Transaction Warnings, where the user can set individual limits per account and per category. (FG-C18) |
+| Back button behaviour | Controls what happens when the user presses the Android back button while a transaction entry form has unsaved data. Options: **Ask before discarding** (default) — shows a confirmation dialog *"Discard changes?"*; **Auto-save as draft** — saves the partial entry as a draft (accessible from a Drafts section); **Discard immediately** — discards without confirmation. (FG-C20) |
 
 #### 5.4.3 Security
 
@@ -994,7 +1030,7 @@ Contextual action menus are accessible via long-tap, hamburger menu, or 3-dot me
 | Entity | Contextual Actions | Notes |
 |--------|-------------------|-------|
 | **Transaction (normal)** | Edit, Delete | "Add to Budget" removed — budgets deferred to v2 |
-| **Account** | Edit, Delete | |
+| **Account** | Edit, Delete, Reconcile | Reconcile opens the balance reconciliation flow (§5.1.3a) |
 | **Parent category** (in category management) | Edit, Delete, Add Child Category | Delete triggers migration prompt (§5.2.4) |
 | **Child/subcategory** (in category management) | Edit, Delete | No "Add Child" (max depth is 2). Change parent deferred to v2. |
 | **Recurring transaction template** (active) | Edit template, Delete template, Pause, Unpause, View child transactions | View shows both past and future child transactions. Pause accepts duration in template's time unit or custom date. See §5.2.7. |
@@ -1146,6 +1182,9 @@ In v1, each account holds a currency. The app maintains a home currency (set in 
 - In the absence of any cached rate (e.g., first launch, no internet ever), the app falls back to displaying each currency balance separately or shows a disclaimer.
 - Exchange rate updates are entirely optional and non-blocking — the app functions without them.
 
+**Currency symbol disambiguation (FG-C13):**
+When the user has accounts in two or more currencies that share the same display symbol (e.g., "$" for USD, SGD, AUD; "£" for GBP and others), the app displays the **3-letter ISO 4217 code** alongside the symbol in all views where both currencies appear in context — including the account list, net worth view, transaction list, and transaction detail view. If only one currency with that symbol is in use, the symbol alone is sufficient. The disambiguation is automatic and requires no user action.
+
 **Cross-currency transfers:**
 - In v1, **transfers between accounts of different currencies are disallowed**. The UI must prevent the user from selecting a destination account whose currency differs from the source account during a transfer. This constraint is deferred for resolution in v2.
 
@@ -1161,6 +1200,9 @@ When a transaction is created against an account whose currency differs from the
 **Net worth vs. transaction display:**
 - **Net worth** uses the **current/cached rate** (§7 above) because net worth should reflect current market value.
 - **Individual transaction amounts** use the **historical stored rate** because the economic value at the time of the transaction is fixed.
+
+**Exchange rate estimate during transaction entry (FG-C12):**
+When recording a transaction against an account whose currency differs from the home currency, the app displays a **real-time home currency estimate** below the amount field: *"≈ [home currency symbol][estimated amount]"*. The estimate is computed from the current cached exchange rate. If the cached rate is **stale** (older than 14 days, per the staleness threshold defined in §7), a warning icon and label are shown alongside the estimate: *"⚠ Rate may be outdated"*. If no cached rate is available at all, the estimate is omitted and a note is shown: *"Exchange rate unavailable."* This is purely informational — the estimate does not affect the posted transaction amount.
 
 **Schema implication:** Transactions require an `exchange_rate_to_home` field (nullable — only set when account currency ≠ home currency). When set, the home currency equivalent is `amount × exchange_rate_to_home`.
 
@@ -1232,6 +1274,13 @@ When a transaction is created against an account whose currency differs from the
 - **Per-account settings clarified** — "per-account settings" = account edit form, accessible from Settings > Accounts and from account contextual menu; no additional settings (FG-B8)
 - **Soft-deleted account behaviour** — frozen state (no new/edited transactions); hidden from pickers; historical transactions remain visible and searchable; included in filter account picker; does not extend to voided transactions (FG-B9)
 - **Soft-deleted categories in filter** — soft-deleted categories visible in filter dropdowns for historical transaction lookup (updated alongside FG-B9)
+- **Duplicate transaction detection** — non-blocking warning when a transaction with the same type, amount, account, and category exists on the same day (FG-C2)
+- **Balance reconciliation** — "Reconcile" action on all accounts: enter actual balance, app computes discrepancy, posts journal adjustment via standard flow (FG-C6)
+- **Indian numbering format (lakh/crore)** — 2-2-3 grouping explicitly supported; default inferred from device locale; currency formatting configurable in Settings (FG-C11)
+- **Exchange rate estimate during transaction entry** — home currency estimate shown below amount field for foreign-currency accounts; staleness warning if rate is older than 14 days (FG-C12)
+- **Currency symbol disambiguation** — 3-letter ISO code shown alongside symbol when multiple accounts share the same currency symbol (FG-C13)
+- **Large transaction warning** — per-account and per-category configurable warning thresholds; non-blocking confirmation when exceeded. Credit card limit warning when expense exceeds configured credit limit (FG-C18)
+- **Back button behaviour** — configurable: ask before discarding (default), auto-save as draft, or discard immediately (FG-C20)
 
 ### 🔄 Deferred — v2
 
@@ -1253,6 +1302,13 @@ When a transaction is created against an account whose currency differs from the
 - Cross-currency transfer fee handling (deferred with cross-currency transfers to v2)
 - **Transaction detail view v2 additions** — correction history, recurring template link, installment/loan status (FG-B1)
 - **Home screen v2 additions** — net worth graph over time, budget-at-a-glance widget, analytics summary (FG-B2)
+- **Combined search + filter** — search and filter operating simultaneously; deferred with advanced filter mode (FG-C4)
+- **Balance history / mini chart per account** — per-account balance over time visualisation; deferred with analytics (FG-C5)
+- **Budget period start day configuration** — user-configurable budget month start day for non-1st pay cycles; deferred with budgets (FG-C8)
+- **Income categories in budget context** — income budgets / savings targets; deferred with budgets (FG-C9)
+- **App data wipe / factory reset** — clear all data without uninstalling; deferred with data management (FG-C10)
+- **Account statement export** — basic share-as-text/PDF per-account transaction history; deferred with CSV export (FG-C14)
+- **Auto-detect transactions from SMS and email notifications** — automatically detect and record transactions from UPI/credit card SMS and email notifications; pattern matching, merchant detection, permission management; major v2 feature (FG-C21)
 
 ### 🔄 Deferred — v3 (or later)
 
@@ -1260,6 +1316,7 @@ When a transaction is created against an account whose currency differs from the
 - OCR receipt capture
 - Exchange rate update infrastructure (if not landed in v2)
 - Google Drive backup
+- **Android home screen widget** — glanceable finance widget showing key figures; privacy concern (widget visible on lock screen without PIN) to be resolved (FG-C7)
 
 ### ❌ Permanently Out of Scope
 
@@ -1328,6 +1385,6 @@ When a transaction is created against an account whose currency differs from the
 
 ## 11. Open Questions
 
-> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and remaining feature gap items (FG-C) are tracked in `docs/06-helpers/gaps-and-questions.md`.
+> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) are tracked in `docs/06-helpers/gaps-and-questions.md`.
 >
-> Feature gaps FG-A1 through FG-A11 were resolved on 2026-04-14. Feature gaps FG-A12 through FG-A31 were resolved on 2026-04-14. Feature gaps FG-B1 through FG-B9 were resolved on 2026-04-14; FG-B3 and FG-B6 deferred with budgets to v2. All v2-deferred decisions are consolidated in `docs/01-product/prd-v2-draft.md`. FG-C items remain open. The PRD is ready for continued sign-off.
+> Feature gaps FG-A1 through FG-A31, FG-B1 through FG-B9, and FG-C1 through FG-C21 are all resolved. FG-B3 and FG-B6 deferred with budgets to v2. FG-C1, C15, C19 rejected. FG-C7 deferred to v3. FG-C4, C5, C8, C9, C10, C14, C21 deferred to v2. Remaining FG-C items baked into the PRD as v1 features. All v2-deferred decisions are consolidated in `docs/01-product/prd-v2-draft.md`. The PRD feature gap analysis is complete. UX design decisions (UX-1 through UX-14) and ERR-1 remain open.

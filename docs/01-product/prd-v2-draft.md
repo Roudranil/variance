@@ -187,29 +187,50 @@ These are v3 or later and not expected in v2, but listed for completeness:
 - Exchange rate update infrastructure (if not landed in v2).
 - Google Drive backup (if not landed in v2).
 - ML/rule-based auto-generated transaction titles.
+- **Android home screen widget (FG-C7)** — glanceable finance widget showing key figures. Privacy concern: widget visible on lock screen without PIN. Strictly v3.
 
 ---
 
-## 20. FG-C Items (Unresolved — Pending Product Decisions)
+## 20. FG-C Items (Resolved — Decision Log)
 
-These feature gap items from the v1 gap analysis remain open. Some may land in v2; others may be deferred further or rejected. Product decisions needed.
+All FG-C items were resolved on 2026-04-14. Items are categorized by disposition:
 
-| ID | Topic | v1 PRD Reference |
-|----|-------|-----------------|
-| FG-C1 | Transaction quick-entry templates (not recurring) | No v1 spec. "Save as template" for manual reuse. |
-| FG-C2 | Duplicate transaction detection | No v1 spec. Soft warning on probable duplicates. |
-| FG-C4 | Combined search + filter | No v1 spec. Can user apply text search AND filter simultaneously? |
-| FG-C5 | Balance history / mini chart per account | Derivable from ledger. Deferred to v2 analytics. |
-| FG-C6 | Cash reconciliation workflow | Faster path to direct balance edit for cash accounts. |
-| FG-C7 | Android home screen widget | Glanceable finance widget. Privacy concern (lock screen visibility). |
-| FG-C10 | App data wipe / factory reset | No v1 "reset all data" option. Uninstall required. |
-| FG-C11 | Indian numbering format (lakh/crore) | 2-2-3 grouping from right. Must be explicitly supported. |
-| FG-C12 | Offline exchange rate freshness in transaction entry | Any rate reference shown during foreign-currency transaction entry? |
-| FG-C13 | Currency symbol ambiguity | Multiple currencies share symbols. Show ISO code alongside? |
-| FG-C14 | Account statement export | Basic share-as-text/PDF. Deferred with CSV export. |
-| FG-C15 | Undo for recently created transactions | Post-save "Undo" snackbar (5s). Standard mobile UX pattern. |
-| FG-C16 | Photo storage on app uninstall | Photos in app-private storage = lost on uninstall. Document as known limitation. |
-| FG-C17 | Recurring transaction pause/disable | Resolved in v1 (pause/unpause exists). Disable/enable with backfill = v2. |
-| FG-C18 | Transaction amount validation upper bound | Soft warning for large amounts above configurable threshold? |
-| FG-C19 | Default account on transaction entry | Pre-selected default account logic (most recent, highest balance, first created?). |
-| FG-C20 | Keyboard behaviour and back navigation during transaction entry | Discard vs. draft policy on back press during transaction entry. |
+**Baked into v1 PRD:** FG-C2 (duplicate detection), FG-C6 (balance reconciliation — all accounts), FG-C11 (Indian numbering), FG-C12 (exchange rate estimate in entry), FG-C13 (currency symbol disambiguation), FG-C18 (large transaction warning + credit card limit validation), FG-C20 (back button behaviour).
+
+**Deferred to v2:** FG-C4 (combined search + filter — with advanced filter), FG-C5 (balance history — with analytics), FG-C8 (budget period start day), FG-C9 (income budgets), FG-C10 (app data wipe — with data management), FG-C14 (account statement export — with CSV export), FG-C21 (auto-detect transactions from SMS/email).
+
+**Deferred to v3:** FG-C7 (Android home screen widget — privacy concerns).
+
+**Rejected:** FG-C1 (quick-entry templates — no value, UI clutter), FG-C15 (undo snackbar — standard delete flow suffices), FG-C19 (default account — no pre-selection).
+
+**No action needed:** FG-C16 (photo storage on uninstall — accept Android default), FG-C17 (recurring pause/disable — already resolved in v1/v2).
+
+---
+
+## 21. Auto-Detect Transactions from SMS & Email Notifications (FG-C21)
+
+> **Priority:** High — this is a primary motivation for the app's target user base.
+
+Automatically detect and record financial transactions from device notifications (SMS and email) without manual entry. This is a major v2 feature requiring significant design, permissions, and pattern-matching infrastructure.
+
+**Core use cases:**
+- **UPI payments:** Detect UPI transaction SMS (common in India) — extract merchant name, amount, date/time, and source account.
+- **Credit card transactions:** Detect transaction SMS or email notifications — extract merchant, amount, card (last 4 digits → match to account).
+- **Bank account debits/credits:** Detect bank SMS — extract amount, type (debit/credit), and account.
+
+**High-level design considerations:**
+
+| Aspect | Notes |
+|--------|-------|
+| **Permission model** | Requires `READ_SMS` or Notification Listener Service permission. Must be opt-in and clearly explained to the user. Privacy-sensitive — the app reads message content locally, never sends it to any server. |
+| **Pattern matching** | Rule-based pattern matching against known SMS/email formats from Indian banks, UPI providers, and credit card issuers. Regex or template-based extraction. Must be extensible — new bank formats should be addable without app updates (consider a local rules file or user-contributed patterns). |
+| **Account matching** | Extracted account identifiers (last 4 digits of card, bank name) are matched against the user's configured accounts. Fuzzy matching with user confirmation for ambiguous cases. |
+| **Merchant → category mapping** | Optional: map known merchants to transaction categories (e.g., Swiggy → Food > Eating Out). This could use a local lookup table. If no mapping exists, the user assigns the category manually. |
+| **User review flow** | Auto-detected transactions should be surfaced as **pending suggestions** — not auto-posted without user review. A dedicated "Review detected transactions" screen (similar to Pending Confirmations for recurring templates) lets the user confirm, edit, or dismiss each detection. |
+| **Duplicate handling** | If the user already manually recorded a transaction that matches a detected one, the app should flag it as a probable duplicate (building on FG-C2's detection logic). |
+| **Error handling** | Unrecognized SMS formats are silently ignored. False positives (non-financial SMS matched incorrectly) must be dismissible. The user can disable detection for specific senders. |
+| **Gmail integration** | If feasible: read credit card statement emails from Gmail via local notification access or an authorized Gmail API scope. This is more complex and may be a v2+ or v3 feature within this feature set. |
+
+**Out of scope for this feature:** Cloud processing of messages, sharing message content with any server, auto-posting without user review.
+
+**Design work needed:** Full UX flow for review screen, permission request flow, pattern library architecture, account matching algorithm, category suggestion model.
