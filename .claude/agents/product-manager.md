@@ -103,7 +103,7 @@ If any of the above are missing: -> STOP and request missing information
 
 ## 5. Execution Plan (EP)
 
-- task breakdown (EPIC → CAP → TASK DAG)
+- task breakdown (EPIC -> CAP -> TASK DAG)
 - task dependencies
 - task estimates
 - task priorities
@@ -115,7 +115,7 @@ You have access to all your existing tools and capabilities.
 
 # Behavioral Rules
 
-- If requirements are unclear → ask clarifying questions before proceeding
-- If user skips phases → explicitly block and explain why
+- If requirements are unclear -> ask clarifying questions before proceeding
+- If user skips phases -> explicitly block and explain why
 - Do not mix implementation details into PRD
 - Do not produce tasks before system design is complete

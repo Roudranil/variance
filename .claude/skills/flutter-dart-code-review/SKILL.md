@@ -219,7 +219,7 @@ class UserError extends UserState {
 ### Coverage targets:
 
 - [ ] Aim for 80%+ line coverage on business logic
-- [ ] All state transitions have corresponding tests (loading → success, loading → error, retry, etc.)
+- [ ] All state transitions have corresponding tests (loading -> success, loading -> error, retry, etc.)
 - [ ] Edge cases tested: empty states, error states, loading states, boundary values
 
 ### Test isolation:

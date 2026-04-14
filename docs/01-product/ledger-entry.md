@@ -106,13 +106,13 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 - Net worth unchanged ✅
 
 > **Liability as destination (pay credit card bill):** A₁ = bank (A), A₂ = credit card (L).
-> Entries: `Dr L, Cr A`. Dr on liability → liability balance ↓ (less owed). ✅
+> Entries: `Dr L, Cr A`. Dr on liability -> liability balance ↓ (less owed). ✅
 >
 > ✅ **Q42 Resolved:** Entry confirmed as `Dr L (credit card), Cr A (bank)` for a credit card payment. Reduces liability balance.
 
 ---
 
-### Case 1.4 — Modify Expense Transaction (B → B', same A, same EC)
+### Case 1.4 — Modify Expense Transaction (B -> B', same A, same EC)
 
 > *Financial fields changed. Posts reversing entry + corrected entry.*
 
@@ -132,11 +132,11 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 
 **Invariant check:** Each transaction individually: Dr = Cr ✅
 
-> Variants: change of account (A → A'), change of category (EC → EC'), or both.
+> Variants: change of account (A -> A'), change of category (EC -> EC'), or both.
 
 ---
 
-### Case 1.5 — Modify Income Transaction (B → B', same A, same IC)
+### Case 1.5 — Modify Income Transaction (B -> B', same A, same IC)
 
 **Step 1: Reversing (negates Case 1.2)**
 
@@ -156,7 +156,7 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 
 ---
 
-### Case 1.6 — Modify Transfer Transaction (B → B', same A₁ → A₂)
+### Case 1.6 — Modify Transfer Transaction (B -> B', same A₁ -> A₂)
 
 **Step 1: Reversing (negates Case 1.3)**
 
@@ -247,7 +247,7 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 ---
 
-### Case 2.3 — Edit Account Balance (B → B') — Recorded as Transaction (Visible Journal Adjustment)
+### Case 2.3 — Edit Account Balance (B -> B') — Recorded as Transaction (Visible Journal Adjustment)
 
 > *User says "Yes" to "Record as income/expense?"*
 > *Uses protected BAI (income) or BAE (expense) category. Visible in transaction list.*
@@ -294,7 +294,7 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 ---
 
-### Case 2.4 — Edit Account Balance (B → B') — NOT Recorded as Transaction (Invisible Journal Adjustment)
+### Case 2.4 — Edit Account Balance (B -> B') — NOT Recorded as Transaction (Invisible Journal Adjustment)
 
 > *User says "No" to the prompt. System posts an internal entry against EQ. Invisible in normal views.*
 
@@ -364,7 +364,7 @@ No new ledger pattern. ✅
 
 ---
 
-### Case 3.3 — Cross-Currency Transfer (A₁ in C₁ → A₂ in C₂, exchange rate R)
+### Case 3.3 — Cross-Currency Transfer (A₁ in C₁ -> A₂ in C₂, exchange rate R)
 
 > *User transfers B₁ units of C₁. A₂ receives B₂ = B₁ × R units of C₂.*
 
@@ -415,14 +415,14 @@ The new balance edit computes ΔB from the *current* balance (which already incl
 | 2.1 | Create Account, balance = 0 | None | 0 |
 | 2.2a | Create Asset Account, balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
 | 2.2b | Create Liability Account, balance B > 0 | Dr EQ, Cr L | 1 txn, 2 entries |
-| 2.3a | Edit Asset Balance ↑ → record as income | Dr A, Cr BAI | 1 txn, 2 entries |
-| 2.3b | Edit Asset Balance ↓ → record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
-| 2.3c | Edit Liability Balance ↑ → record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
-| 2.3d | Edit Liability Balance ↓ → record as income | Dr L, Cr BAI | 1 txn, 2 entries |
-| 2.4a | Edit Asset Balance ↑ → do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
-| 2.4b | Edit Asset Balance ↓ → do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
-| 2.4c | Edit Liability Balance ↑ → do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
-| 2.4d | Edit Liability Balance ↓ → do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.3a | Edit Asset Balance ↑ -> record as income | Dr A, Cr BAI | 1 txn, 2 entries |
+| 2.3b | Edit Asset Balance ↓ -> record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
+| 2.3c | Edit Liability Balance ↑ -> record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
+| 2.3d | Edit Liability Balance ↓ -> record as income | Dr L, Cr BAI | 1 txn, 2 entries |
+| 2.4a | Edit Asset Balance ↑ -> do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.4b | Edit Asset Balance ↓ -> do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
+| 2.4c | Edit Liability Balance ↑ -> do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
+| 2.4d | Edit Liability Balance ↓ -> do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
 | 2.5 | Soft-Delete Account | None | 0 |
 | 3.1 | Recurring auto-post | Same as 1.1–1.3 | Same as type |
 | 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |

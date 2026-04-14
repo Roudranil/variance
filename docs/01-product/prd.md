@@ -59,7 +59,7 @@ The user can create, view, edit, and soft-delete **accounts** across a fixed set
 
 ### UC-2: Manage Transactions and Transaction Categories
 
-The user records transactions as income, expense, or transfer. All transactions are immutable — edits to financial fields post correcting entries. The user manages a two-level taxonomy of transaction categories (category → subcategory) separately for income and expense. All deletions are soft deletes.
+The user records transactions as income, expense, or transfer. All transactions are immutable — edits to financial fields post correcting entries. The user manages a two-level taxonomy of transaction categories (category -> subcategory) separately for income and expense. All deletions are soft deletes.
 
 ### UC-3: View and Manage Budgets *(Deferred to v2)*
 
@@ -153,8 +153,8 @@ A transaction is valid if and only if:
 When an account is created with an initial balance, the system implicitly posts a transaction against an internal **Opening Balance equity account** (EQ). This equity account is **never visible to the user under any circumstances** — it does not appear in any user-facing views, account lists, or reports.
 
 **EQ posting direction by account type:**
-- Asset account with initial balance B: `Dr A, Cr EQ` → A balance ↑ B, EQ credit balance ↑ B.
-- Liability account with initial balance B: `Dr EQ, Cr L` → L balance ↑ B, EQ debit balance ↑ B (net EQ credit balance ↓ B).
+- Asset account with initial balance B: `Dr A, Cr EQ` -> A balance ↑ B, EQ credit balance ↑ B.
+- Liability account with initial balance B: `Dr EQ, Cr L` -> L balance ↑ B, EQ debit balance ↑ B (net EQ credit balance ↓ B).
 
 EQ supports bidirectional postings: credited for asset openings, debited for liability openings.
 
@@ -211,14 +211,14 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 | 2.1 | Create Account, balance = 0 | None | 0 |
 | 2.2a | Create Asset Account, balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
 | 2.2b | Create Liability Account, balance B > 0 | Dr EQ, Cr L | 1 txn, 2 entries |
-| 2.3a | Edit Asset Balance ↑ → record as income | Dr A, Cr BAI | 1 txn, 2 entries |
-| 2.3b | Edit Asset Balance ↓ → record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
-| 2.3c | Edit Liability Balance ↑ → record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
-| 2.3d | Edit Liability Balance ↓ → record as income | Dr L, Cr BAI | 1 txn, 2 entries |
-| 2.4a | Edit Asset Balance ↑ → do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
-| 2.4b | Edit Asset Balance ↓ → do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
-| 2.4c | Edit Liability Balance ↑ → do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
-| 2.4d | Edit Liability Balance ↓ → do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.3a | Edit Asset Balance ↑ -> record as income | Dr A, Cr BAI | 1 txn, 2 entries |
+| 2.3b | Edit Asset Balance ↓ -> record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
+| 2.3c | Edit Liability Balance ↑ -> record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
+| 2.3d | Edit Liability Balance ↓ -> record as income | Dr L, Cr BAI | 1 txn, 2 entries |
+| 2.4a | Edit Asset Balance ↑ -> do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.4b | Edit Asset Balance ↓ -> do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
+| 2.4c | Edit Liability Balance ↑ -> do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
+| 2.4d | Edit Liability Balance ↓ -> do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
 | 2.5 | Soft-Delete Account | None | 0 |
 | 3.1 | Recurring auto-post | Same as 1.1–1.3 | Same as type |
 | 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
@@ -234,7 +234,7 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 ## 5. Functional Requirements (Feature Graph)
 
 > Only **v1** features are defined here.
-> Organized as: **PILLAR → FEATURE → SUB-FEATURE**
+> Organized as: **PILLAR -> FEATURE -> SUB-FEATURE**
 
 ---
 
@@ -298,8 +298,8 @@ This model applies to **all account types** — there is no functional differenc
 An account's balance changes in exactly three ways:
 
 1. **Direct balance edit** (via edit account menu): System prompts — *"Record this change as a real transaction?"*
-   - If Yes → posts a proper income/expense transaction with the protected **"Balance Adjustment"** category. Visible in transaction list. See §4.10 and Cases 2.3a–2.3d in `docs/01-product/ledger-entry.md` for the full posting logic by account type (asset vs. liability) and direction (balance up vs. balance down).
-   - If No → posts an invisible journal adjustment against the internal equity account (EQ). Not visible in normal views. Surfaces in the v2 audit view. See Cases 2.4a–2.4d in `docs/01-product/ledger-entry.md`.
+   - If Yes -> posts a proper income/expense transaction with the protected **"Balance Adjustment"** category. Visible in transaction list. See §4.10 and Cases 2.3a–2.3d in `docs/01-product/ledger-entry.md` for the full posting logic by account type (asset vs. liability) and direction (balance up vs. balance down).
+   - If No -> posts an invisible journal adjustment against the internal equity account (EQ). Not visible in normal views. Surfaces in the v2 audit view. See Cases 2.4a–2.4d in `docs/01-product/ledger-entry.md`.
 2. **Recorded transaction against this account**: A normal income/expense/transfer entry referencing this account. Displayed in the transaction list.
 3. **Deletion (soft-delete) of an existing transaction**: Posts an invisible reversing entry to neutralise the original transaction's effect on the account balance. The reversal is not displayed in normal transaction views.
 
@@ -343,7 +343,7 @@ Each row in the transaction list displays three columns:
 | Column | Content |
 |--------|---------|
 | **C1 — Category** | If the transaction has only a parent category: the parent category icon and name. If the transaction has a parent + subcategory: parent name on the first row, subcategory name on the second row. For transfers: no category (display "Transfer" label). |
-| **C2 — Title & Account** | **Row 1:** Title (blank if not provided; v3 idea: ML/rule-based auto-generated titles). **Row 2:** Account info — for expense: source account name; for income: destination account name; for transfer: source account → destination account. |
+| **C2 — Title & Account** | **Row 1:** Title (blank if not provided; v3 idea: ML/rule-based auto-generated titles). **Row 2:** Account info — for expense: source account name; for income: destination account name; for transfer: source account -> destination account. |
 | **C3 — Amount & Currency** | The transaction amount with currency symbol. For accounts in a foreign currency, both the original currency amount and the home currency equivalent are shown (see §7.1). |
 
 **Grouping and ordering:** Transactions are grouped by date (date header per group). Within each date group, transactions are ordered by time (most recent first). The timestamp is not shown in the list row — it is revealed when the user taps the transaction to open the detail view.
@@ -377,7 +377,7 @@ Each row in the transaction list displays three columns:
 
 #### 5.2.4 Transaction Categories (Two-Level Hierarchy)
 
-Categories and subcategories form a two-level tree — category → subcategory. No deeper nesting.
+Categories and subcategories form a two-level tree — category -> subcategory. No deeper nesting.
 
 Separate trees exist for **Income** and **Expense**. Transfers have no category.
 

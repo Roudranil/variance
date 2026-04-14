@@ -29,7 +29,7 @@
 #
 #   --tag <string>   Append -<string> as a pre-release / build tag.
 #                    Can be combined with a bump flag to bump and tag in one
-#                    step (e.g. --minor --tag beta → 0.3.0 becomes 0.4.0-beta).
+#                    step (e.g. --minor --tag beta -> 0.3.0 becomes 0.4.0-beta).
 #                    If used alone (no bump flag) it replaces or sets the tag
 #                    on the current version without changing the numbers.
 #
@@ -51,19 +51,19 @@
 #     unchanged and the script exits with "Version unchanged".
 #
 # EXAMPLES
-#   # Bump the patch component:        0.3.0 → 0.3.1
+#   # Bump the patch component:        0.3.0 -> 0.3.1
 #   scripts/version.sh --patch
 #
-#   # Bump minor, clear tag:           0.3.1-beta → 0.4.0
+#   # Bump minor, clear tag:           0.3.1-beta -> 0.4.0
 #   scripts/version.sh --minor
 #
-#   # Bump major with a tag:           0.4.0 → 1.0.0-rc1
+#   # Bump major with a tag:           0.4.0 -> 1.0.0-rc1
 #   scripts/version.sh --major --tag rc1
 #
-#   # Add a tag without bumping:       1.0.0 → 1.0.0-hotfix
+#   # Add a tag without bumping:       1.0.0 -> 1.0.0-hotfix
 #   scripts/version.sh --tag hotfix
 #
-#   # Clear tag without bumping:       1.0.0-hotfix → 1.0.0
+#   # Clear tag without bumping:       1.0.0-hotfix -> 1.0.0
 #   scripts/version.sh --no-tag
 #
 # FILES
@@ -226,4 +226,4 @@ if [[ "$new_version" == "$current" ]]; then
 fi
 
 printf '%s' "$new_version" > "$VERSION_FILE"
-echo "$current → $new_version"
+echo "$current -> $new_version"

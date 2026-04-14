@@ -151,7 +151,7 @@ await fetchData();      // or properly awaited
 ## Imports
 
 - Use `package:` imports throughout — never relative imports (`../`) for cross-feature or cross-layer code
-- Order: `dart:` → external `package:` → internal `package:` (same package)
+- Order: `dart:` -> external `package:` -> internal `package:` (same package)
 - No unused imports — `dart analyze` enforces this with `unused_import`
 
 ## Code Generation

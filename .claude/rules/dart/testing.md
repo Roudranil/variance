@@ -1,9 +1,10 @@
 ---
 paths:
-  - "**/*.dart"
-  - "**/pubspec.yaml"
-  - "**/analysis_options.yaml"
+    - "**/*.dart"
+    - "**/pubspec.yaml"
+    - "**/analysis_options.yaml"
 ---
+
 # Dart/Flutter Testing
 
 > This file extends [common/testing.md](../common/testing.md) with Dart and Flutter-specific content.
@@ -18,12 +19,12 @@ paths:
 
 ## Test Types
 
-| Type | Tool | Location | When to Write |
-|------|------|----------|---------------|
-| Unit | `dart:test` | `test/unit/` | All domain logic, state managers, repositories |
-| Widget | `flutter_test` | `test/widget/` | All widgets with meaningful behavior |
-| Golden | `flutter_test` | `test/golden/` | Design-critical UI components |
-| Integration | `integration_test` | `integration_test/` | Critical user flows on real device/emulator |
+| Type        | Tool               | Location            | When to Write                                  |
+| ----------- | ------------------ | ------------------- | ---------------------------------------------- |
+| Unit        | `dart:test`        | `test/unit/`        | All domain logic, state managers, repositories |
+| Widget      | `flutter_test`     | `test/widget/`      | All widgets with meaningful behavior           |
+| Golden      | `flutter_test`     | `test/golden/`      | Design-critical UI components                  |
+| Integration | `integration_test` | `integration_test/` | Critical user flows on real device/emulator    |
 
 ## Unit Tests: State Managers
 
@@ -210,6 +211,6 @@ integration_test/
 ## Coverage
 
 - Target 80%+ line coverage for business logic (domain + state managers)
-- All state transitions must have tests: loading → success, loading → error, retry
+- All state transitions must have tests: loading -> success, loading -> error, retry
 - Run `flutter test --coverage` and inspect `lcov.info` with a coverage reporter
 - Coverage failures should block CI when below threshold
