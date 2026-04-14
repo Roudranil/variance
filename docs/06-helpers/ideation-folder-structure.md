@@ -17,6 +17,7 @@ docs/
 ├── frontmatter-schema.md           # Schema reference for all doc frontmatter
 ├── 01-product/                     # Product definition artifacts
 │   ├── prd.md
+│   ├── prd-v2-draft.md
 │   └── ledger-entry.md
 ├── 02-technical/                   # Technical specifications
 │   ├── feature-dag.md
@@ -57,6 +58,7 @@ docs/
 | ------------------ | ---------------------------------------------- | ---------------------------------------- |
 | PRD                | `docs/01-product/prd.md`                       | What we're building and why              |
 | Ledger Entry Cases | `docs/01-product/ledger-entry.md`              | Authoritative posting case reference     |
+| PRD v2 Draft       | `docs/01-product/prd-v2-draft.md`              | All deferred v2 features and decisions   |
 | Frontmatter Schema | `docs/frontmatter-schema.md`                   | Schema reference for all doc frontmatter |
 | Folder Structure   | `docs/06-helpers/ideation-folder-structure.md` | Docs folder taxonomy                     |
 | Ideation Tracker   | `docs/06-helpers/ideation-tracker.md`          | Phase status, open questions, decisions  |

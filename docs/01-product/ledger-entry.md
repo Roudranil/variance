@@ -4,7 +4,6 @@ status: approved
 owner: pm
 created: 2026-04-12
 last_updated: 2026-04-14
-version: 0.5.0
 depends_on: [01-product/prd.md]
 outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 ---
@@ -438,9 +437,9 @@ The new balance edit computes ΔB from the *current* balance (which already incl
 
 | ID | Question | Status | Decision |
 |----|----------|--------|----------|
-| Q41 | PRD §4.5 and §4.6 conflict on income transaction entry sides. | ✅ Resolved (v0.2.0) | Corrected to `Dr A, Cr IC`. |
-| Q42 | Confirm entry `Dr L, Cr A` for credit card payment. | ✅ Resolved (v0.2.1) | Confirmed. Reduces liability balance. |
-| Q43 | EQ debited for liability opening balance. Confirm bidirectional postings. | ✅ Resolved (v0.2.1) | Confirmed. EQ supports debit and credit. |
-| Q44 | Liability journal adjustment income/expense direction. | ✅ Resolved (v0.2.1) | Balance ↑ = expense (2.3c/2.4c). Balance ↓ = income (2.3d/2.4d). Cases added. |
-| Q45 | Soft-delete account with non-zero balance: prompt to transfer? | ✅ Resolved (v0.2.1) | Two-step flow with transfer prompt and net-worth warning. Q49 tracks transfer type. |
-| Q46 | Cross-currency transfers ledger handling. | ✅ Resolved (v0.2.1) | Disallowed in v1. Deferred to v2. |
+| Q41 | PRD §4.5 and §4.6 conflict on income transaction entry sides. | ✅ Resolved | Corrected to `Dr A, Cr IC`. |
+| Q42 | Confirm entry `Dr L, Cr A` for credit card payment. | ✅ Resolved | Confirmed. Reduces liability balance. |
+| Q43 | EQ debited for liability opening balance. Confirm bidirectional postings. | ✅ Resolved | Confirmed. EQ supports debit and credit. |
+| Q44 | Liability journal adjustment income/expense direction. | ✅ Resolved | Balance ↑ = expense (2.3c/2.4c). Balance ↓ = income (2.3d/2.4d). Cases added. |
+| Q45 | Soft-delete account with non-zero balance: prompt to transfer? | ✅ Resolved | Two-step flow with transfer prompt and net-worth warning. Q49 tracks transfer type. |
+| Q46 | Cross-currency transfers ledger handling. | ✅ Resolved | Disallowed in v1. Deferred to v2. |

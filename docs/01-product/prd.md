@@ -4,10 +4,99 @@ status: in progress
 owner: pm
 created: 2026-04-13
 last_updated: 2026-04-14
-version: 0.5.0
 depends_on: []
 outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-contracts.md, 03-planning/task-breakdown.md]
 ---
+
+- [Product Requirements Document (PRD)](#product-requirements-document-prd)
+  - [Variance — Personal Finance \& Expense Tracker](#variance--personal-finance--expense-tracker)
+  - [1. Problem Statement](#1-problem-statement)
+  - [2. Goals](#2-goals)
+    - [Primary Goals](#primary-goals)
+    - [Version Roadmap](#version-roadmap)
+    - [Anti-Goals (Permanent — Never)](#anti-goals-permanent--never)
+  - [3. Use Cases](#3-use-cases)
+    - [UC-1: Manage Accounts and Account Categories](#uc-1-manage-accounts-and-account-categories)
+    - [UC-2: Manage Transactions and Transaction Categories](#uc-2-manage-transactions-and-transaction-categories)
+    - [UC-3: View and Manage Budgets *(Deferred to v2)*](#uc-3-view-and-manage-budgets-deferred-to-v2)
+  - [4. Core Model: Double-Entry Bookkeeping](#4-core-model-double-entry-bookkeeping)
+    - [4.1 Core Invariant](#41-core-invariant)
+    - [4.2 Accounting Equation](#42-accounting-equation)
+    - [4.3 Data Model](#43-data-model)
+    - [4.4 Constraints](#44-constraints)
+    - [4.5 Transaction Rules by Type](#45-transaction-rules-by-type)
+    - [4.6 Balance Calculation](#46-balance-calculation)
+    - [4.7 Transaction Validity](#47-transaction-validity)
+    - [4.8 Immutability \& Correction Model](#48-immutability--correction-model)
+    - [4.9 Initial Balance \& Equity Account](#49-initial-balance--equity-account)
+    - [4.10 Journal Adjustments](#410-journal-adjustments)
+    - [4.11 Ledger Posting Cases (Reference)](#411-ledger-posting-cases-reference)
+  - [5. Functional Requirements (Feature Graph)](#5-functional-requirements-feature-graph)
+    - [5.1 Account Management (CORE) — UC-1](#51-account-management-core--uc-1)
+      - [5.1.1 Account CRUD](#511-account-crud)
+        - [Create Account — Fields](#create-account--fields)
+      - [5.1.2 Account Categories (Fixed Set — No Custom Categories)](#512-account-categories-fixed-set--no-custom-categories)
+      - [5.1.3 Account Balance Model](#513-account-balance-model)
+      - [5.1.4 Account Balance View](#514-account-balance-view)
+      - [5.1.5 Internal Transfer](#515-internal-transfer)
+      - [5.1.5b Transfer Fee (Optional)](#515b-transfer-fee-optional)
+      - [5.1.6 Credit Card Balance Model](#516-credit-card-balance-model)
+      - [5.1.7 Credit Card Payment Reminders](#517-credit-card-payment-reminders)
+    - [5.2 Transaction Management (CORE) — UC-2](#52-transaction-management-core--uc-2)
+      - [5.2.1 Transaction Entry](#521-transaction-entry)
+      - [5.2.2 Transaction Immutability \& Editing](#522-transaction-immutability--editing)
+      - [5.2.3 Photo Attachments](#523-photo-attachments)
+      - [5.2.4 Transaction Categories (Two-Level Hierarchy)](#524-transaction-categories-two-level-hierarchy)
+        - [Default Expense Categories](#default-expense-categories)
+        - [Default Income Categories](#default-income-categories)
+      - [5.2.5 Transaction Search](#525-transaction-search)
+      - [5.2.6 Transaction Filtering](#526-transaction-filtering)
+      - [5.2.7 Recurring Transactions](#527-recurring-transactions)
+      - [5.2.8 Installments](#528-installments)
+    - [5.3 Budgeting *(Deferred to v2)*](#53-budgeting-deferred-to-v2)
+      - [5.3.1 Budget Model](#531-budget-model)
+      - [5.3.2 Income Replenishment](#532-income-replenishment)
+      - [5.3.3 Budget vs. Actual](#533-budget-vs-actual)
+      - [5.3.4 Budget Alerts](#534-budget-alerts)
+      - [5.3.5 Budget Rollover](#535-budget-rollover)
+    - [5.4 Settings \& Customisation (CORE)](#54-settings--customisation-core)
+      - [5.4.1 Appearance](#541-appearance)
+      - [5.4.2 Primary Configuration](#542-primary-configuration)
+      - [5.4.3 Security](#543-security)
+      - [5.4.4 Management](#544-management)
+      - [5.4.5 Accessibility](#545-accessibility)
+      - [5.4.6 Local Data Backup](#546-local-data-backup)
+      - [5.4.8 About \& Legal](#548-about--legal)
+    - [5.5 Contextual Action Menus](#55-contextual-action-menus)
+      - [5.5.1 Confirmed Contextual Menu Actions](#551-confirmed-contextual-menu-actions)
+      - [5.5.2 Deferred Contextual Menu Cases (v2)](#552-deferred-contextual-menu-cases-v2)
+    - [5.6 Onboarding \& First Launch](#56-onboarding--first-launch)
+      - [5.6.1 Default Category Seeding](#561-default-category-seeding)
+      - [5.6.2 Onboarding Wizard](#562-onboarding-wizard)
+    - [5.7 Timezone \& Date Policy](#57-timezone--date-policy)
+    - [5.8 Home Screen \& Dashboard](#58-home-screen--dashboard)
+      - [5.8.1 Greeting](#581-greeting)
+      - [5.8.2 Financial Summary](#582-financial-summary)
+      - [5.8.3 Month Selector](#583-month-selector)
+      - [5.8.4 Transaction List](#584-transaction-list)
+      - [5.8.5 Alerts](#585-alerts)
+      - [5.8.6 Quick Entry](#586-quick-entry)
+  - [6. Non-Functional Requirements](#6-non-functional-requirements)
+  - [7. Multi-Currency Model (v1)](#7-multi-currency-model-v1)
+    - [7.1 Transaction-Level Exchange Rate Capture](#71-transaction-level-exchange-rate-capture)
+  - [8. In-Scope vs. Out-of-Scope](#8-in-scope-vs-out-of-scope)
+    - [✅ In Scope — v1](#-in-scope--v1)
+    - [🔄 Deferred — v2](#-deferred--v2)
+    - [🔄 Deferred — v3 (or later)](#-deferred--v3-or-later)
+    - [❌ Permanently Out of Scope](#-permanently-out-of-scope)
+  - [9. Success and Failure Criteria](#9-success-and-failure-criteria)
+    - [Success Criteria](#success-criteria)
+    - [Failure Criteria](#failure-criteria)
+  - [10. Assumptions and Constraints](#10-assumptions-and-constraints)
+    - [Assumptions](#assumptions)
+    - [Constraints](#constraints)
+  - [11. Open Questions](#11-open-questions)
+
 
 # Product Requirements Document (PRD)
 ## Variance — Personal Finance & Expense Tracker
@@ -38,7 +127,7 @@ Existing personal finance apps on Android fall into one of two camps:
 
 | Version | Scope |
 |---------|-------|
-| **v1** | Core: accounts, transactions, categories, recurring transactions, installments, onboarding, settings, home summary |
+| **v1** | Core: accounts, transactions, categories, recurring transactions, installments, onboarding, settings, home screen dashboard (greeting, net worth, monthly summary, alerts, search/filter) |
 | **v2** | Advanced: budgeting (total + per-category, multi-horizon, rollover, alerts, income replenishment), trends, dashboards, analytics, data management (backup/restore, CSV), savings goals, tags, audit view, account & category reordering |
 | **v3** | Predictive: ML insights, OCR receipt capture, advanced analytics, exchange rate updates (online-optional), Drive backup |
 
@@ -246,7 +335,7 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 
 #### 5.1.1 Account CRUD
 
-**Create Account — Fields**
+##### Create Account — Fields
 
 The Create Account form collects the following fields. Category-specific fields (see §5.1.2) are additionally displayed once the account category is selected.
 
@@ -283,7 +372,16 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
 
 **Edit balance**: Posts a journal adjustment transaction (see §4.10 and §5.1.3).
 
-**Delete**: Soft delete only. Account becomes hidden from all user-facing views. Ledger entries are retained. A soft-deleted account's balance is excluded from net worth. Hard delete and transaction migration to another account are deferred to a future version.
+**Delete**: Soft delete only. Ledger entries are retained. A soft-deleted account's balance is excluded from net worth. Hard delete and transaction migration to another account are deferred to a future version.
+
+**Soft-deleted account behaviour (FG-B9):**
+- A soft-deleted account is **frozen**: no new transactions can be posted against it, and no existing transactions can be edited to reference it (the account is excluded from the account picker in transaction edit forms).
+- The account is **hidden from the account list** on the home screen and the account picker in new transaction forms.
+- The account **remains visible** in Settings > Accounts (with reinstatement option, per §5.1.1) and is shown grayed-out in the net worth view (per §5.1.4) if it was previously included.
+- **Historical transactions** that reference the soft-deleted account retain the account name and remain fully visible in all transaction views. The account name is displayed as-is — no "(deleted)" suffix is shown.
+- **Search (§5.2.5):** Transactions from soft-deleted accounts appear in search results. The deleted account's name is a searchable field.
+- **Filter (§5.2.6):** Soft-deleted accounts are included in the account filter picker, so users can filter to see historical transactions from a deleted account. This mirrors the treatment of soft-deleted categories in filter dropdowns.
+- **This does not extend to soft-deleted transactions.** Voided transactions are excluded from the default list and search results. The existing "Is voided" boolean filter (§5.2.6) is the only way to surface them.
   - If the account has a non-zero balance at deletion time, the app presents a two-step flow:
     1. "Would you like to transfer the remaining balance to another account?" — if yes, the user selects a destination account and a **system-generated internal transfer** is posted. This transfer is visible in the transaction list but is marked as system-generated and is not user-editable. If the user later attempts to soft-delete this system transfer, the app warns: *"This transfer was created when you deleted [account name]. Voiding it will reduce your net worth because the source account is no longer active."*
     2. If the user declines: "Deleting this account without transferring the balance will change your net worth. Are you sure?" — if confirmed, the soft-delete proceeds.
@@ -480,6 +578,30 @@ This applies uniformly to all transactions, including Balance Adjustment entries
 - Description appears **only in the transaction detail view**, never in the transaction list.
 - Character limit is configurable in Settings (§5.4.2) from a predefined set: 500, 1000, or 2000 characters. Default: 1000.
 
+**Transaction Detail View**
+
+Tapping a transaction in the list opens its detail view. The detail view surfaces all information about a single transaction that is not visible in the list row. Exact layout is deferred to UX Flows.
+
+**v1 contents:**
+
+| Section | Content | Notes |
+|---------|---------|-------|
+| **Header** | Transaction type badge (Income / Expense / Transfer) | Colour-coded per §5.2.1 amount colour coding |
+| **Amount** | Full amount with currency symbol; home currency equivalent if foreign-currency account (§7.1); stored exchange rate | Exchange rate shown here only, not in list row |
+| **Date & time** | Full date and timestamp | Timestamp is hidden in the list row — revealed here |
+| **Title** | Title text (if provided) | |
+| **Description** | Full description text | Only place description is shown (not in list) |
+| **Account info** | Expense: source account name. Income: destination account name. Transfer: source → destination account names. | Account names are shown even if the account has been soft-deleted (see §5.1.1 soft-delete behaviour) |
+| **Category info** | Parent category (icon + name) and subcategory name (if any). Transfers: not shown. | |
+| **Fee breakdown** | Transfer amount and fee amount shown separately (if compound transfer-with-fee per §5.1.5b). Fee category displayed. | Only for compound transactions |
+| **Photo carousel** | Attached photos displayed as a horizontally scrollable carousel. Tap opens full-screen. | Max 2 photos (§5.2.3). Contextual menu on photo: Delete photo (§5.5.1). |
+| **Contextual menu** | Edit, Delete (per §5.5.1) | Accessible via 3-dot menu or similar affordance |
+
+**v2 additions (not in v1 scope):**
+- **Correction history:** "This transaction was corrected on [date]" with link to original and reversal entries (surfaces in v2 audit view).
+- **Recurring template link:** Which template generated this transaction; past and future occurrences of the series.
+- **Installment and loan status:** If part of an installment series linked to a loan account — series progress, remaining amount, loan balance.
+
 #### 5.2.2 Transaction Immutability & Editing
 
 - All posted transactions are immutable.
@@ -529,11 +651,12 @@ Category management is accessed from Settings (§5.4.4). The flow is:
 - A parent category **cannot be deleted if it has any child subcategories**. The user must first soft-delete all children before the parent becomes deletable. Bulk "delete parent and all children" is not supported.
 - **A leaf parent category** (a parent with no children) **can be soft-deleted at any time.**
 - **A child category (subcategory) can be soft-deleted at any time**, regardless of whether active (non-voided) transactions reference it. This supersedes any prior constraint to the contrary.
-- **Transaction migration on category deletion:** When a user initiates a category soft-delete, the app prompts: *"Would you like to migrate transactions from this category to another category?"*
+- **Category usage count on deletion (FG-B5):** When a user initiates a category soft-delete, the app first displays the number of active (non-voided) transactions referencing this category: *"This category is used by [N] transaction(s). Deleting it will not affect those transactions, but the category will be removed from the filter and category picker for new entries."* This count must be computed efficiently (single aggregate query). If N = 0, this informational step is skipped and the flow proceeds directly to the migration prompt.
+- **Transaction migration on category deletion:** After the usage count is shown, the app prompts: *"Would you like to migrate transactions from this category to another category?"*
   - **No migration (default):** Existing transactions retain the soft-deleted category label. The category is hidden from pickers and filters but the label persists on historical transactions.
   - **Yes — migrate all:** The user selects a destination category. All transactions referencing the deleted category are re-categorised to the destination (this is a financial edit — reversing + corrected entry pairs are posted per §4.8).
   - **Yes — choose specific transactions:** The user is presented with the list of transactions referencing the category and selects which ones to migrate. Selected transactions are re-categorised; unselected transactions retain the old category (same as "no migration" for those).
-- Soft-deleted categories are hidden from: filter dropdowns, and the category picker in new transaction entry. They are not available for selection when creating or editing a transaction.
+- Soft-deleted categories are **hidden from the category picker** in new transaction entry and are not available for selection when creating a new transaction. However, soft-deleted categories **remain visible in filter dropdowns** (§5.2.6) so users can filter to historical transactions that reference a deleted category. This mirrors the treatment of soft-deleted accounts in the account filter (see §5.1.1 soft-deleted account behaviour).
 - Existing (non-voided) transactions that reference a soft-deleted category continue to display that category's name exactly as it was at the time of the transaction. The soft-deleted category label is shown as-is in the transaction detail view.
 - **Reinstatement of soft-deleted categories:** The same reinstatement logic described in §5.1.1 for accounts applies to categories. When creating a new category whose name matches a soft-deleted category within the same tree and parent, the app offers to reinstate the deleted category instead. Category names must be unique including across soft-deleted categories.
 
@@ -597,7 +720,7 @@ Search is accessible from the transaction list. The search engine uses an **fzf-
 - **Nearest-substring ranking**: Results are ranked by closeness of match. Exact matches rank highest, prefix matches rank above mid-string matches.
 - **Exact string match**: Typing an exact value matches it with the highest rank.
 
-**Searchable fields:** date, account name, category name, subcategory name, title, and description. Whether title and description are searched with equal or different ranking weight is deferred to UX Flows.
+**Searchable fields:** date, account name, category name, subcategory name, title, and description. Whether title and description are searched with equal or different ranking weight is deferred to UX Flows. Transactions referencing **soft-deleted accounts or soft-deleted categories** are included in search results — the deleted entity's name remains searchable (see §5.1.1 soft-deleted account behaviour and §5.2.4 soft-deleted category behaviour).
 
 **Amount search:** Amount fields are matched by **exact value only**. Typing "500" returns transactions with an amount of exactly ₹500 — it does not return ₹5,000 or ₹50.
 
@@ -610,7 +733,7 @@ A dedicated filter view (separate from the main transaction list) provides filte
 | Transaction type | Income / Expense / Transfer |
 | Category | Contextual — only shows income categories for income filter, etc. Multi-select: one or more categories may be selected. |
 | Subcategory | Contextual — filtered by the selected category. Multi-select. |
-| Account | One or more accounts |
+| Account | One or more accounts. **Includes soft-deleted accounts** so users can filter to historical transactions from a deleted account (see §5.1.1 soft-deleted account behaviour). |
 | Date range | Absolute range or relative presets (this month, last 7 days, etc.) |
 | Amount range | Min amount, max amount, or both (inclusive bounds). Optional. |
 | Has photo | Boolean |
@@ -689,6 +812,21 @@ The installment template maintains four tracked amounts:
 
 The non-blocking mismatch warning (at save time) applies when Projected final total ≠ Total configured.
 
+**Installment early close (FG-B7):**
+
+The user may close an installment series early before all scheduled installments have been posted. This is accessed via the **"Mark series as complete"** action in the installment template's contextual menu (§5.5.1).
+
+The early close flow:
+
+1. The app displays the current payment progress (the 4 tracked amounts above) and asks: *"Would you like to record a final payment before closing this series?"*
+2. **If yes — final lump-sum payment:** The user enters a final payment amount. A new transaction is posted and linked to the installment series (same as a regular installment child transaction). All remaining future scheduled installments are cancelled and the template is archived.
+3. **If no — close without final payment:** All remaining future scheduled installments are cancelled and the template is archived. No new transaction is posted.
+4. **Mismatch warning:** After the early close (with or without a final payment), if the resulting Running total ≠ Total configured, the app warns: *"The total paid ([running total]) differs from the original target ([total configured]). Would you like to update the target total to match the actual paid amount?"*
+   - **Update target:** Total configured is updated to match Running total. The mismatch is resolved.
+   - **Keep original:** Total configured remains unchanged. The series is archived with the mismatch noted.
+
+Once archived via early close, the template follows the standard archive rules — it **cannot be reactivated** (§5.2.7).
+
 ---
 
 ### 5.3 Budgeting *(Deferred to v2)*
@@ -756,6 +894,7 @@ $$N_{\text{new}} = \min(N + T, \, M)$$
 
 | Setting | Notes |
 |---------|-------|
+| Display name | Optional. Used in home screen greeting (§5.8). If empty, greeting shows "Hi!" with no name. |
 | Currency | Selected from a bundled ISO 4217 list; sets symbol and locale format |
 | Week start | Monday / Sunday |
 | Time format | 12-hour / 24-hour |
@@ -806,7 +945,7 @@ Applies only to the **sensitive account details view** — not to the rest of th
 
 | Section | Contents |
 |---------|----------|
-| Accounts | View and manage all accounts, including soft-deleted (with reinstatement option); per-account settings |
+| Accounts | View and manage all accounts, including soft-deleted (with reinstatement option). "Per-account settings" is the account edit form (§5.1.1 Edit) — accessible from both Settings > Accounts and from the account contextual menu in the account list. There are no additional per-account settings beyond the edit form. |
 | Transaction categories | Manage income and expense category and subcategory trees (excluding protected system categories, which are hidden) |
 | Recurring / Installments | Manage active, paused, and archived recurring transaction and installment templates |
 | Backup | Export all app data as a portable zip archive (see §5.4.6) |
@@ -918,6 +1057,67 @@ A **Skip** button is available on steps 2–4. Skipping bypasses remaining wizar
 
 ---
 
+### 5.8 Home Screen & Dashboard
+
+The home screen is the primary surface the user sees on every app open. It provides an at-a-glance summary of the user's finances and quick access to the most frequent actions.
+
+#### 5.8.1 Greeting
+
+The home screen displays a personalised greeting: **"Hi, [display name]!"** where the display name is the optional text field configured in Settings (§5.4.2). If no display name is set, the greeting shows **"Hi!"** with no name.
+
+#### 5.8.2 Financial Summary
+
+The following summary figures are shown prominently:
+
+| Element | Content | Notes |
+|---------|---------|-------|
+| **Net worth** | Sum of all included account balances (per §5.1.4) | Always reflects the current (latest) state. Currency formatting per locale. |
+| **Current month income** | Sum of all income transactions posted in the currently selected month | Green-tinted or income-styled |
+| **Current month expenses** | Sum of all expense transactions posted in the currently selected month | Red-tinted or expense-styled |
+| **Current month net** | Income − Expenses for the selected month | Positive = surplus, negative = deficit |
+
+Net worth is **not** affected by the month selector — it always shows the current total. The income, expense, and net figures shift when the user changes the selected month.
+
+**v2 additions:** Net worth graph over time; budget-at-a-glance widget; analytics summary.
+
+#### 5.8.3 Month Selector
+
+A **left/right arrow selector** allows the user to navigate between months. The selected month controls:
+- The income / expense / net summary figures (§5.8.2).
+- The transaction list shown on the home screen (§5.8.4).
+
+The selector does **not** affect the net worth figure. The default selected month is the **current calendar month**. Navigation to future months is allowed (will show pending transactions if any exist).
+
+#### 5.8.4 Transaction List
+
+The home screen includes a **transaction list filtered to the selected month**. This list follows the same display rules as the unified transaction list (§5.2.1): 3-column layout, date-grouped, date-descending, amount colour coding.
+
+**Search and filter** controls are accessible from this list — they operate on the currently displayed (month-filtered) set. The search and filter behaviour is identical to §5.2.5 and §5.2.6, applied on top of the month filter.
+
+#### 5.8.5 Alerts
+
+The home screen includes an **alerts section** that surfaces actionable in-app notifications. Alerts are displayed as a compact list or card strip above the transaction list.
+
+**v1 alert types:**
+
+| Alert type | Trigger | Content | Action |
+|------------|---------|---------|--------|
+| **Pending recurring confirmation** | A "remind and confirm" recurring template (§5.2.7) has a scheduled occurrence awaiting user confirmation | Template name, scheduled date, amount, account, category | Confirm (post), Edit before confirming, Dismiss (skips this occurrence) |
+| **Credit card payment due** | A credit card payment reminder fires per the notification schedule in §5.1.7 | Card name, amount due, due date | Opens the credit card payment entry form (§5.1.7) |
+| **Backup reminder** | First month of use or first 50 transactions reached, and no backup has been taken (§5.4.6) | One-time reminder to back up data | Navigate to Settings > Backup |
+
+Alerts are **also delivered as OS-level local notifications** (for recurring confirmations per §5.2.7 and credit card reminders per §5.1.7). The home screen alerts section mirrors these in-app so the user sees them even if they dismissed the OS notification.
+
+**Alert dismissal:** Pending recurring confirmations remain in the alerts section until acted upon (confirmed, edited, or dismissed) or auto-approved after 24 hours. Credit card payment alerts clear once the due date passes or a payment is recorded. The backup reminder clears once a backup is taken or the user explicitly dismisses it (shown only once).
+
+**Pending Confirmations screen:** A dedicated **Pending Confirmations** view showing all unconfirmed recurring occurrences is accessible from the app's navigation overflow menu (e.g., "More options" in the nav bar). This screen shows the same information as the home screen alert cards but as a full list, allowing bulk review. Each item supports: Confirm, Edit before confirming, and Dismiss.
+
+#### 5.8.6 Quick Entry
+
+A **quick-entry FAB** (Floating Action Button) is present on the home screen for creating new transactions. Exact design (single FAB, speed dial with income/expense/transfer split, etc.) is deferred to UX Flows (UX-2).
+
+---
+
 ## 6. Non-Functional Requirements
 
 | ID    | Category | Requirement |
@@ -993,7 +1193,7 @@ When a transaction is created against an account whose currency differs from the
 - Future-dated transactions held as pending until scheduled date
 - Transaction timestamps stored in UTC, displayed in local timezone
 - Transaction-level exchange rate capture (locked at creation time) for foreign-currency accounts
-- Basic home summary (account balances, net worth)
+- Home screen dashboard: greeting, net worth, monthly income/expense/net summary, month-filtered transaction list, search and filter, alerts, quick-entry FAB (§5.8)
 - First-launch onboarding wizard (currency selection, first account creation, feature highlights)
 - Default category seeding on first install
 - Settings: appearance (Material You), primary config, security (device lock / PIN with configurable scope and timeout), management, about
@@ -1024,6 +1224,14 @@ When a transaction is created against an account whose currency differs from the
 - **Net worth excluded accounts** — shown grayed-out inline below the net worth contributors (FG-A26)
 - **Soft-deleted category in transaction edit** — current selection always shown even if deleted; re-selectable to cancel accidental edits; hidden from picker for transactions with active categories (FG-A25)
 - **Account deletion — no same-currency account** — skips transfer offer if no same-currency account exists; goes directly to net worth warning (FG-A29)
+- **Transaction detail view** — full detail screen on tap: amount, date/time, type, account, category, description, fee breakdown, photo carousel, contextual menu; v2 additions (correction history, recurring link, installment status) noted (FG-B1)
+- **Home screen dashboard** — personalised greeting (display name from Settings), net worth, current month income/expense/net, month selector for transaction list, search and filter, alerts section, quick-entry FAB (FG-B2)
+- **Home screen alerts** — pending recurring confirmations, credit card payment due reminders, one-time backup reminder; alerts section + dedicated Pending Confirmations screen via nav overflow (FG-B4)
+- **Category usage count on deletion** — informational count of active transactions shown before soft-delete proceeds; must be efficient (single aggregate query) (FG-B5)
+- **Installment early close** — "Mark series as complete" with optional final lump-sum payment; mismatch warning with option to update target total (FG-B7)
+- **Per-account settings clarified** — "per-account settings" = account edit form, accessible from Settings > Accounts and from account contextual menu; no additional settings (FG-B8)
+- **Soft-deleted account behaviour** — frozen state (no new/edited transactions); hidden from pickers; historical transactions remain visible and searchable; included in filter account picker; does not extend to voided transactions (FG-B9)
+- **Soft-deleted categories in filter** — soft-deleted categories visible in filter dropdowns for historical transaction lookup (updated alongside FG-B9)
 
 ### 🔄 Deferred — v2
 
@@ -1043,6 +1251,8 @@ When a transaction is created against an account whose currency differs from the
 - Audit view (surfaces all transactions including voided and journal adjustments)
 - Tags (color, name, icon; assignable to transactions; filterable and searchable)
 - Cross-currency transfer fee handling (deferred with cross-currency transfers to v2)
+- **Transaction detail view v2 additions** — correction history, recurring template link, installment/loan status (FG-B1)
+- **Home screen v2 additions** — net worth graph over time, budget-at-a-glance widget, analytics summary (FG-B2)
 
 ### 🔄 Deferred — v3 (or later)
 
@@ -1118,6 +1328,6 @@ When a transaction is created against an account whose currency differs from the
 
 ## 11. Open Questions
 
-> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and remaining feature gap items (FG-B, FG-C) are tracked in `docs/06-helpers/gaps-and-questions.md`.
+> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and remaining feature gap items (FG-C) are tracked in `docs/06-helpers/gaps-and-questions.md`.
 >
-> Feature gaps FG-A1 through FG-A11 were resolved on 2026-04-14 (PRD v0.4.0). Feature gaps FG-A12 through FG-A31 were resolved on 2026-04-14 (PRD v0.5.0) and are baked into the PRD body. Budget-related gaps FG-A17–FG-A21 are deferred with the budgeting feature to v2. No open product questions remain. The PRD is ready for continued sign-off.
+> Feature gaps FG-A1 through FG-A11 were resolved on 2026-04-14. Feature gaps FG-A12 through FG-A31 were resolved on 2026-04-14. Feature gaps FG-B1 through FG-B9 were resolved on 2026-04-14; FG-B3 and FG-B6 deferred with budgets to v2. All v2-deferred decisions are consolidated in `docs/01-product/prd-v2-draft.md`. FG-C items remain open. The PRD is ready for continued sign-off.

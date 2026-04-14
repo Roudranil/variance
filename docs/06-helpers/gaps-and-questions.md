@@ -4,24 +4,21 @@ status: in progress
 owner: pm
 created: 2026-04-13
 last_updated: 2026-04-14
-version: 0.5.0
 depends_on: [01-product/prd.md]
 outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 ---
 
 # Variance — Gaps & Open Questions
 
-> **Last Updated:** 2026-04-14 (PRD v0.4.0)
->
-> **Last Updated:** 2026-04-14 (PRD v0.5.0)
+> **Last Updated:** 2026-04-14
 >
 > This document is a comprehensive reference for product gaps and questions. It is organized into three parts:
 >
-> - **Part 1 — PRD Questions (Q47–Q76):** ✅ **ALL RESOLVED** in PRD v0.3.0. Question text removed from this document — resolutions are baked into the PRD body; the resolved questions log is in `docs/06-helpers/ideation-tracker.md`.
+> - **Part 1 — PRD Questions (Q47–Q76):** ✅ **ALL RESOLVED** in the PRD. Question text removed from this document — resolutions are baked into the PRD body; the resolved questions log is in `docs/06-helpers/ideation-tracker.md`.
 >
 > - **Part 2 — UX Flows Pre-Work Topics (UX-1–UX-14):** Interaction design decisions that belong in `docs/02-technical/ux-flows.md`, not the PRD. These do not block the PRD sign-off but must be resolved before the UX Flows document can be completed. Items UX-7 and UX-8 are deferred with budgets to v2.
 >
-> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD. FG-A1 through FG-A11 resolved on 2026-04-14 (PRD v0.4.0). FG-A12 through FG-A31 resolved on 2026-04-14 (PRD v0.5.0). FG-B and FG-C remain open.
+> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD. FG-A1 through FG-A11 resolved on 2026-04-14. FG-A12 through FG-A31 resolved on 2026-04-14. FG-B1 through FG-B9 resolved on 2026-04-14; FG-B3 and FG-B6 deferred with budgets to v2. FG-C remains open.
 >
 > The authoritative status of each question is tracked in `docs/06-helpers/ideation-tracker.md`.
 
@@ -29,7 +26,7 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ## Part 1 — PRD Questions
 
-> ✅ **All 30 questions (Q47–Q76) were resolved on 2026-04-13 and baked into PRD v0.3.0.** Resolutions are in the PRD document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Part 1 has been removed from this document — see those sources for details.
+> ✅ **All 30 questions (Q47–Q76) were resolved on 2026-04-13 and baked into the PRD.** Resolutions are in the PRD document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Part 1 has been removed from this document — see those sources for details.
 
 ---
 
@@ -110,102 +107,16 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ### FG-A — Existing Features: Edge Cases & Missing Detail
 
-> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into PRD v0.4.0.** See `docs/06-helpers/ideation-tracker.md` for the full decision log.
+> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into the PRD.** See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 >
-> ✅ **FG-A12 through FG-A31 were resolved on 2026-04-14 and baked into PRD v0.5.0.** Resolutions summary:
+> ✅ **FG-A12 through FG-A31 were resolved on 2026-04-14 and baked into the PRD.** Resolutions summary:
 > See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 
 ---
 
 ### FG-B — Features Implied or Mentioned But Never Specified
 
-#### FG-B1 — Transaction Detail View: Content Never Defined
-
-The PRD defines what fields are collected on transaction entry (§5.2.1) but never specifies what a transaction detail view shows after the fact.
-
-**Gap:** What additional information does the detail view surface that the list row does not? Candidates:
-- Full description (long-form text)
-- Photo attachments (thumbnail grid with tap-to-expand)
-- The recurring template this transaction was generated from (if applicable)
-- The budget pool(s) this transaction was added to (if any)
-- Correction history: "This transaction was corrected on [date]" (connected to Q72)
-- Timestamps: created at, last edited at
-
-This is a foundational screen in the app and entirely undefined.
-
----
-
-#### FG-B2 — Home Screen Dashboard: Content Undefined
-
-§8 (in-scope for v1) lists "basic home summary (account balances, net worth)" but this is the entire specification for the home screen.
-
-**Gap:** What does the home screen show? Reasonable candidates:
-- Net worth figure (prominently)
-- Account list with current balances (or a summarised version)
-- Income vs. expense summary for the current period (this month)
-- A "recent transactions" list (how many? from all accounts?)
-- Budget at-a-glance widget (current period spend vs. budget)
-- Quick-entry FAB (connects to UX-2)
-
-None of these are confirmed or denied in the PRD. The home screen is the first thing the user sees every time they open the app.
-
----
-
-#### FG-B3 — In-App Alert History: Where Do Past Alerts Go? *(Deferred to v2 with budgets)*
-
-§5.3.4 says in-app alerts fire at configurable thresholds. Once an alert fires, what happens to it?
-
-**Gap:** Is the alert a one-time event (fires once at the threshold, never repeats for the same budget period)? Or does it fire every time the threshold is crossed (including correction-triggered recalculations)? Where does the alert go after it fires — is there a notification center / alert history the user can review, or does it disappear forever after dismissal?
-
----
-
-#### FG-B4 — Recurring Transaction: "Remind and Confirm" Inbox
-
-§5.2.7 says recurring transactions in "remind and confirm" mode prompt the user to review and confirm before posting. There must be a UI surface where pending confirmations live.
-
-**Gap:** Is there a dedicated "pending confirmations" screen? Or are pending items surfaced inline on the home screen? What does a pending confirmation item show (template name, scheduled date, amount, account, category)? Can the user edit the amount/details before confirming?
-
----
-
-#### FG-B5 — Category Usage Count / Impact Warning on Deletion
-
-When the user soft-deletes a category that is referenced by hundreds of historical transactions, they should be informed of the impact.
-
-**Gap:** Does the app show "This category is used by 47 transactions. Deleting it will not affect those transactions, but it will be removed from the filter and picker." This is a transparency affordance. Without it, the user may not understand the consequences of deleting a category.
-
----
-
-#### FG-B6 — Budget and Soft-Deleted Categories *(Deferred to v2 with budgets)*
-
-If a per-category budget exists for a category that is subsequently soft-deleted, what happens to the budget?
-
-**Gap:** Options: (a) the budget is automatically archived; (b) the budget continues to exist but shows "deleted category" as its label; (c) the budget is blocked from being created for a deleted category (already covered), but existing ones become orphaned. This is a data integrity question with budget-engine implications.
-
-**[Policy] [SDS]**
-
----
-
-#### FG-B7 — Installment: Early Completion and Final Reconciliation
-
-§5.2.8 notes that per-installment amounts can be adjusted manually and the total may not match the target (non-blocking warning). But it never specifies what happens at the end of the installment series.
-
-**Gap:** (1) If the sum of posted installments is less than the target total (because individual amounts were reduced), does the app flag this as an outstanding balance? (2) Can the user mark the installment series as "paid in full" regardless of the total tracking? (3) Is there an "overpay" installment if the user paid more in some periods and wants to close the series early?
-
----
-
-#### FG-B8 — "Per-Account Settings" in Settings: Vague
-
-§5.4.4 lists "Settings > Accounts: view and manage all accounts, including soft-deleted; per-account settings." The phrase "per-account settings" is undefined.
-
-**Gap:** What are "per-account settings"? The account edit form covers name, notes, include-in-net-worth, and category-specific fields. Are there additional settings accessible only from Settings > Accounts that are not available from the account edit form? Or is "per-account settings" just another way of saying "edit account"?
-
----
-
-#### FG-B9 — Transactions From Soft-Deleted Accounts in Search and Filter
-
-§5.1.1 says soft-deleted accounts are "hidden from all user-facing views." But the transaction list and search cover all transactions.
-
-**Gap:** If a user searches for a transaction that was recorded against a soft-deleted account, does it appear in search results? What is the account label on that transaction (the account name, or "(deleted account)")?
+> ✅ **FG-B1 through FG-B9 were resolved on 2026-04-14 and baked into the PRD.** FG-B3 and FG-B6 deferred with budgets to v2. All v2-deferred decisions consolidated in `docs/01-product/prd-v2-draft.md`. See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 
 ---
 
