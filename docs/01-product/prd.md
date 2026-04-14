@@ -3,7 +3,7 @@ name: Product Requirements Document
 status: in progress
 owner: pm
 created: 2026-04-13
-last_updated: 2026-04-13
+last_updated: 2026-04-14
 depends_on: []
 outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-contracts.md, 03-planning/task-breakdown.md]
 ---
@@ -109,8 +109,8 @@ $$\sum \text{debit}(T) = \sum \text{credit}(T)$$
 ### 4.5 Transaction Rules by Type
 
 **Expense:**
-- At least one expense category entry (credit side)
-- At least one account entry (debit side, the source of funds)
+- At least one expense category entry (**debit side** — expense category balance increases)
+- At least one account entry (**credit side** — the source of funds; account balance decreases)
 
 **Income:**
 - At least one account entry (debit side, where funds land)
@@ -120,17 +120,29 @@ $$\sum \text{debit}(T) = \sum \text{credit}(T)$$
 - Only account entries (no category entries)
 - Source account is credited; destination account is debited
 
-### 4.6 Balance Calculation by Account Type
+### 4.6 Balance Calculation
 
-**Asset accounts** (Cash, Bank Account, Debit Card, Top-Up Wallet, Loan-as-asset, Investment):
+**Universal Balance Formula — all account types:**
+
 $$\text{balance} = \sum \text{debit} - \sum \text{credit}$$
 
-**Liability accounts** (Credit Card, Loan-as-liability):
-$$\text{balance} = \sum \text{credit} - \sum \text{debit}$$
+This formula applies to every user-facing account regardless of category. The sign of the balance conveys the account's economic state:
 
-**Income/Expense categories** (internal, not user-visible as "accounts"):
-- Income: $\text{balance} = \sum \text{credit} - \sum \text{debit}$
-- Expense: $\text{balance} = \sum \text{debit} - \sum \text{credit}$
+- **Positive balance** → account is in an **asset state**: you hold this value or it is owed to you.
+- **Negative balance** → account is in a **liability state**: you owe this value.
+- **Zero balance** → account is settled or empty.
+
+There is no explicit asset/liability designation field on any account. The direction is inferred entirely from the balance sign at any point in time. The UI never exposes raw signs — balance direction is communicated through **colour and labelling** (see §5.1.4).
+
+**Examples of sign-based inference:**
+- Bank account balance +₹10,000 → asset state (you hold ₹10,000).
+- Credit card balance −₹5,000 → liability state (you owe ₹5,000).
+- Loan account balance +₹50,000 → asset state (someone owes you ₹50,000).
+- Loan account balance −₹1,50,000 → liability state (you owe ₹1,50,000).
+
+**Income/Expense category accounts** (internal, not user-visible):
+- Income category: $\text{balance} = \sum \text{credit} - \sum \text{debit}$
+- Expense category: $\text{balance} = \sum \text{debit} - \sum \text{credit}$
 
 ### 4.7 Transaction Validity
 
@@ -152,31 +164,22 @@ A transaction is valid if and only if:
 
 When an account is created with an initial balance, the system implicitly posts a transaction against an internal **Opening Balance equity account** (EQ). This equity account is **never visible to the user under any circumstances** — it does not appear in any user-facing views, account lists, or reports.
 
-**EQ posting direction by account type:**
-- Asset account with initial balance B: `Dr A, Cr EQ` -> A balance ↑ B, EQ credit balance ↑ B.
-- Liability account with initial balance B: `Dr EQ, Cr L` -> L balance ↑ B, EQ debit balance ↑ B (net EQ credit balance ↓ B).
+**EQ posting direction by initial balance sign:**
+- Initial balance B > 0 (asset state): `Dr A, Cr EQ` → account balance = +B.
+- Initial balance B < 0 (liability state): `Dr EQ, Cr A` → account balance = −|B|.
+- Initial balance B = 0: No posting (see case 2.1 in §4.11).
 
-EQ supports bidirectional postings: credited for asset openings, debited for liability openings.
+EQ supports bidirectional postings and is valid for any account type.
 
-**EQ and net worth — mathematical treatment:**
+**EQ and net worth:**
 
-The DEB accounting equation is:
+EQ is a technical balancing account used solely to satisfy the DEB invariant for opening-balance entries. Its balance is exactly the algebraic negative of the net sum of all opening balance postings. If EQ were included in net worth, it would offset every opening balance, causing net worth to understate (or overstate) the user's actual financial position.
 
-$$\text{Assets} = \text{Liabilities} + \text{Equity}$$
-
-EQ tracks the net equity injected to establish opening balances. If EQ were included in the net worth calculation:
-
-$$\text{Net Worth (wrong)} = \text{Assets} - \text{Liabilities} + \text{EQ}$$
-
-Since $\text{EQ} = \text{Assets} - \text{Liabilities}$ (from the accounting equation):
-
-$$= (\text{Assets} - \text{Liabilities}) + (\text{Assets} - \text{Liabilities}) = 2 \times (\text{Assets} - \text{Liabilities})$$
-
-This double-counts. **EQ must therefore be excluded from net worth.**
+**EQ must therefore be excluded from net worth.**
 
 The correct net worth formula is:
 
-$$\text{Net Worth} = \text{Assets} - \text{Liabilities}$$
+$$\text{Net Worth} = \sum_{\text{included accounts}} \text{balance}_i = \sum_{\text{included accounts}} \left(\sum \text{debit}_i - \sum \text{credit}_i\right)$$
 
 EQ exists solely to balance opening-balance transactions. It has no economic meaning in a personal finance context and is never surfaced to the user.
 
@@ -187,9 +190,13 @@ When a user directly edits an account's balance, the system posts a **journal ad
 - If **Yes**: The adjustment is categorised under the protected **"Balance Adjustment"** system category and is visible in the transaction list.
 - If **No**: The adjustment is an invisible internal entry retained for ledger integrity. It is not visible in normal views but surfaces in the v2 audit view.
 
-**Income/expense direction for liability account adjustments:**
-- Liability balance **increases** (more owed — e.g., interest charged, fee levied): classified as **expense** (`Dr BAE, Cr L`).
-- Liability balance **decreases** (less owed without a transfer — e.g., debt forgiven or written off): classified as **income** (`Dr L, Cr BAI`).
+**Income/expense direction for balance adjustments (universal — all account types):**
+
+Since all accounts use the same formula (§4.6), the direction of the income/expense classification follows the change in balance value:
+- Balance **increases** (moves toward +∞, e.g., debt forgiven, refund credited, cash received): classified as **income** (`Dr A, Cr BAI`).
+- Balance **decreases** (moves toward −∞, e.g., fee charged, overdraft, spending recorded): classified as **expense** (`Dr BAE, Cr A`).
+
+This applies uniformly whether the account is currently in asset state or liability state. For example: a credit card balance moving from −₹5,000 to −₹6,000 is a balance decrease → expense. A credit card balance moving from −₹5,000 to −₹3,000 (partial forgiveness or correction) is a balance increase → income.
 
 ### 4.11 Ledger Posting Cases (Reference)
 
@@ -209,16 +216,12 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 | 1.8 | Soft-Delete Income | Cr A, Dr IC | 1 txn, 2 entries |
 | 1.9 | Soft-Delete Transfer | Cr A₂, Dr A₁ | 1 txn, 2 entries |
 | 2.1 | Create Account, balance = 0 | None | 0 |
-| 2.2a | Create Asset Account, balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
-| 2.2b | Create Liability Account, balance B > 0 | Dr EQ, Cr L | 1 txn, 2 entries |
-| 2.3a | Edit Asset Balance ↑ -> record as income | Dr A, Cr BAI | 1 txn, 2 entries |
-| 2.3b | Edit Asset Balance ↓ -> record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
-| 2.3c | Edit Liability Balance ↑ -> record as expense | Dr BAE, Cr L | 1 txn, 2 entries |
-| 2.3d | Edit Liability Balance ↓ -> record as income | Dr L, Cr BAI | 1 txn, 2 entries |
-| 2.4a | Edit Asset Balance ↑ -> do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
-| 2.4b | Edit Asset Balance ↓ -> do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
-| 2.4c | Edit Liability Balance ↑ -> do NOT record | Dr EQ, Cr L | 1 txn, 2 entries (invisible) |
-| 2.4d | Edit Liability Balance ↓ -> do NOT record | Dr L, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.2a | Create Account, initial balance B > 0 | Dr A, Cr EQ | 1 txn, 2 entries |
+| 2.2b | Create Account, initial balance B < 0 | Dr EQ, Cr A | 1 txn, 2 entries |
+| 2.3a | Edit Balance ↑ (toward +∞) → record as income | Dr A, Cr BAI | 1 txn, 2 entries |
+| 2.3b | Edit Balance ↓ (toward −∞) → record as expense | Dr BAE, Cr A | 1 txn, 2 entries |
+| 2.4a | Edit Balance ↑ → do NOT record | Dr A, Cr EQ | 1 txn, 2 entries (invisible) |
+| 2.4b | Edit Balance ↓ → do NOT record | Dr EQ, Cr A | 1 txn, 2 entries (invisible) |
 | 2.5 | Soft-Delete Account | None | 0 |
 | 3.1 | Recurring auto-post | Same as 1.1–1.3 | Same as type |
 | 3.2 | Installment single post | Same as 1.1 or 1.2 | Same as type |
@@ -227,7 +230,7 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 | 3.5 | Budget Replenishment | None (budget layer) | 0 |
 | 3.6 | Category Soft-Delete | None | 0 |
 
-> The posting model for liability accounts is complete. Cross-currency transfers are disallowed in v1. Full enumeration of all posting cases is in `docs/01-product/ledger-entry.md`, which is the authoritative reference for SDS schema design.
+> All accounts use the universal balance formula (§4.6). The former separate liability cases (2.3c/d, 2.4c/d) are subsumed by 2.3a/b and 2.4a/b under the universal formula — the ledger entries are identical; only the interpretation of "balance ↑ vs ↓" changes. Cross-currency transfers are disallowed in v1. Full enumeration of all posting cases is in `docs/01-product/ledger-entry.md`, which is the authoritative reference for SDS schema design.
 
 ---
 
@@ -251,10 +254,19 @@ The Create Account form collects the following fields. Category-specific fields 
 | Name | Yes | — | Must be unique across all accounts (see uniqueness constraint below). Free-form text. |
 | Account category | Yes | — | Selected from the fixed set in §5.1.2. Determines which category-specific fields are shown. |
 | Initial balance | Yes | 0 | Numeric amount. If > 0, an opening-balance ledger transaction is posted (see §4.9). |
-| Currency | Yes | — | Selected from the bundled ISO 4217 list (see §5.4.2). |
+| Currency | Yes | Home currency | Selected from the bundled ISO 4217 list (see §5.4.2). **Immutable after creation** — cannot be changed once the account is saved (see currency immutability below). |
 | Include in net worth | Yes (boolean) | true | Controls whether this account's balance contributes to the net worth total (see §5.1.4). |
 | Notes | No | — | Optional free-form text. Retained on accounts even though notes has been removed from transactions. |
 | Category-specific fields | Varies | — | Additional fields per the selected account category (see §5.1.2). |
+
+**Currency Immutability**
+
+Account currency is permanently fixed at the time of creation. To ensure an informed choice:
+1. The currency field defaults to the **home currency** (§5.4.2). An info tooltip accompanies the field: *"Account currency cannot be changed after creation. Select carefully."*
+2. If the user changes the currency away from the default, a **visual change indicator** (e.g., a highlighted field border or inline confirmation label) is shown to confirm the selection has been intentionally changed.
+3. Before the account is saved, a **confirmation dialog** is presented: *"Your account will be created in [Currency]. This cannot be changed later. Continue?"*
+
+---
 
 **Account Name Uniqueness Constraint**
 
@@ -274,7 +286,21 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
   - If the account has a non-zero balance at deletion time, the app presents a two-step flow:
     1. "Would you like to transfer the remaining balance to another account?" — if yes, the user selects a destination account and a **system-generated internal transfer** is posted. This transfer is visible in the transaction list but is marked as system-generated and is not user-editable. If the user later attempts to soft-delete this system transfer, the app warns: *"This transfer was created when you deleted [account name]. Voiding it will reduce your net worth because the source account is no longer active."*
     2. If the user declines: "Deleting this account without transferring the balance will change your net worth. Are you sure?" — if confirmed, the soft-delete proceeds.
-- Cannot delete the last remaining account.
+- Cannot delete the last remaining account. When exactly one account exists, the **delete action is disabled** (greyed out and non-interactive) on that account, with a tooltip: *"You cannot delete your only account."* This applies regardless of whether the last account has a zero or non-zero balance.
+
+**Recurring and installment template handling on account deletion:**
+
+Before soft-deleting an account, the app checks whether any recurring or installment template with **future-scheduled occurrences** references that account. If such templates exist, a blocking warning is shown before the normal balance-transfer / net-worth-change flow:
+
+> *"[N] recurring/installment template(s) are scheduled to use this account. What would you like to do?"*
+
+The user must choose one of:
+- **Migrate templates** — select a replacement account; all future-scheduled occurrences of the affected templates switch to the replacement account. This is treated as a template edit (account field change) effective from the next unposted occurrence.
+- **Stop templates** — all affected templates are immediately archived; future-scheduled occurrences are cancelled.
+
+The **default pre-selected option is Stop templates**. Deletion does not proceed until the user confirms a choice. Templates with no future-scheduled occurrences are unaffected — their historical child transactions are retained.
+
+---
 
 #### 5.1.2 Account Categories (Fixed Set — No Custom Categories)
 
@@ -284,12 +310,22 @@ Account categories are a fixed, predefined set. Users cannot create, rename, or 
 |----------|-------------------|
 | **Cash** | None |
 | **Bank Account** | Bank name, account number (masked display), branch, IFSC |
-| **Credit Card** | Card name, card number (hashed/masked), expiry date, CVV (hashed; security unlock required to reveal), billing date, payment due date, credit limit, linked bank account |
-| **Debit Card** | Card name, card number (hashed/masked), expiry date, CVV (hashed; security unlock required to reveal), linked bank account |
+| **Credit Card** | Card name, card number (encrypted; masked display), expiry date, billing date, payment due date, credit limit, linked bank account (optional) |
+| **Debit Card** | Card name, card number (encrypted; masked display), expiry date, linked bank account (optional; metadata only) |
 | **Top-Up Wallet** | Wallet provider name, linked phone number |
-| **Loan** | Lender/borrower name, principal amount, interest rate, EMI amount, EMI date, loan direction (asset — owed to me / liability — owed by me), due date |
+| **Loan** | Lender/borrower name, principal amount, interest rate, EMI amount, EMI date, due date |
 | **Investment** | Investment type (FD, Mutual Fund, Stocks, PPF, NPS, Other), institution name, current value (manually entered — see §5.1.3 for balance model) |
 | **Other** | None — generic miscellaneous account |
+
+**Field encryption:** Sensitive account fields — card numbers (Credit Card, Debit Card) and bank account numbers (Bank Account) — are **encrypted at rest** on the device. Authentication is required to reveal the unmasked value in the UI (§5.4.3 sensitive field reveal). **CVV is never stored in any form in any version of the app.**
+
+**Loan account direction:** The loan direction (asset vs. liability) is not a stored field. The balance sign conveys direction: a positive loan balance means the loan is owed **to you** (asset state); a negative balance means **you owe** (liability state). Set the initial balance to a positive value if you lent money out; set it to a negative value if you borrowed. See §4.6.
+
+**Linked bank account — behaviour by account category:**
+- *Debit Card*: Metadata only. Linking a bank account has no functional effect on either account. Deleting either does not affect the other.
+- *Credit Card*: Triggers automatic payment reminders and pre-fills the payment source in the payment entry form. See §5.1.7.
+
+---
 
 #### 5.1.3 Account Balance Model
 
@@ -298,8 +334,8 @@ This model applies to **all account types** — there is no functional differenc
 An account's balance changes in exactly three ways:
 
 1. **Direct balance edit** (via edit account menu): System prompts — *"Record this change as a real transaction?"*
-   - If Yes -> posts a proper income/expense transaction with the protected **"Balance Adjustment"** category. Visible in transaction list. See §4.10 and Cases 2.3a–2.3d in `docs/01-product/ledger-entry.md` for the full posting logic by account type (asset vs. liability) and direction (balance up vs. balance down).
-   - If No -> posts an invisible journal adjustment against the internal equity account (EQ). Not visible in normal views. Surfaces in the v2 audit view. See Cases 2.4a–2.4d in `docs/01-product/ledger-entry.md`.
+   - If Yes -> posts a proper income/expense transaction with the protected **"Balance Adjustment"** category. Visible in transaction list. See §4.10 and Cases 2.3a–2.3b in `docs/01-product/ledger-entry.md` for the posting logic by balance direction (balance ↑ = income, balance ↓ = expense). This applies uniformly to all account types.
+   - If No -> posts an invisible journal adjustment against the internal equity account (EQ). Not visible in normal views. Surfaces in the v2 audit view. See Cases 2.4a–2.4b in `docs/01-product/ledger-entry.md`.
 2. **Recorded transaction against this account**: A normal income/expense/transfer entry referencing this account. Displayed in the transaction list.
 3. **Deletion (soft-delete) of an existing transaction**: Posts an invisible reversing entry to neutralise the original transaction's effect on the account balance. The reversal is not displayed in normal transaction views.
 
@@ -309,12 +345,66 @@ An account's balance changes in exactly three ways:
 - Net worth view: sum of all balances for accounts where "include in net worth" is true and the account is not soft-deleted. Accounts flagged as excluded are shown separately or not shown.
 - Balances respect the locale, number format, and currency settings.
 
+**Negative balance visual treatment:**
+When an account balance is negative (liability state per §4.6), it is displayed using a **distinct warning colour** (exact Material You colour token deferred to UX Flows). No minus sign or "−" prefix is shown in the primary balance display — colour alone signals the liability state. Accessibility labelling (for screen readers) must convey the liability state; exact semantics deferred to UX Flows.
+
+**Overdraft warning:**
+When recording a transaction that would push an account balance below zero, or deepen an existing negative balance, a **non-blocking inline warning** is shown at the point of entry: *"This transaction will result in a negative balance of [amount] for [Account Name]."* The user may dismiss and proceed — there is no hard block.
+
 #### 5.1.5 Internal Transfer
 
 - A Transfer transaction atomically debits the destination account and credits the source account.
 - Both entries post together or neither does.
 - Transfers carry no transaction category.
-- **Credit card payment**: When the destination account is a liability (e.g., paying a credit card bill), the posting is `Dr L, Cr A`. Debiting the liability account decreases the outstanding balance (less owed). This is the standard ledger treatment for liability account transfers.
+- **Credit card payment**: When transferring to a credit card account (paying the outstanding balance), the posting is `Dr CreditCard, Cr SourceAccount`. With the universal asset formula (§4.6), debiting the credit card account increases its balance (moves it toward zero, reducing the amount owed). This is consistent with the standard DEB transfer treatment for all accounts.
+
+#### 5.1.6 Credit Card Balance Model
+
+A credit card account's ledger balance is computed using the universal formula (§4.6): **balance = Σdebit − Σcredit**. In normal use the balance is negative, representing the total amount owed.
+
+Two balance figures are meaningful for credit cards:
+
+| Balance | Definition | Source |
+|---------|------------|--------|
+| **Outstanding balance** | Current total ledger balance — the total amount owed across all billing cycles. | Live ledger computation |
+| **Statement balance** | Net change to the credit card account between the last billing date and the current date — the amount due by the payment due date. | Derived on demand from the ledger filtered by billing period. Not stored separately. |
+
+**Balance edit screen for credit cards:**
+
+The balance edit screen for a credit card presents **two distinct actions** (replacing the single "edit balance" used for other account types):
+
+1. **Adjust statement balance** — corrects the amount owed for the current billing cycle. The resulting journal adjustment is dated to the billing date.
+2. **Adjust outstanding balance** — corrects the total currently owed. The journal adjustment is dated to today.
+
+Both actions follow the standard journal adjustment flow (§4.10): the user is prompted *"Record this change as income/expense?"* and cases 2.3a/2.3b (visible) or 2.4a/2.4b (invisible) apply.
+
+#### 5.1.7 Credit Card Payment Reminders
+
+When a credit card account has a **billing date** and **payment due date** configured, the app automatically schedules OS-level local notifications to prompt payment. These reminders fire regardless of whether a linked bank account is set.
+
+**Notification schedule (recurring each billing cycle):**
+
+| Trigger | Notification content |
+|---------|---------------------|
+| 1 day after billing date | "Your [Card Name] statement is ready. Statement balance: [amount]." |
+| 7 days before payment due date | "[Card Name] payment due in 7 days. Amount due: [statement balance]." |
+| 1 day before payment due date | "[Card Name] payment is due tomorrow. Amount due: [statement balance]." |
+| On payment due date | "[Card Name] payment is due today." |
+
+Each notification exposes a **Pay** action that opens the credit card payment entry form. The same form is accessible from the persistent **Pay FAB** on the credit card account detail screen.
+
+**Credit card payment entry form:**
+
+| Field | Value |
+|-------|-------|
+| Transaction type | Transfer (fixed — not editable) |
+| Destination account | This credit card (pre-filled, not editable) |
+| Source account | Linked bank account if set (pre-filled); empty otherwise |
+| Amount | Statement balance (pre-filled; user may edit before confirming) |
+
+**Notification lifecycle:** Notifications are re-scheduled whenever the billing date, payment due date, or linked bank account field is updated. This feature reuses the same `SCHEDULE_EXACT_ALARM` and `POST_NOTIFICATIONS` permissions already required by recurring transaction reminders (§5.2.7).
+
+---
 
 ### 5.2 Transaction Management (CORE) — UC-2
 
@@ -363,7 +453,7 @@ Each row in the transaction list displays three columns:
 - All posted transactions are immutable.
 - **Editing amount, account, or category**: A reversing entry is posted (negating the original), followed by the corrected transaction. This applies equally to all three financial fields. A category change is treated identically to an account or amount change — it is a financial correction requiring a reversing + corrected pair. This is consistent with §4.8 and with Cases 1.4 and 1.5 in `docs/01-product/ledger-entry.md`, where the corrected entry already models a changed category (EC', IC').
 - **Correction visibility:** Only the **final corrected transaction** is visible in the transaction list. The original transaction and its reversing entry are hidden as internal ledger entries — they maintain ledger integrity but are not shown in normal user-facing views. This preserves full DEB abstraction (§2, G2). The original and reversal are surfaced in the v2 audit view.
-- **In-place edits (no ledger posting)**: Title, description, and photos only. These fields carry no ledger significance and may be updated without generating new entries.
+- **In-place edits (no ledger posting)**: Title, description, photos, and **date/time**. None of these fields trigger correcting ledger entries when changed. Changing the transaction date may shift which reporting period the transaction falls in (affecting period-based summaries), but no reversing/corrected entries are posted. The user is responsible for date accuracy.
 - **Soft delete**: The transaction is voided. A reversing entry is posted automatically. The original record is retained but excluded from all normal views and calculations. Voided transactions are surfaced in the v2 audit view.
 - No transaction is ever permanently deleted.
 
@@ -413,6 +503,16 @@ Category management is accessed from Settings (§5.4.4). The flow is:
 - Soft-deleted categories are hidden from: filter dropdowns, and the category picker in new transaction entry. They are not available for selection when creating or editing a transaction.
 - Existing (non-voided) transactions that reference a soft-deleted category continue to display that category's name exactly as it was at the time of the transaction. The soft-deleted category label is shown as-is in the transaction detail view.
 - **Reinstatement of soft-deleted categories:** The same reinstatement logic described in §5.1.1 for accounts applies to categories. When creating a new category whose name matches a soft-deleted category within the same tree and parent, the app offers to reinstate the deleted category instead. Category names must be unique including across soft-deleted categories.
+
+**Recurring and installment template handling on category deletion:**
+
+The same template warning and migration flow described in §5.1.1 applies when a transaction category is soft-deleted and it is referenced by future-scheduled recurring or installment templates. Before the category soft-delete proceeds, the user is shown a blocking warning:
+
+> *"[N] recurring/installment template(s) are scheduled to use this category. What would you like to do?"*
+
+Options: **Migrate templates** (select a replacement category) or **Stop templates** (archive all affected templates). The **default is Stop templates**. This warning fires in addition to the existing transaction-migration prompt (§5.2.4 category mutability rules) — both flows may be active if the category has both historical transactions and future template occurrences.
+
+---
 
 **Protected system category — "Balance Adjustment":**
 - Exists in both income and expense trees.
@@ -486,6 +586,10 @@ Users can define recurring transaction templates. Parameters:
 - **Recurrence definition**: $N$ units of a time unit, where unit ∈ { day, week, month, year }. E.g., "every 2 weeks", "every 3 months".
 - **Optional recurrence constraints**: repeat on weekdays only / weekends only / start of month / end of month / start of year / end of year.
 - Start date, optional end date.
+- **End-of-month day handling:** If a recurring transaction is scheduled for a calendar day that does not exist in a given month (e.g., the 29th, 30th, or 31st in February; the 31st in April, June, September, or November), it is posted on the **last valid day of that month** (e.g., 28 February in non-leap years; 30 April). This applies to all month- and year-unit recurrences.
+
+- **Missed transactions on app launch:** If the device was powered off, the app was force-stopped, or the scheduler was otherwise unable to run on a scheduled date, all missed recurring auto-post transactions are **posted automatically the next time the app launches**. For "remind and confirm" templates, if the 24-hour confirmation window has already elapsed, the missed occurrence is auto-approved and posted at launch. Occurrences skipped during a pause period are **not** retroactively posted when the template resumes.
+
 - **Posting behaviour** (configurable per template):
   - **Auto-post**: Transaction is posted automatically on the scheduled date.
   - **Remind and confirm**: An **OS-level local notification** prompts the user to review and confirm before posting. This requires `POST_NOTIFICATIONS` (Android 13+) and `SCHEDULE_EXACT_ALARM` permissions. No network call is involved — notifications are entirely on-device. If the user does not respond within **24 hours** of the scheduled time, the transaction is **auto-approved and posted**. The user can disable "remind and confirm" mode for all future occurrences of a template via the template's contextual menu (switching it to auto-post).
@@ -798,9 +902,17 @@ When a transaction is created against an account whose currency differs from the
 - Universal soft-delete: no entity is ever permanently deleted
 - Internal equity account for initial balance (invisible to user)
 - System-generated internal transfer on account soft-delete (with warning on deletion)
+- **Universal balance formula**: all accounts use `balance = Σdebit − Σcredit`; asset/liability state inferred from sign (positive = asset, negative = liability); no explicit direction field
+- **Account currency immutability** with confirmation UX at account creation; defaults to home currency
+- **Negative balance visual treatment** (colour-coded) and non-blocking overdraft warning
+- **Credit card two-balance model**: outstanding balance (live ledger) and statement balance (derived from billing period); two distinct balance-edit actions
+- **Credit card payment reminder system**: automatic local notifications on billing/payment cycle; Pay FAB on credit card detail screen; payment entry form with pre-filled source account if linked
+- **Recurring/installment template handling on account or category soft-delete**: blocking warning with migrate or stop options; default stop
+- **Date/time as in-place editable field** on transactions (no correcting entries)
 
 ### 🔄 Deferred — v2
 
+- **Split transactions** — recording a single bill/payment split across multiple categories (e.g., one supermarket receipt split as Groceries + Toiletries + Snacks). One transaction per split at the ledger level; UI and edit flows to be designed in v2.
 - **Budgeting** (total + per-category budgets, multi-horizon, configurable rollover, alerts, income replenishment) — to be redesigned alongside savings goals
 - Savings goals
 - Account and category manual reordering
@@ -885,6 +997,6 @@ When a transaction is created against an account whose currency differs from the
 
 ## 11. Open Questions
 
-> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log with original question text and decisions is maintained in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and feature gap items (Parts 2–3) are tracked in `docs/06-helpers/gaps-and-questions.md`.
+> **All questions Q1–Q76 are resolved.** All resolutions are baked into the document body. The full resolved questions log is in `docs/06-helpers/ideation-tracker.md`. Open UX design decisions (UX-1 through UX-14) and remaining feature gap items (FG-A12 onward, FG-B, FG-C) are tracked in `docs/06-helpers/gaps-and-questions.md`.
 >
-> No open questions remain. The PRD is ready for sign-off.
+> Feature gaps FG-A1 through FG-A11 were resolved on 2026-04-14 (PRD v0.4.0) and are now baked into the PRD body. No open product questions remain. The PRD is ready for continued sign-off as gap resolution continues.

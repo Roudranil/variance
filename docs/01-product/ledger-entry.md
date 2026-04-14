@@ -3,7 +3,7 @@ name: Ledger Entry Case Analysis
 status: approved
 owner: pm
 created: 2026-04-12
-last_updated: 2026-04-12
+last_updated: 2026-04-14
 depends_on: [01-product/prd.md]
 outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 ---
@@ -21,8 +21,7 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 
 | Symbol | Meaning |
 |--------|---------|
-| `A` | Asset account (Cash, Bank, Debit Card, Wallet, Loan-as-asset, Investment) |
-| `L` | Liability account (Credit Card, Loan-as-liability) |
+| `A` | Any user-facing account (Cash, Bank, Debit Card, Wallet, Credit Card, Loan, Investment, Other) |
 | `IC` | Income category (internal node) |
 | `EC` | Expense category (internal node) |
 | `EQ` | Internal Opening Balance equity account (invisible to user) |
@@ -32,16 +31,17 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 | `Cr` | Credit entry |
 | `B` | Amount > 0 |
 | `B'` | New/corrected amount > 0 |
-| `ΔB = B' − B` | Net change in balance (may be positive or negative) |
+| `ΔB = \|B' − B\|` | Magnitude of balance change (always > 0) |
 
 **Balance conventions (from PRD §4.6):**
 
-| Account/Category type | Balance formula |
-|----------------------|----------------|
-| Asset | Σ Dr − Σ Cr |
-| Liability | Σ Cr − Σ Dr |
-| Income category | Σ Cr − Σ Dr |
-| Expense category | Σ Dr − Σ Cr |
+| Account/Category type | Balance formula | Sign meaning |
+|----------------------|----------------|-------------|
+| All user accounts | Σ Dr − Σ Cr | Positive = asset state; Negative = liability state |
+| Income category | Σ Cr − Σ Dr | — |
+| Expense category | Σ Dr − Σ Cr | — |
+
+> **Universal formula note:** All user-facing accounts use the same formula regardless of category. There is no separate "liability formula." A credit card in normal use has a negative balance (you owe money). A loan you owe also has a negative balance. The sign conveys the economic direction — no explicit `is_liability` field exists on accounts.
 
 **Invariant:** For every posted transaction T: `Σ Dr(T) = Σ Cr(T)`.
 
@@ -64,7 +64,7 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 - EC expense balance ↑ B (more spent)
 - A asset balance ↓ B (money left the account)
 
-> **Note:** If A is a liability account (e.g., Credit Card), entry 2 is still Cr on L. For a liability, Cr increases the balance (more owed). This is correct — spending on a credit card increases what you owe. ✅
+> **Note (credit card):** If the source account is a credit card, entry 2 is still `Cr A`. With the universal formula (Σ Dr − Σ Cr), crediting the credit card decreases its balance (makes it more negative), representing more money owed. This is correct — spending on a credit card increases what you owe. ✅
 
 ---
 
@@ -72,9 +72,7 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 
 > *User records: received B into account A from category IC.*
 
-> ⚠️ **PRD Inconsistency flagged (Q41):** PRD §4.5 states the income category entry is on the **debit side** and the account entry is on the **credit side**. But §4.6 defines income category balance as `Σ Cr − Σ Dr`. If income category is *debited* in an income transaction, that *decreases* the income balance — backwards. **The correct standard accounting treatment is: `Dr A, Cr IC`.** This makes A balance ↑ and IC income balance ↑. PRD §4.5 must be corrected.
-
-**Using corrected Framing (standard T-account treatment):**
+**Standard T-account treatment (Q41 resolved — PRD §4.5 corrected):**
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
@@ -105,10 +103,10 @@ outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 - A₂ balance ↑ B
 - Net worth unchanged ✅
 
-> **Liability as destination (pay credit card bill):** A₁ = bank (A), A₂ = credit card (L).
-> Entries: `Dr L, Cr A`. Dr on liability -> liability balance ↓ (less owed). ✅
+> **Credit card payment:** A₁ = bank account, A₂ = credit card.
+> Entries: `Dr A₂ (credit card), Cr A₁ (bank)`. With the universal formula, Dr on the credit card increases its balance (moves toward zero, reducing the negative outstanding — less owed). ✅
 >
-> ✅ **Q42 Resolved:** Entry confirmed as `Dr L (credit card), Cr A (bank)` for a credit card payment. Reduces liability balance.
+> ✅ **Q42 Resolved:** Entry confirmed as `Dr CreditCard, Cr Bank` for a credit card payment.
 
 ---
 
@@ -223,27 +221,27 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 ---
 
-### Case 2.2 — Create Account with Initial Balance B > 0
+### Case 2.2 — Create Account with Non-Zero Initial Balance
 
-**Sub-case 2.2a — Asset Account (A)**
+**Sub-case 2.2a — Initial balance B > 0 (asset state)**
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
 | 1 | Dr | A | B |
 | 2 | Cr | EQ (Opening Balance equity, internal) | B |
 
-**Effect:** A balance = B ✅. EQ is an internal system account, invisible to user.
+**Effect:** A balance = +B ✅. EQ is a system account, invisible to user.
 
-**Sub-case 2.2b — Liability Account (L)** (e.g., existing credit card debt)
+**Sub-case 2.2b — Initial balance B < 0 (liability state)** (e.g., existing credit card debt; user enters the outstanding amount as a negative value or the UI converts it)
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
-| 1 | Dr | EQ | B |
-| 2 | Cr | L | B |
+| 1 | Dr | EQ | \|B\| |
+| 2 | Cr | A | \|B\| |
 
-**Effect:** L liability balance = Σ Cr − Σ Dr = B ✅. EQ debited.
+**Effect:** A balance = Σ Dr − Σ Cr = 0 − \|B\| = **−\|B\|** (negative) ✅. EQ debited.
 
-> ✅ **Q43 Resolved:** EQ is debited when a liability starts with balance B > 0. EQ supports bidirectional postings (credited for asset openings, debited for liability openings). This case is valid as written.
+> ✅ **Q43 Resolved:** EQ is debited when an account opens in liability state. EQ supports bidirectional postings (credited for positive-balance openings, debited for negative-balance openings). Valid under the universal formula.
 
 ---
 
@@ -254,41 +252,29 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 `ΔB = |B' − B| > 0`
 
-**Sub-case 2.3a — Asset balance increases (B' > B): recorded as income**
+**Sub-case 2.3a — Balance increases (moves toward +∞): recorded as income**
+
+> *e.g., cash received, debt partially forgiven, refund credited.*
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
 | 1 | Dr | A | ΔB |
 | 2 | Cr | BAI (Balance Adjustment income) | ΔB |
 
-**Sub-case 2.3b — Asset balance decreases (B' < B): recorded as expense**
+**Effect:** A balance ↑ ΔB. BAI income balance ↑ ΔB. ✅
+
+**Sub-case 2.3b — Balance decreases (moves toward −∞): recorded as expense**
+
+> *e.g., cash spent, credit card fee charged, account balance goes more negative.*
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
 | 1 | Dr | BAE (Balance Adjustment expense) | ΔB |
 | 2 | Cr | A | ΔB |
 
-**Sub-case 2.3c — Liability balance increases (B' > B, more owed): recorded as expense**
+**Effect:** A balance ↓ ΔB. BAE expense balance ↑ ΔB. ✅
 
-> *e.g., an existing credit card debt grows (interest charged, fee levied) — recorded as expense incurred.*
-
-| Entry | Side | Account/Category | Amount |
-|-------|------|-----------------|--------|
-| 1 | Dr | BAE (Balance Adjustment expense) | ΔB |
-| 2 | Cr | L | ΔB |
-
-**Effect:** L liability balance (Σ Cr − Σ Dr) ↑ ΔB. BAE expense balance ↑ ΔB. ✅
-
-**Sub-case 2.3d — Liability balance decreases (B' < B, less owed without a transfer): recorded as income**
-
-> *e.g., a debt is forgiven or written off — recorded as income received.*
-
-| Entry | Side | Account/Category | Amount |
-|-------|------|-----------------|--------|
-| 1 | Dr | L | ΔB |
-| 2 | Cr | BAI (Balance Adjustment income) | ΔB |
-
-**Effect:** L liability balance (Σ Cr − Σ Dr) ↓ ΔB. BAI income balance ↑ ΔB. ✅
+> **Universal coverage note:** The former sub-cases 2.3c (liability balance ↑ → expense) and 2.3d (liability balance ↓ → income) are subsumed by 2.3b and 2.3a respectively under the universal formula. The ledger entries are identical — only the semantic framing changed. A credit card balance moving from −5,000 to −6,000 is a balance decrease (↓ = toward −∞) → case 2.3b. A credit card balance moving from −5,000 to −3,000 (debt forgiven) is a balance increase (↑ = toward +∞) → case 2.3a.
 
 **Invariant check:** Dr = Cr = ΔB ✅ for all sub-cases.
 
@@ -298,45 +284,27 @@ No transaction has occurred. Account balance = 0 by virtue of zero ledger activi
 
 > *User says "No" to the prompt. System posts an internal entry against EQ. Invisible in normal views.*
 
-**Sub-case 2.4a — Asset balance increases (B' > B)**
+**Sub-case 2.4a — Balance increases (moves toward +∞)**
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
 | 1 | Dr | A | ΔB |
 | 2 | Cr | EQ | ΔB |
 
-**Sub-case 2.4b — Asset balance decreases (B' < B)**
+**Sub-case 2.4b — Balance decreases (moves toward −∞)**
 
 | Entry | Side | Account/Category | Amount |
 |-------|------|-----------------|--------|
 | 1 | Dr | EQ | ΔB |
 | 2 | Cr | A | ΔB |
 
-**Sub-case 2.4c — Liability balance increases (B' > B, more owed): not recorded**
-
-> *The change is absorbed silently against EQ.*
-
-| Entry | Side | Account/Category | Amount |
-|-------|------|-----------------|--------|
-| 1 | Dr | EQ | ΔB |
-| 2 | Cr | L | ΔB |
-
-**Effect:** L liability balance ↑ ΔB. EQ debited (mirrors opening balance liability logic). ✅
-
-**Sub-case 2.4d — Liability balance decreases (B' < B, less owed): not recorded**
-
-| Entry | Side | Account/Category | Amount |
-|-------|------|-----------------|--------|
-| 1 | Dr | L | ΔB |
-| 2 | Cr | EQ | ΔB |
-
-**Effect:** L liability balance ↓ ΔB. EQ credited. ✅
+> **Universal coverage note:** The former sub-cases 2.4c and 2.4d (liability-specific invisible adjustments) are subsumed by 2.4b and 2.4a respectively under the universal formula. The entries are identical.
 
 **Invariant check:** Dr = Cr = ΔB ✅ for all sub-cases.
 
 ---
 
-### Case 2.5 — Soft-Delete Account (current balance B ≥ 0)
+### Case 2.5 — Soft-Delete Account
 
 **Ledger entries:** None posted at time of deletion.
 

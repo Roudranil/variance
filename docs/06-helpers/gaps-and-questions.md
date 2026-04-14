@@ -3,14 +3,14 @@ name: Gaps and Open Questions
 status: in progress
 owner: pm
 created: 2026-04-13
-last_updated: 2026-04-13
+last_updated: 2026-04-14
 depends_on: [01-product/prd.md]
 outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 ---
 
 # Variance — Gaps & Open Questions
 
-> **Last Updated:** 2026-04-13 (PRD v0.3.0)
+> **Last Updated:** 2026-04-14 (PRD v0.4.0)
 >
 > This document is a comprehensive reference for product gaps and questions. It is organized into three parts:
 >
@@ -18,7 +18,7 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 >
 > - **Part 2 — UX Flows Pre-Work Topics (UX-1–UX-14):** Interaction design decisions that belong in `docs/02-technical/ux-flows.md`, not the PRD. These do not block the PRD sign-off but must be resolved before the UX Flows document can be completed. Items UX-7 and UX-8 are deferred with budgets to v2.
 >
-> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD identifying (A) existing features with unresolved edge cases or missing detail, (B) features mentioned or implied but never fully specified, and (C) features never discussed that a user would encounter or expect. Budget-related items are marked as deferred to v2.
+> - **Part 3 — Feature Gap Analysis:** A user-perspective audit of the PRD identifying (A) existing features with unresolved edge cases or missing detail, (B) features mentioned or implied but never fully specified, and (C) features never discussed that a user would encounter or expect. Budget-related items are marked as deferred to v2. FG-A1 through FG-A11 were resolved on 2026-04-14 (PRD v0.4.0).
 >
 > The authoritative status of each question is tracked in `docs/06-helpers/ideation-tracker.md`.
 
@@ -83,6 +83,16 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ---
 
+## Part 0 — Internal Errors & Inconsistencies
+
+> Errors found in existing documents that need to be fixed.
+
+| ID | Document | Section | Error |
+|----|----------|---------|-------|
+| ERR-1 | `docs/01-product/prd.md` | §4.5 Transaction Rules by Type — Expense | Debit/credit sides are reversed. PRD says "expense category entry (credit side), account entry (debit side)" but §4.11 Case 1.1 and `ledger-entry.md` Case 1.1 both record `Dr EC, Cr A` — expense category is **debited**, source account is **credited**. **Fix: swap the side labels in §4.5.** |
+
+---
+
 ## Part 3 — Feature Gap Analysis
 
 > This section is a user-perspective audit of the PRD. It is organized into three groups:
@@ -97,129 +107,7 @@ outputs_to: [02-technical/ux-flows.md, 02-technical/sds.md]
 
 ### FG-A — Existing Features: Edge Cases & Missing Detail
 
-#### FG-A1 — Account Currency: Immutable After Creation?
-
-The PRD lists Currency as a required field on account creation but never states whether it can be changed afterwards. The edit fields listed in §5.1.1 do not include currency.
-
-**Gap:** Is account currency permanently fixed at creation? If yes, the PRD must say so explicitly. If no, what happens to the balance calculation and displayed amounts for all existing transactions when the currency changes?
-
-**User impact:** A user who selects the wrong currency on creation has no recourse without a work-around (soft-delete and recreate). This needs to be an explicit locked field or a supported edit with consequences defined.
-
-**[Policy]**
-
----
-
-#### FG-A2 — Loan Account: Asset vs. Liability Direction Is Selected at Creation — Can It Change?
-
-The Loan account category has a "loan direction" field (asset = owed to me / liability = owed by me). The balance formula for asset accounts is `debit − credit`, while for liability accounts it is `credit − debit`. This direction determines which formula is used.
-
-**Gap:** Is the loan direction fixed at creation or editable? If editable, changing direction mid-life would retroactively reinterpret every historical ledger entry's meaning. This is a significant semantic change. The PRD does not address this.
-
-**User impact:** A user who initially records a personal loan they gave out (asset) and later reclassifies it as a debt they owe (liability) would get a completely wrong balance history.
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A3 — "Linked Bank Account" on Credit Card and Debit Card: Functional or Metadata?
-
-§5.1.2 lists "linked bank account" as an additional field for both Credit Card and Debit Card account categories.
-
-**Gap:** Is this purely metadata (displayed for user reference, no system behaviour) or does it have functional meaning? For example: does the system suggest a transfer from the linked bank account when the credit card billing date arrives? Does deleting the linked bank account affect the card account in any way?
-
-**User impact:** If it is metadata-only, the PRD should say so and the SDS will model it as a plain text or foreign-key reference with no behavioural coupling. If it is functional, that behaviour must be specified.
-
-**[Policy]**
-
----
-
-#### FG-A4 — CVV Storage: "Hashed" Is Misleading and Possibly a Security Problem
-
-§5.1.2 describes CVV as "hashed; security unlock required to reveal." A cryptographic hash is one-way — you cannot "reveal" the original value from a hash. If CVV can be revealed, the data must be **encrypted** (reversible), not hashed.
-
-Additionally, storing CVV at all is a security concern. In payment industry standards (PCI-DSS), CVV must never be stored after authorisation. While this is a personal finance tracker (not a payment processor), storing a CVV — even encrypted — creates unnecessary risk if the device is compromised.
-
-**Gap:** (1) The word "hashed" must be corrected to "encrypted at rest, decryptable with security authentication." (2) A product policy decision is needed: should CVV storage be supported at all in v1, or should it be removed from the field list?
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A5 — Negative Balance on Asset Accounts: Allowed or Warned?
-
-The DEB model allows asset account balances to go negative (you can spend more than you have). The PRD never addresses this scenario.
-
-**Gap:** (1) Is a negative asset balance allowed with no friction? (2) Is there a warning when a transaction would push an account into negative? (3) How is a negative balance displayed visually — red text, a negative sign, a "−" prefix?
-
-**User impact:** A user overdrawing their cash account should be informed. No warning means silent financial state drift. A hard block would be too restrictive (legitimate overdrafts exist). A warning with a confirmation is the middle ground — but none of this is defined.
-
-**[Policy]**
-
----
-
-#### FG-A6 — "Cannot Delete the Last Remaining Account": Zero-Balance Edge Case
-
-§5.1.1 states the user cannot delete the last remaining account. But what if that last account has a zero balance? The two-step flow (offer balance transfer, then confirm net worth change) is presumably skipped for a zero-balance account. Is the user simply blocked from deleting it with no explanation, or is there an explanatory message?
-
-**Gap:** Define the UX when the user tries to delete their last account. Is the delete action hidden/disabled, or shown with a blocking error? What is the exact error message?
-
-**[Policy]**
-
----
-
-#### FG-A7 — Recurring Template: What Happens When Its Account or Category Is Soft-Deleted?
-
-A recurring template references an account (and for income/expense, a category). If either of those is soft-deleted after the template is created, what happens to future auto-posts?
-
-**Gap:** Options: (a) the template fails silently on the next scheduled post; (b) the template is automatically archived when its referenced account/category is deleted; (c) the template continues posting — the referenced (soft-deleted) account/category is still valid in the ledger even if hidden in UI. This must be defined.
-
-**User impact:** A user who soft-deletes a salary income category would be surprised when their recurring salary transaction continues posting to a "deleted" category, or equally surprised when it silently stops posting.
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A8 — Recurring Transactions: End-of-Month Day Handling
-
-If a recurring transaction is set for the 31st of every month, February (28 or 29 days), April, June, September, and November do not have a 31st day.
-
-**Gap:** What is the behaviour? Options: (a) skip the month entirely; (b) post on the last day of the month; (c) post on the 1st of the following month; (d) the "end of month" recurrence constraint already covers this (but the user could specify "every 1 month" starting on the 31st without using the end-of-month constraint). The same issue exists for the 29th and 30th in February.
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A9 — Recurring Transactions: Auto-Post When Device Was Off
-
-If a recurring transaction is due on a date when the device was powered off (or the app was force-stopped), what happens when the device comes back on?
-
-**Gap:** Options: (a) post the missed transaction immediately on next launch; (b) skip it (post only future occurrences); (c) queue it as a pending "remind and confirm" even if the template was set to auto-post. This is a scheduler reliability question with real financial implications — a user who was offline for 3 days might get 3 salary credits posted retroactively, or zero.
-
-**[Policy] [SDS]**
-
----
-
-#### FG-A10 — Transaction Date/Time Field: Is It a Financial Field or In-Place Editable?
-
-§5.2.2 defines in-place edits as "title, description, and photos only." Date and time are not mentioned either way.
-
-**Gap:** Is changing the date/time of a transaction a financial edit (triggers reversal + correction) or an in-place edit (no ledger change)? Changing the date shifts which period a transaction belongs to, affecting budget calculations and period-based reporting. This has ledger significance. Yet treating it as a financial edit creates a heavy workflow for what feels like a simple correction.
-
-**User impact:** If the user enters today's grocery expense but mistakenly sets the date to yesterday, forcing a full reversal + correction is disproportionate. But allowing date edits in-place means the budget engine can be silently manipulated by the user.
-
-**[Policy]**
-
----
-
-#### FG-A11 — Split Transactions: DEB Supports Them, UI Does Not
-
-The DEB entry model (§4.3) supports multiple entries per transaction (`|entries(T)| ≥ 2`), which means a single transaction can span multiple categories. However, §5.2.1 presents a single-category/single-account transaction entry form.
-
-**Gap:** Is split transaction entry (e.g., a single supermarket receipt split as Rs. 500 Groceries + Rs. 200 Toiletries + Rs. 50 Snacks) a v1 feature? If no, the PRD should explicitly exclude it. If yes, the transaction entry form needs to support multi-line category splits.
-
-**User impact:** This is a very common real-world scenario. Users of other finance apps frequently split bills across categories. Without it, users must record multiple separate transactions for a single physical payment.
-
-**[Policy]**
+> ✅ **FG-A1 through FG-A11 were resolved on 2026-04-14 and baked into PRD v0.4.0.** Resolutions are in the PRD body (§4.6, §5.1.1–§5.1.7, §5.2.2, §5.2.4, §5.2.7). See `docs/06-helpers/ideation-tracker.md` for the full decision log.
 
 ---
 

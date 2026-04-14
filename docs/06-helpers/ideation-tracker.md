@@ -3,14 +3,14 @@ name: Ideation Phase Tracker
 status: in progress
 owner: pm
 created: 2026-04-13
-last_updated: 2026-04-13
+last_updated: 2026-04-14
 depends_on: [01-product/prd.md]
 outputs_to: []
 ---
 
 # Variance — Ideation Phase Tracker
 
-> **Last Updated:** 2026-04-13 (PRD v0.3.0)
+> **Last Updated:** 2026-04-14 (PRD v0.4.0)
 
 ---
 
@@ -29,7 +29,7 @@ outputs_to: []
 
 | # | Deliverable | Status | Notes |
 |---|-------------|--------|-------|
-| 1 | **PRD v0.3.0** | 🟢 All Questions Resolved | All 76 questions resolved. Pending founder sign-off on v0.3.0 changes (budget deferral, onboarding, app lock redesign, etc.). |
+| 1 | **PRD v0.4.0** | 🟢 All Questions Resolved | All 76 questions resolved and FG-A1–FG-A11 (feature gaps) resolved and baked in. Pending founder sign-off on all accumulated changes. |
 | 2 | **System Design Spec (SDS)** | ⬜ Ready to Start | All PRD blockers resolved. Can proceed after PRD sign-off. |
 | 3 | **UX Flows** | ⬜ Ready to Start | All PRD blockers resolved. UX pre-work topics (UX-1 through UX-14) remain as design decisions for UX Flows authoring. |
 | 4 | **API Contracts** | 🔴 Blocked | Blocked on SDS |
@@ -149,6 +149,20 @@ outputs_to: []
 | 2026-04-12 | Photo cap set to 2 per transaction. Photo compression confirmed (specifics SDS). Exchange rate staleness threshold set to 14 days. Cross-currency transfers disallowed in v1. Archived recurring templates cannot be reactivated. All default categories fully mutable (no parent reassignment for subcategories). "Other" added to Social, Stationery, Culture expense categories. Net worth cap formula updated to min(N+T, M). Soft-delete of account with non-zero balance uses two-step transfer prompt flow. EQ excluded from net worth (mathematical proof in §4.9). PRD bumped to v0.2.1. |
 | 2026-04-12 | **PRD v0.2.3 changes:** (1) Account name uniqueness constraint added (§5.1.1). (2) Create Account fields table added (§5.1.1). (3) Account balance model generalised to all account types — Investment is no longer special; §5.1.3 renamed "Account Balance Model" and applies universally. (4) Transaction "notes" replaced by separate optional "title" and "description" fields across §5.2.1, §5.2.5, §5.2.6, §5.2.7; account notes retained. (5) Category edit now posts reversing + corrected entry pair (same as account/amount edit); in-place edits restricted to title, description, photos — §4.8 and §5.2.2 updated. (6) Category management UX defined: parent list -> tap for children -> + button at each level (§5.2.4). (7) Categories have exactly two fields: icon and name. (8) Category name uniqueness constraint added within parent scope. (9) Child category soft-delete restriction removed — subcategories can be soft-deleted at any time. (10) §5.5 Contextual Action Menus added with confirmed actions and 8 open questions (Q56–Q63). (11) New open questions: Q52–Q63 (12 new questions). Q50 partially addressed. |
 | 2026-04-13 | **PRD v0.2.4 changes:** User-perspective gap analysis conducted across the full PRD. 13 new PRD questions added (Q64–Q76) across 7 new groups (G–M) covering: transaction list architecture, onboarding and first launch, budget lifecycle, alert and notification delivery, transaction correction visibility, app lock timing, and cross-cutting policy (timezone, account reordering, multi-currency list display). 14 UX Flows pre-work topics (UX-1–UX-14) catalogued in tracker. New comprehensive reference document created at `docs/gaps-and-questions.md`. |
+| 2026-04-14 | **PRD v0.4.0 — Feature Gaps FG-A1 through FG-A11 resolved.** Major decisions: |
+| | **(FG-A1) Account currency immutable.** Fixed at creation. Defaults to home currency. Info tooltip + visual change indicator if altered + confirmation dialog before save. |
+| | **(FG-A2 + FG-A5) Universal balance formula.** Removed all explicit asset/liability designation from accounts. All accounts use `balance = Σdebit − Σcredit`. Sign infers state: positive = asset, negative = liability. No separate formula, no loan direction field. Loan accounts use sign of initial balance to convey direction. Negative balance displayed with warning colour (no minus sign). Non-blocking overdraft warning on transactions that push balance negative. |
+| | **(FG-A3) Linked bank account.** Debit Card: metadata only, no functional coupling. Credit Card: triggers automatic payment reminder notifications (1 day after billing, 7/1/0 days before payment due) and pre-fills source in payment form. Linking is optional. Pay FAB on credit card detail screen. |
+| | **(FG-A4) CVV removed entirely.** Never stored in any form in any version. Card numbers and bank account numbers encrypted at rest (not hashed); decryptable with authentication. |
+| | **(FG-A6) Delete last account — delete action disabled.** When exactly one account exists, the delete action is greyed out (non-interactive) with tooltip, regardless of balance. |
+| | **(FG-A7) Recurring/installment template handling on account or category soft-delete.** On soft-delete of a referenced account or category, the app checks for future-scheduled template occurrences. If found: blocking warning with options (migrate to another account/category, or stop templates). Default: stop. Applies to both account and category deletion. |
+| | **(FG-A8) End-of-month day handling.** If scheduled day does not exist in a month (e.g., 31st in June), post on the last valid day of that month. |
+| | **(FG-A9) Missed recurring transactions on device resume.** All missed auto-post transactions posted automatically on next app launch. Remind-and-confirm occurrences past the 24h window are auto-approved and posted. Paused-period skips are not retroactively posted. |
+| | **(FG-A10) Date/time is in-place editable.** No correcting ledger entries for date/time changes. Affects period display only; user is responsible. |
+| | **(FG-A11) Split transactions deferred to v2.** Design intent preserved in PRD §8 deferred note: one-payment split across multiple categories; one transaction per split at ledger level. |
+| | **(ERR-1 fixed) §4.5 expense entry sides corrected.** PRD §4.5 previously had expense category on credit side and account on debit side — backwards. Corrected to Dr EC (debit), Cr A (credit). ledger-entry.md updated to remove redundant Q41 flag. |
+| | **(Credit card balance model added — §5.1.6.)** Outstanding balance (live ledger) and statement balance (derived from billing period). Two-action balance edit screen: adjust statement balance (dated to billing date) vs. adjust outstanding balance (dated today). |
+| | **(ledger-entry.md updated.)** Universal formula documented. Former liability cases 2.3c/d and 2.4c/d subsumed by 2.3a/b and 2.4a/b. Case 2.2b updated to sign-based (initial balance < 0). Notation updated to remove "L" as a distinct symbol. |
 | 2026-04-13 | **PRD v0.3.0 — ALL QUESTIONS RESOLVED (Q47–Q76).** Major decisions: |
 | | (1) **Budget deferred to v2**: Entire budgeting feature (§5.3) moved to v2 for ground-up redesign alongside savings goals. Removes Q59, Q61, Q68, Q69 and "Add to Budget" from v1 scope. |
 | | (2) **Recurring templates: pause/unpause** added to v1 (disable/enable deferred to v2). OS-level local notifications for remind-and-confirm with 24h auto-approve. |
