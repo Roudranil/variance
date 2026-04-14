@@ -42,11 +42,29 @@ docs/
 
 ## Folder Reference
 
-| Folder               | Purpose                           | Owner    | Document Types                                          |
-|----------------------|-----------------------------------|----------|---------------------------------------------------------|
-| `01-product/`        | Product definition                | pm       | PRD, ledger entry cases, product decisions              |
-| `02-technical/`      | Technical specifications          | tpm/dev  | SDS, data model, API contracts, UX flows, feature DAG   |
-| `03-planning/`       | Execution planning                | tpm      | Task breakdown, sprint plans                            |
-| `04-implementation/` | Sprint-scoped delivery artifacts  | dev      | Per-sprint notes, changelogs                            |
-| `05-quality/`        | Quality and security              | reviewer | Test specs, security review docs                        |
-| `06-helpers/`        | Process and reference aids        | pm       | Ideation tracker, gap analysis, diff logs               |
+| Folder               | Purpose                          | Owner     | Document Types                                        |
+| -------------------- | -------------------------------- | --------- | ----------------------------------------------------- |
+| `01-product/`        | Product definition               | pm        | PRD, ledger entry cases, product decisions            |
+| `02-technical/`      | Technical specifications         | architect | SDS, data model, API contracts, UX flows, feature DAG |
+| `03-planning/`       | Execution planning               | tpm       | Task breakdown, sprint plans                          |
+| `04-implementation/` | Sprint-scoped delivery artifacts | tpm/dev   | Per-sprint notes, changelogs                          |
+| `05-quality/`        | Quality and security             | architect | Test specs, security review docs                      |
+| `06-helpers/`        | Process and reference aids       | all       | Ideation tracker, gap analysis, diff logs             |
+
+## Document Index
+
+| Document           | Path                                           | Purpose                                  |
+| ------------------ | ---------------------------------------------- | ---------------------------------------- |
+| PRD                | `docs/01-product/prd.md`                       | What we're building and why              |
+| Ledger Entry Cases | `docs/01-product/ledger-entry.md`              | Authoritative posting case reference     |
+| Frontmatter Schema | `docs/frontmatter-schema.md`                   | Schema reference for all doc frontmatter |
+| Folder Structure   | `docs/06-helpers/ideation-folder-structure.md` | Docs folder taxonomy                     |
+| Ideation Tracker   | `docs/06-helpers/ideation-tracker.md`          | Phase status, open questions, decisions  |
+| Gaps & Questions   | `docs/06-helpers/gaps-and-questions.md`        | UX pre-work and feature gap analysis     |
+| SDS                | `docs/02-technical/sds.md`                     | How we're building it                    |
+| Feature DAG        | `docs/02-technical/feature-dag.md`             | Feature dependency graph                 |
+| Data Model         | `docs/02-technical/data-model.md`              | Schema and entity design                 |
+| API Contracts      | `docs/02-technical/api-contracts.md`           | Internal interfaces                      |
+| UX Flows           | `docs/02-technical/ux-flows.md`                | User interaction specification           |
+| Task Breakdown     | `docs/03-planning/task-breakdown.md`           | Task breakdown and dependencies          |
+| Sprint Plans       | `docs/03-planning/sprint-plans.md`             | Sprint-level delivery plans              |

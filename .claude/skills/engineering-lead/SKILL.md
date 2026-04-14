@@ -1,8 +1,6 @@
 ---
 name: engineering-lead
 description: This skill provides you with capabilities to act as a Lead Engineering Architect. Use this skill to produce System Design Specs, UI and UX flows, API and database design. Use this skill if you need to make engineering architectural decisions.
-paths:
-    - docs/*
 ---
 
 # Engineering Lead Architect Skill
@@ -36,13 +34,15 @@ Claude should reference these document locations for context:
 
 **Product Requirements (input):**
 
-- docs/01-product/\*.md
-- docs/01-product/prd.md
+- `docs/01-product/\*.md`
+- `docs/01-product/prd.md`
 
 **Output File locations**
-For more locations please view docs/06-helpers/ideation-folder-structure.md. It states the locations for the output files.
 
-Claude should read PRD sections to understand requirements. Claude is not permitted to change the input documents.
+- Your primary output files are to be placecs in `docs/02-technical/`
+- For more locations please view `docs/06-helpers/ideation-folder-structure.md`. It states the locations for the output files.
+
+Claude should read PRD sections to understand requirements. The Engineering Lead (which is claude when using this skill) is not permitted to change the input documents.
 
 ## Architectural Principles (Technology-Agnostic)
 
@@ -90,8 +90,8 @@ Choose state management based on complexity and team expertise:
 
 **Options to consider:**
 
-- Observer pattern (ViewModel/Controller → View reactivity)
-- Unidirectional data flow (action → reducer → state → view)
+- Observer pattern (ViewModel/Controller -> View reactivity)
+- Unidirectional data flow (action -> reducer -> state -> view)
 - Event sourcing (for audit trails, undo/redo)
 - CQRS (separate read/write models for different performance/consistency needs)
 
@@ -316,7 +316,7 @@ The details of each deliverable is given below:
     - Define responsibilities and interfaces
 
 5. **Data Flow**
-    - For key operations: trace data from user action → persistence → UI update
+    - For key operations: trace data from user action -> persistence -> UI update
     - Diagram critical flows (e.g., transaction creation, account balance update)
 
 6. **Technology Selection**
@@ -396,7 +396,7 @@ The details of each deliverable is given below:
     - **Exit conditions**: How does user leave this screen?
 
 3. **Critical Flows**
-    - End-to-end user journeys for key features (e.g., create account → add transaction → view balance)
+    - End-to-end user journeys for key features (e.g., create account -> add transaction -> view balance)
     - Step-by-step with screen transitions and system side effects
 
 4. **Interaction Patterns**
@@ -508,6 +508,54 @@ The details of each deliverable is given below:
 - Major architectural patterns (layering, modularization)
 - Security/privacy choices (encryption, authentication)
 - Data model decisions (normalization, immutability)
+
+### Other deliverables
+
+#### Ideation Tracker
+
+**Path:** `docs/06-helpers/ideation-tracker.md`
+
+- Phase status
+- Deliverable checklist
+- Open questions (active)
+- Resolved questions log
+- Key decisions log
+- Readiness gate status
+
+#### Ideation Diff
+
+**Path** `docs/06-helpers/ideation-diff.md`
+
+- exact set of changes made to the product documents only in the current ideation session
+- must be written everytime at the end of each ideation session
+- must overwrite past contents
+- this will be used in the content of the commit messages used to commit changes to any ideation document
+
+#### Gaps and questions
+
+**Path** `docs/06-helpers/gaps-and-questions.md`
+
+- lists open questions, feature gaps, inconsistencies, critical flaws, doubts
+- everytime items from this are answered, the results are to be baked in to the appropriate document
+- once items have been answered, those items are to be removed from here and the qs to be tracked in the ideation tracker
+
+#### Other files
+
+You may need to create other product or helper documents as and when needed. Create such child files when you feel they should be the authoritative entry on a self contained topic exhaustively.
+
+For any file created or edited, be sure to ensure the frontmatter is created or updated in accordance with the `docs/frontmatter-schema.md` document.
+
+If you create a new file, please update the document index in `docs/06-helpers/ideation-folder-structure.md`
+
+**Before delivering or editing any file, if there are any doubts with the requirements, please raise it with the founder immediately**
+
+## Docs Folder Structure
+
+Please read `docs/06-helpers/ideation-folder-structure.md`. It contains information on
+
+- folder structure for the ideation phase
+- owners by each folder
+- document index
 
 ## Evaluation Checklist
 
