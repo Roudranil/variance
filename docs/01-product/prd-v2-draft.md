@@ -3,7 +3,7 @@ name: PRD v2 Draft — Deferred Features & Decisions
 status: in progress
 owner: pm
 created: 2026-04-14
-last_updated: 2026-04-14
+last_updated: 2026-04-15
 depends_on: [01-product/prd.md]
 outputs_to: []
 ---
@@ -14,7 +14,7 @@ outputs_to: []
 >
 > **Status:** Draft collection — not a specification. Items here need full product definition before they become implementable.
 >
-> **Last Updated:** 2026-04-14
+> **Last Updated:** 2026-04-15
 
 ---
 
@@ -182,12 +182,13 @@ Cross-currency transfers are blocked in v1 (§7). v2 must design:
 ## 19. v3+ Items (for reference)
 
 These are v3 or later and not expected in v2, but listed for completeness:
-- ML insights and predictions.
+- ML insights and predictions. *(Note: v2 introduces LLM-based insights via BYOK in §24 — a cloud-dependent, user-initiated approach. v3 ML refers to on-device, offline-capable predictive models such as spending forecasts and category auto-classification. These are distinct features.)*
 - OCR receipt capture.
 - Exchange rate update infrastructure (if not landed in v2).
 - Google Drive backup (if not landed in v2).
 - ML/rule-based auto-generated transaction titles.
 - **Android home screen widget (FG-C7)** — glanceable finance widget showing key figures. Privacy concern: widget visible on lock screen without PIN. Strictly v3.
+- TDS / advance tax tracking for income tax computation (if §23 lands in v2 without it).
 
 ---
 
@@ -207,7 +208,149 @@ All FG-C items were resolved on 2026-04-14. Items are categorized by disposition
 
 ---
 
-## 21. Auto-Detect Transactions from SMS & Email Notifications (FG-C21)
+## 21. Savings Interest Rate Tracking
+
+> **Priority:** Low — quality-of-life enhancement for bank account holders.
+>
+> **Cross-references:** Account categories (v1 PRD §5.1.2), analytics and visualisations (§12), net worth projections (§18).
+
+Add an optional user-editable field — **annual interest rate (%)** — to Bank Account-type accounts.
+
+**Scope clarification:** Loan accounts already carry interest rate, EMI amount, and EMI date as optional fields (v1 PRD §5.1.2). This feature adds a similar interest rate field to Bank Accounts specifically for savings/deposit interest projection. It does not modify the Loan account model.
+
+**Core capabilities:**
+- Optional field on account creation and editable in account settings.
+- Projected interest calculation (display-only, not ledger entries). The app computes an estimated annual interest accrual and surfaces it alongside the account balance.
+- No automatic interest posting — this is informational, not transactional.
+
+**Design considerations:**
+- Applicable to Bank Account category only. FD accounts (Investment type = FD) already have a separate model; if FD interest tracking is desired, it should be handled as part of the investment portfolio feature (§22), not this field.
+- The projected interest value could feed into net worth projections (§18) and analytics dashboards (§12).
+- Compounding frequency must be configurable or assumed. Indian savings accounts typically use daily compounding with quarterly crediting — this should be the default assumption, with a user-overridable setting if complexity is justified.
+- For foreign-currency Bank Accounts, the projected interest is in the account's currency. No home-currency conversion is applied at the projection level.
+
+**Open questions:**
+- OQ-V2-01: Where should projected interest be surfaced? Candidates: account detail screen, analytics/trends view, or both.
+- OQ-V2-02: Should the compounding frequency be user-configurable, or is a single sensible default (daily compounding, quarterly crediting) sufficient for v2?
+- OQ-V2-03: Does this field warrant inclusion in the onboarding flow for Bank Account creation, or is it a settings-only field?
+
+**Design work needed:** Display placement for projected interest, compounding model, interaction with analytics dashboards (§12).
+
+---
+
+## 22. Investment Portfolio Tracking
+
+> **Priority:** Medium — extends Variance from expense tracking into personal finance management.
+>
+> **Cross-references:** Existing Investment account category (v1 PRD §5.1.2), account balance model (v1 PRD §5.1.3), net worth (§18), analytics (§12), projected income tax (§23).
+
+Extend the existing Investment account category to support portfolio-level tracking: holdings, market prices, cost basis, and unrealised gain/loss.
+
+**Existing v1 model:** The Investment account category already exists (v1 PRD §5.1.2) with types FD, Mutual Fund, Stocks, PPF, NPS, Other. Its balance follows the universal balance model (§5.1.3) — manually maintained via recorded transactions and balance edits. This feature enriches the Investment category with structured holdings data and optional market price feeds.
+
+**Anti-goal conflict — cryptocurrency:** The v1 PRD lists "No cryptocurrency tracking" as a permanent anti-goal. **This feature must not include crypto as a supported asset class unless the founder explicitly revises that anti-goal.** All references to crypto are removed from this section pending founder decision.
+
+> **FOUNDER DECISION REQUIRED:** Does investment portfolio tracking warrant revising the "No cryptocurrency tracking" anti-goal? If yes, the v1 PRD anti-goal must be formally amended. If no, crypto is excluded from this feature.
+
+**Core capabilities:**
+- **Symbol watchlist:** Add stock/MF symbols to a watchlist. Display current price, daily change, and basic chart. Watchlist is display-only — no ledger interaction.
+- **Purchase recording:** Record buy/sell transactions for Investment accounts. Track quantity, purchase price, date, and fees. Buy/sell transactions create ledger entries (Dr Investment Account, Cr Bank Account for a purchase; reverse for a sale).
+- **Holdings tracking:** Aggregate holdings per Investment account. Track current value vs. cost basis. Show unrealised gain/loss per holding and per account.
+- **Market data feed:** Fetch current prices from a market data API. This is an **opt-in, user-initiated network call** — consistent with the offline-first constraint (v1 C1) and the uninstructed network call failure criterion (v1 FC-1). The user explicitly triggers a price refresh or enables a background refresh interval.
+- **Country-aware:** Support Indian markets (NSE/BSE, AMFI MF codes for mutual funds) and global markets. Currency-aware pricing — each holding's price is in its native currency; portfolio value is converted to the account's currency.
+
+**Design considerations:**
+- **Not a new account type.** This extends the existing Investment account category. The investment type enum (FD, Mutual Fund, Stocks, PPF, NPS, Other) may need expansion or restructuring to support per-holding granularity.
+- **Market data API:** Free-tier options include Yahoo Finance API, Alpha Vantage, and AMFI NAV data (publicly available, no API key required for Indian MFs). API selection must account for rate limits, reliability, and data coverage. The chosen API is a design-time decision, not a user-facing choice.
+- **Unrealised gains are display-only** — not ledger entries. Only realised gains (sell transactions) create ledger entries. This preserves the DEB invariant for informational-vs-transactional data.
+- **Portfolio value feeds into net worth calculation** (§18). When market data is available, net worth reflects current market value. When offline or stale, net worth uses the last-known cached price with a staleness indicator.
+- **Offline-first:** Cache last-known prices locally. Display a staleness indicator (timestamp of last successful fetch) when data is not current.
+- **Cost basis method:** Must be defined — FIFO, weighted average cost, or specific identification. Indian tax rules (relevant to §23) typically use FIFO for equities and average cost for mutual funds. The default should align with Indian norms.
+
+**Open questions:**
+- OQ-V2-04: Should the watchlist be a standalone feature (symbols the user watches but does not hold) or limited to held positions?
+- OQ-V2-05: What is the cost basis method — FIFO, weighted average, or configurable per account/type? Consider alignment with Indian capital gains tax rules (§23).
+- OQ-V2-06: How should dividend income be recorded — as a standard income transaction against the Investment account, or with a dedicated dividend sub-type?
+- OQ-V2-07: Does the user configure the market data refresh interval, or is there a single sensible default (e.g., daily)?
+
+**Design work needed:** Holdings data model (extending Investment account), market data API selection and abstraction layer, cost basis computation, portfolio valuation display, buy/sell transaction entry flow, interaction with DEB model for buy/sell/dividend, watchlist UX, net worth integration with live prices.
+
+---
+
+## 23. Projected Income Tax Computation (Indian Locale)
+
+> **Priority:** Medium — high-value feature for Indian salaried users.
+>
+> **Cross-references:** Investment portfolio tracking (§22 — capital gains feed), analytics (§12), transaction categories (v1 PRD §5.2.4).
+>
+> **Dependency:** Partially depends on §22 (investment portfolio tracking) for capital gains computation. Core income tax projection can ship without §22, but capital gains estimation requires it.
+
+Use transaction data, income category mapping, and Indian tax rules to compute a projected annual income tax liability.
+
+**Disclaimer requirement (mandatory):** This feature provides estimates only. It is not tax-filing software and does not replace professional tax advice. A persistent, non-dismissible disclaimer must be visible on every screen that displays tax projections: *"This is an estimate based on your recorded transactions and configured deductions. It is not tax advice. Consult a tax professional for filing."*
+
+**Core capabilities:**
+- **Income-to-tax-head mapping:** The user maps their income transaction categories (v1 PRD §5.2.4) to Indian tax heads: Salary, Business/Profession, House Property, Capital Gains (short-term and long-term), Other Sources (interest, dividends, etc.). This mapping is configured once in Settings and editable at any time.
+- **Tax slab application:** Apply Indian income tax slabs for both the Old Regime and the New Regime to the mapped gross income. The app projects the annual tax liability based on income recorded year-to-date, annualised.
+- **Regime comparison:** Side-by-side comparison of projected tax under Old Regime vs. New Regime, showing which regime results in lower tax for the user's income profile.
+- **Deduction configuration:** User-configurable deductions for Old Regime: Section 80C (investments — PPF, ELSS, etc.), Section 80D (health insurance), HRA exemption, standard deduction. New Regime: standard deduction only (per current rules). Deduction amounts are user-entered, not auto-derived from transactions.
+- **Summary display:** Monthly projected tax, annual projected tax, effective tax rate, and marginal tax rate. Displayed in the analytics section (§12) or a dedicated tax projection screen.
+
+**Design considerations:**
+- **Tax rules change annually.** Slab rates and deduction limits must be updateable without an app update. Options: (a) bundled JSON/YAML config file per financial year, shipped with app updates but also downloadable as a standalone file; (b) user-editable slab table for maximum flexibility. Option (a) is recommended for v2 — simpler UX, lower error risk.
+- **Indian locale only in v2.** The architecture should use a locale-abstracted tax engine interface so that future locales (US, UK, etc.) can be added by implementing the same interface with different rules. v2 ships with only the Indian implementation.
+- **Financial year alignment:** Indian financial year runs April 1 to March 31. All tax projections must use the financial year, not the calendar year. The "year-to-date" income must be computed from April 1 of the current FY.
+- **Capital gains (conditional on §22):** If investment portfolio tracking (§22) is available, realised capital gains from sell transactions feed into the capital gains tax head. If §22 is not available, the user can manually enter capital gains amounts as a deduction/income override.
+- **Surcharge and cess:** The computation must include surcharge (income-dependent) and health & education cess (currently 4%) to produce accurate total tax liability figures.
+- **No TDS tracking in v2.** Tax deducted at source (advance tax, TDS from salary) is not tracked. The projection shows gross tax liability, not tax payable after TDS. TDS tracking is a potential v3 addition.
+
+**Open questions:**
+- OQ-V2-08: Should the income-to-tax-head mapping be per-category or per-transaction? Per-category is simpler but less flexible (e.g., a "Freelance" category might span Business and Other Sources). Per-transaction adds entry friction.
+- OQ-V2-09: How should the app handle mid-year regime switches? Under current Indian tax law, the regime choice is made at filing time. Should the app allow toggling the projection regime at any time, or lock it per financial year?
+- OQ-V2-10: Where does the tax projection live in the app navigation — as a sub-section of analytics (§12), a dedicated top-level screen, or a settings-adjacent tool?
+
+**Design work needed:** Tax slab data model and storage format, financial year date handling, deduction configuration UI, income-to-tax-head mapping flow, regime comparison logic, surcharge/cess computation, disclaimer placement, integration with analytics (§12), capital gains handoff from §22.
+
+---
+
+## 24. LLM-Based Insights (BYOK — Bring Your Own Key)
+
+> **Priority:** Low — experimental, power-user feature.
+>
+> **Cross-references:** Analytics and visualisations (§12), privacy constraints (v1 PRD C1, FC-1, anti-goals).
+>
+> **Dependency:** Logically ships after or alongside analytics (§12). Insights are most useful when there is already a structured analytics foundation to summarise from.
+
+Optional AI-powered financial insights using the user's own API key for an LLM provider. This is a strictly opt-in feature — the app is fully functional without it.
+
+**Privacy and constraint alignment:** This feature introduces **user-initiated, explicit network calls** to external LLM APIs. This is consistent with the offline-first constraint (v1 C1) and the uninstructed network call failure criterion (v1 FC-1) because: (a) the feature is entirely opt-in — disabled by default, (b) every network call is user-initiated (the user explicitly requests an insight or query), and (c) no data is sent without the user's action. The app never phones home, auto-syncs, or transmits data in the background.
+
+**Core capabilities:**
+- **Spending insights:** Summary observations derived from transaction data. Examples: "You spent 40% more on Food this month than last month." "Your top 3 spending categories this quarter are X, Y, Z."
+- **Anomaly flagging:** Highlight unusual transactions relative to the user's spending patterns. Example: "Unusual transaction: Rs 15,000 at [merchant] — this is significantly above your average for this category."
+- **Savings suggestions:** Pattern-based recommendations. Example: "Based on your income and spending over the past 3 months, you could save approximately Rs X/month by reducing discretionary spending."
+- **Natural language queries:** The user types a question in plain language and receives a data-backed answer. Example: "How much did I spend on transport in March?" The app constructs a data summary, sends it to the LLM, and displays the response.
+
+**Design considerations:**
+- **BYOK model:** The user provides their own API key for a supported LLM provider. Supported providers in v2: OpenAI, Anthropic, Google (Gemini). No Variance-hosted LLM service — ever.
+- **API key storage:** Keys are stored in platform-secure storage (Android Keystore / flutter_secure_storage), never in SharedPreferences or plain-text files. Keys are never logged, cached in memory beyond the active request, or included in backup exports.
+- **Data minimisation:** The app constructs a summarised data payload before sending to the LLM. By default, only aggregated figures are sent (category totals, monthly summaries, trends). Raw transaction details (titles, descriptions, merchant names) are never sent unless the user explicitly enables a "detailed mode" toggle. The data sharing level is configurable in Settings with a clear explanation of what each level sends.
+- **No background calls.** Every LLM request is triggered by an explicit user action (tapping "Get Insight" or submitting a query). There is no scheduled, periodic, or background insight generation.
+- **Offline behaviour:** When offline, the insights feature is disabled with a clear message: "Insights require an internet connection. Your data remains on-device." No cached insights are shown from previous sessions (to avoid stale advice).
+- **Cost transparency:** Before each query, display an estimated token count and approximate cost (based on the provider's published pricing). After each query, display actual tokens used.
+- **Scope for v2:** Basic insights and natural language queries only. This is not a conversational assistant, not a chatbot, and not a financial advisor. No multi-turn conversations. One question, one answer.
+
+**Open questions:**
+- OQ-V2-11: What are the exact data summarisation tiers? Proposed: (a) aggregates only — category totals, monthly income/expense, net worth; (b) aggregates + category names; (c) aggregates + transaction titles (opt-in, with warning). Need to define what each tier sends.
+- OQ-V2-12: Should the app include pre-built prompt templates (e.g., "Monthly spending review", "Savings opportunity scan") or only support free-form queries?
+- OQ-V2-13: Where does this feature live in the app — as a tab within analytics (§12), a standalone screen accessible from the home screen, or a floating action accessible from multiple screens?
+- OQ-V2-14: How should the app handle LLM API errors (rate limits, invalid key, network failures)? Proposed: clear error message with retry option; no fallback to a different provider.
+
+**Design work needed:** Data summarisation pipeline and tier definitions, prompt engineering for financial insights, provider abstraction layer (to support multiple LLM APIs behind a common interface), API key lifecycle (entry, validation, rotation, deletion), cost estimation model, privacy controls UI, response display format, placement within app navigation.
+
+---
+
+## 25. Auto-Detect Transactions from SMS & Email Notifications (FG-C21)
 
 > **Priority:** High — this is a primary motivation for the app's target user base.
 

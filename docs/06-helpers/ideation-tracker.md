@@ -29,7 +29,7 @@ outputs_to: []
 
 | #   | Deliverable                  | Status                   | Notes                                                                                                                                             |
 | --- | ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **PRD**                      | 🟢 Complete — Ready for sign-off | All 76 questions resolved. FG-A1–FG-A31, FG-B1–FG-B9, FG-C1–FG-C21 all resolved. DEB audit complete. TC-001–TC-058 all resolved (58/58). 5 founder decisions locked (TC-014, TC-022, TC-029, TC-031, TC-050). Input fields reference complete. Navigation model defined (§5.7a). No remaining blockers. |
+| 1   | **PRD**                      | ✅ **SIGNED OFF & LOCKED** | Founder sign-off 2026-04-14. All docs in `docs/01-product/` are frozen. All 76 Qs, all FGs, all 58 TCs, all 5 founder decisions resolved. No edits without formal change request. |
 | 2   | **System Design Spec (SDS)** | 🟢 Ready to Start         | All PRD blockers resolved. No founder decisions pending. 5 SDS-owned TC items (TC-003, TC-006, TC-009, TC-033, TC-041) to be resolved during SDS authoring. Icon curation (TC-014) is a parallel task. |
 | 3   | **UX Flows**                 | 🟢 Ready to Start         | Navigation model (TC-031) resolved — bottom nav with 3 tabs. UX pre-work topics (UX-1 through UX-14) remain as design decisions for UX Flows authoring. |
 | 4   | **API Contracts**            | 🔴 Blocked                | Blocked on SDS                                                                                                                                    |

@@ -39,6 +39,7 @@ outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-con
       - [5.1.3 Account Balance Model](#513-account-balance-model)
       - [5.1.3a Balance Reconciliation (FG-C6)](#513a-balance-reconciliation-fg-c6)
       - [5.1.4 Account Balance View](#514-account-balance-view)
+      - [5.1.4a Account Detail Screen](#514a-account-detail-screen)
       - [5.1.5 Internal Transfer](#515-internal-transfer)
       - [5.1.5b Transfer Fee (Optional)](#515b-transfer-fee-optional)
       - [5.1.6 Credit Card Balance Model](#516-credit-card-balance-model)
@@ -80,6 +81,7 @@ outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-con
       - [5.6.1 Default Category Seeding](#561-default-category-seeding)
       - [5.6.2 Onboarding Wizard](#562-onboarding-wizard)
     - [5.7 Timezone \& Date Policy](#57-timezone--date-policy)
+    - [5.7a App Navigation Model](#57a-app-navigation-model)
     - [5.8 Home Screen \& Dashboard](#58-home-screen--dashboard)
       - [5.8.1 Greeting](#581-greeting)
       - [5.8.2 Financial Summary](#582-financial-summary)
@@ -102,6 +104,7 @@ outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-con
     - [Assumptions](#assumptions)
     - [Constraints](#constraints)
   - [11. Open Questions](#11-open-questions)
+
 
 
 # Product Requirements Document (PRD)
