@@ -8,6 +8,41 @@ depends_on: [01-product/prd.md]
 outputs_to: [02-technical/sds.md, 02-technical/api-contracts.md]
 ---
 
+- [Variance — Ledger Entry Case Analysis](#variance--ledger-entry-case-analysis)
+  - [Double-Entry Bookkeeping: All Posting Cases](#double-entry-bookkeeping-all-posting-cases)
+  - [Notation \& Conventions](#notation--conventions)
+  - [Group 1 — Transaction Lifecycle](#group-1--transaction-lifecycle)
+    - [Case 1.1 — Create Expense Transaction (amount B, source account A, expense category EC)](#case-11--create-expense-transaction-amount-b-source-account-a-expense-category-ec)
+    - [Case 1.2 — Create Income Transaction (amount B, destination account A, income category IC)](#case-12--create-income-transaction-amount-b-destination-account-a-income-category-ic)
+    - [Case 1.3 — Create Transfer Transaction (amount B, source A₁, destination A₂)](#case-13--create-transfer-transaction-amount-b-source-a-destination-a)
+    - [Case 1.3a — Create Transfer Transaction with Fee (amount B, fee F, source A₁, destination A₂, fee category FC)](#case-13a--create-transfer-transaction-with-fee-amount-b-fee-f-source-a-destination-a-fee-category-fc)
+    - [Case 1.4 — Modify Expense Transaction (B -\> B', same A, same EC)](#case-14--modify-expense-transaction-b---b-same-a-same-ec)
+    - [Case 1.5 — Modify Income Transaction (B -\> B', same A, same IC)](#case-15--modify-income-transaction-b---b-same-a-same-ic)
+    - [Case 1.6 — Modify Transfer Transaction (B -\> B', same A₁ -\> A₂)](#case-16--modify-transfer-transaction-b---b-same-a---a)
+    - [Case 1.6a — Modify Transfer Transaction with Fee (B → B', F → F', same A₁ → A₂, same FC)](#case-16a--modify-transfer-transaction-with-fee-b--b-f--f-same-a--a-same-fc)
+    - [Case 1.7 — Soft-Delete Expense Transaction (amount B, account A, category EC)](#case-17--soft-delete-expense-transaction-amount-b-account-a-category-ec)
+    - [Case 1.8 — Soft-Delete Income Transaction (amount B, account A, category IC)](#case-18--soft-delete-income-transaction-amount-b-account-a-category-ic)
+    - [Case 1.9 — Soft-Delete Transfer Transaction (amount B, source A₁, destination A₂)](#case-19--soft-delete-transfer-transaction-amount-b-source-a-destination-a)
+    - [Case 1.9a — Soft-Delete Transfer Transaction with Fee (amount B, fee F, source A₁, destination A₂, fee category FC)](#case-19a--soft-delete-transfer-transaction-with-fee-amount-b-fee-f-source-a-destination-a-fee-category-fc)
+  - [Group 2 — Account Lifecycle](#group-2--account-lifecycle)
+    - [Case 2.1 — Create Account with Zero Initial Balance](#case-21--create-account-with-zero-initial-balance)
+    - [Case 2.2 — Create Account with Non-Zero Initial Balance](#case-22--create-account-with-non-zero-initial-balance)
+    - [Case 2.3 — Edit Account Balance (B -\> B') — Recorded as Transaction (Visible Journal Adjustment)](#case-23--edit-account-balance-b---b--recorded-as-transaction-visible-journal-adjustment)
+    - [Case 2.4 — Edit Account Balance (B -\> B') — NOT Recorded as Transaction (Invisible Journal Adjustment)](#case-24--edit-account-balance-b---b--not-recorded-as-transaction-invisible-journal-adjustment)
+    - [Case 2.5 — Soft-Delete Account](#case-25--soft-delete-account)
+    - [Case 2.5a — Account Deletion Balance Transfer (A₁ being deleted, destination A₂)](#case-25a--account-deletion-balance-transfer-a-being-deleted-destination-a)
+  - [Group 3 — Additional Cases (Beyond User's Initial List)](#group-3--additional-cases-beyond-users-initial-list)
+    - [Case 3.1 — Recurring Transaction Auto-Post or Confirm-Post](#case-31--recurring-transaction-auto-post-or-confirm-post)
+    - [Case 3.2 — Installment Single-Period Post](#case-32--installment-single-period-post)
+    - [Case 3.3 — Cross-Currency Transfer (A₁ in C₁ -\> A₂ in C₂, exchange rate R)](#case-33--cross-currency-transfer-a-in-c---a-in-c-exchange-rate-r)
+    - [Case 3.4 — Correction of a Journal Adjustment](#case-34--correction-of-a-journal-adjustment)
+    - [Case 3.5 — Budget Replenishment ("Add to Budget" on Income Transaction)](#case-35--budget-replenishment-add-to-budget-on-income-transaction)
+    - [Case 3.6 — Category Soft-Delete](#case-36--category-soft-delete)
+    - [Case 3.7 — Batch Category Migration on Category Soft-Delete](#case-37--batch-category-migration-on-category-soft-delete)
+  - [Complete Summary Table](#complete-summary-table)
+  - [Questions Surfaced by This Analysis — Resolution Status](#questions-surfaced-by-this-analysis--resolution-status)
+
+
 # Variance — Ledger Entry Case Analysis
 ## Double-Entry Bookkeeping: All Posting Cases
 
