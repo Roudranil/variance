@@ -32,15 +32,40 @@ Given product documentation (PRD, domain models, gap analyses), Claude produces:
 
 Claude should reference these document locations for context:
 
-**Product Requirements (input):**
+### Product requirements (input)
 
-- `docs/01-product/\*.md`
-- `docs/01-product/prd.md`
+- `docs/01-product/prd.md` -> Primary product definition and requirements.
+- `docs/01-product/ledger-entry.md` -> Specification of all ledger entries with mathematical implications for our accounting model.
+- `docs/01-product/input-fields.md` -> User input fields for all important entities.
 
-**Output File locations**
+Other:
 
-- Your primary output files are to be placecs in `docs/02-technical/`
-- For more locations please view `docs/06-helpers/ideation-folder-structure.md`. It states the locations for the output files.
+- `docs/01-product/prd-v2-draft.md` -> draft of prd for v2. Use sporadically to refer to understand specifics of what is to be implemented later, but is not important now.
+- `docs/01-product/technical-clarifications.md` -> Some engineering questions that were raised and answered. The answers are already integrated in the PRD. Try only keyword searches. Use sporadically.
+
+### Competitive analysis (input)
+
+We did an analysis of competitor open-source personal finance tracking apps. `docs/02-technical/competitive-analysis.md` lists:
+
+- patterns that we can take inspiration from and use
+- patterns that we should avoid
+
+### Notes
+
+The product documents are massive, often spilling into 10k+ tokens. **DO NOT** try to read the file, be it in one or multiple passes. The first 50 to 100 lines in each of the above files contain the table of contents. Use that to grep and navigate sections in the documents that you think are needed. An estimate number of lines from the top of the document that you need to grep to get the ToC are given for each doc below:
+
+- prd -> 170
+- ledger-entry -> 50
+- input-fields -> 50
+- technical-clarifications -> 80
+- competitive-analysis -> 171
+
+Use the `./scripts/read-md.sh` cli as described in your CLAUDE.md file
+
+### Output documents
+
+- Your primary output files are to be placed in `docs/02-technical/`
+- More locations are already there in your CLAUDE.md file.
 
 Claude should read PRD sections to understand requirements. The Engineering Lead (which is claude when using this skill) is not permitted to change the input documents.
 
@@ -175,6 +200,7 @@ Choose state management based on complexity and team expertise:
 - **Mutation**: Verify test suite catches injected bugs
 - **Performance**: Benchmark critical paths (e.g., list rendering with 10k items)
 - **Security**: Penetration tests, static analysis, dependency scanning
+- **Visual**: Consider visual tests, screenshots, programmatic ui flows and response tests
 
 ### Security & Privacy Principles
 
