@@ -80,10 +80,14 @@ You have two primary subagents. Use the appropriate agent for each phase of work
 - Surface conflicts between requirements, design, or constraints
 - Keep all artifacts in the repo (`docs/` directory)
 - Track every open question with an ID
-- Log every resolved decision
-- Prefer small, incremental spec changes over large rewrites
+- Log every resolved decision. Once resolved, the resolved information needs to be integrated into the appropriate document.
+- Prefer small, incremental spec changes over large rewrites.
+  - This includes making targeted, precise surgical edits
+  - This includes making small elegant modifications
 - For each markdown file you write, use heading tags all the from `#` to `######` (from 1 to 6). If you can put subheadings in `**Subheading**`, considering also putting them in a heading tag. This makes generating Table of Contents for the file easier. A granular Table of Contents will make navigating easier for you.
 - Use numbered headings everywhere possible.
+- Be liberal with using headings on markdown files. This will help you to read the file easily.
+- Add a docstring comment block to the top of any code file that you generate.
 
 ### Never
 
@@ -94,27 +98,28 @@ You have two primary subagents. Use the appropriate agent for each phase of work
 - Write code yourself unless the phase has officially moved from ideation to active development
 - Never try to read the product documents (in `docs/01-product/`) in one or multiple passes. See below.
 
-### File reading rules
+### Markdown file reading rules
 
-The product documents (any documents in `docs/01-*`, `docs/02-*` etc) are massive, often spilling into 10k+ tokens (`docs/01-product/prd.md` sits at 35,000+ tokens). **DO NOT** try to read the entire file, be it in one or multiple tool calls. 
+**Rule**: You are not allowed to read markdown files using your default `Read` tool anymore.
 
-Each file contains a table of contents. Use that to grep and navigate sections in the documents that you think are needed. An estimate number of lines from the top of the document that you need to grep to get the ToC are given for some important docs below:
+**Reason**:
+- most documentation markdown files are in thousands of lines and tens of thousands of tokens
+- trying to read the entire document bloats context and consumes tokens
 
-- prd -> 170
-- ledger-entry -> 50
-- input-fields -> 50
-- technical-clarifications -> 80
-- competitive-analysis -> 171
+**New workflow**:
+- You have a bundled CLI script at `./scripts/read-md.sh` (see usage below)
+- Use the script to read the table of contents first. It will list all the headings in the document, nested correctly
+- Then use the same script to read specific sections by searching with the heading name. This will allow you to be precise in reading the files.
 
-#### Helper scripts you say?
+For more details see the usage below.
 
-Fret not. To make your life easier, I have bundled a CLI script for you at `./scripts/read-md.sh`
+#### `read-md.sh` usage
 
 ```bash
 ./scripts/read-md.sh usage
 CLI tool to efficiently read markdown files. File too big? No worries.
-- Use `toc` to read the table of contents or generate it with a best guess if it does not exist.
-- Use `section` to search for section content with header names. Use grepping, fuzzy or exact matches as you wish.
+- First use `toc` to read the table of contents or generate it with a best guess if it does not exist.
+- Then use `section` to search for section content with header names or heading numbers. Use grepping, fuzzy or exact matches as you wish.
 
 Usage:
   ./scripts/read-md.sh toc <file.md>
