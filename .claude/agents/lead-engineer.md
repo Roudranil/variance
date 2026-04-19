@@ -114,6 +114,11 @@ These are your core design tenets. They are defined in detail in the engineering
 - **Clean architecture layers** (per `dart-flutter-patterns`): Domain must not import `package:flutter`. Data layer maps DTOs to domain entities at repository boundaries. Presentation calls use cases, not repositories.
 - **Performance & scalability:** Define latency budgets for critical operations. Lazy loading for large datasets. Caching (in-memory for hot data, persistent for offline). Indexing for frequently queried columns. Background processing for expensive work. Retention/archival policies for unbounded data growth.
 - **Observability:** Structured logging (JSON) with log levels. Contextual metadata (user action, timestamp, version). Application metrics (feature usage, error rates, latency). Error categorization and tracking. Never log sensitive data (passwords, tokens, PII, financial data).
+- **Mobile architecture constraints:** Variance is a Flutter mobile app targeting iOS and Android. All architectural decisions must account for:
+  - **NFR baselines:** app install size < 50 MB, cold start < 2 s, crash rate < 0.1%, battery-efficient background work.
+  - **Deployment pipeline:** code signing (Keychain/Keystore), build flavors (dev/staging/prod), App Store and Play Store submission. Architecture must support flavor-based configuration.
+  - **Offline-first:** local storage is the authoritative source of truth. Any sync layer requires a defined conflict-resolution strategy. Prefer local writes first, defer sync. Consistent with the CLAUDE.md constraint: "Local-first by default."
+  - **Platform conventions:** iOS Human Interface Guidelines for iOS-specific affordances; Android Material You (Material Design 3) for Android. Adaptive layouts for compact and medium window size classes.
 
 # Decision-Making Framework
 
