@@ -1,6 +1,6 @@
 ---
 name: Product Requirements Document
-status: in progress
+status: approved
 owner: pm
 created: 2026-04-13
 last_updated: 2026-04-14
@@ -46,12 +46,12 @@ outputs_to: [02-technical/sds.md, 02-technical/ux-flows.md, 02-technical/api-con
   - [5. Functional Requirements (Feature Graph)](#5-functional-requirements-feature-graph)
     - [5.1 Account Management (CORE) — UC-1](#51-account-management-core--uc-1)
       - [5.1.1 Account CRUD](#511-account-crud)
-        - [Create Account — Fields](#create-account--fields)
-        - [5.1.1.1 Currency Immutability](#5111-currency-immutability)
-        - [5.1.1.2 Account Name Uniqueness Constraint](#5112-account-name-uniqueness-constraint)
-        - [5.1.1.3 Edit](#5113-edit)
-        - [5.1.1.4 Soft-deleted account behaviour (FG-B9)](#5114-soft-deleted-account-behaviour-fg-b9)
-        - [5.1.1.5 Recurring and installment template handling on account deletion](#5115-recurring-and-installment-template-handling-on-account-deletion)
+        - [5.1.1.1 Create Account — Fields](#5111-create-account--fields)
+        - [5.1.1.2 Currency Immutability](#5112-currency-immutability)
+        - [5.1.1.3 Account Name Uniqueness Constraint](#5113-account-name-uniqueness-constraint)
+        - [5.1.1.4 Edit](#5114-edit)
+        - [5.1.1.5 Soft-deleted account behaviour (FG-B9)](#5115-soft-deleted-account-behaviour-fg-b9)
+        - [5.1.1.6 Recurring and installment template handling on account deletion](#5116-recurring-and-installment-template-handling-on-account-deletion)
       - [5.1.2 Account Categories (Fixed Set — No Custom Categories)](#512-account-categories-fixed-set--no-custom-categories)
         - [5.1.2.1 Linked bank account — behaviour by account category](#5121-linked-bank-account--behaviour-by-account-category)
       - [5.1.3 Account Balance Model](#513-account-balance-model)
@@ -419,7 +419,7 @@ All system events that produce ledger entries are fully enumerated in `docs/01-p
 
 #### 5.1.1 Account CRUD
 
-##### Create Account — Fields
+##### 5.1.1.1 Create Account — Fields
 
 The Create Account form collects the following fields. Category-specific fields (see §5.1.2) are additionally displayed once the account category is selected.
 
@@ -433,16 +433,15 @@ The Create Account form collects the following fields. Category-specific fields 
 | Notes | No | — | Optional free-form text. Retained on accounts even though notes has been removed from transactions. |
 | Category-specific fields | Varies | — | Additional fields per the selected account category (see §5.1.2). |
 
-##### 5.1.1.1 Currency Immutability
+##### 5.1.1.2 Currency Immutability
 
 Account currency is permanently fixed at the time of creation. To ensure an informed choice:
 1. The currency field defaults to the **home currency** (§5.4.2). An info tooltip accompanies the field: *"Account currency cannot be changed after creation. Select carefully."*
 2. If the user changes the currency away from the default, a **visual change indicator** (e.g., a highlighted field border or inline confirmation label) is shown to confirm the selection has been intentionally changed.
 3. Before the account is saved, a **confirmation dialog** is presented: *"Your account will be created in [Currency]. This cannot be changed later. Continue?"*
 
----
 
-##### 5.1.1.2 Account Name Uniqueness Constraint
+##### 5.1.1.3 Account Name Uniqueness Constraint
 
 Account names must be unique across all accounts, **including soft-deleted accounts**. A soft-deleted account's name is permanently reserved and cannot be reused by a new account.
 
@@ -450,7 +449,7 @@ Account names must be unique across all accounts, **including soft-deleted accou
 
 The same reinstatement logic applies to soft-deleted categories (see §5.2.4).
 
-##### 5.1.1.3 Edit
+##### 5.1.1.4 Edit
 
 Editable fields: name, notes, include-in-net-worth flag, and all category-specific fields. Account category itself is not editable after creation.
 
@@ -460,7 +459,7 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
 
 > **"Not user-editable" vs. soft-deletable (system-generated transactions):** When the PRD states a transaction is "not user-editable" (e.g., the system-generated balance transfer on account deletion), this means the user cannot modify any fields (amount, account, title, description, date, photos) — the Edit action is not available. However, the user CAN initiate a soft-delete on such transactions, with the appropriate warning dialog. Editability (changing fields) and deletability (voiding) are separate concepts. System-generated transfers are non-editable but deletable-with-warning.
 
-##### 5.1.1.4 Soft-deleted account behaviour (FG-B9)
+##### 5.1.1.5 Soft-deleted account behaviour (FG-B9)
 - A soft-deleted account is **frozen**: no new transactions can be posted against it, and no existing transactions can be edited to reference it (the account is excluded from the account picker in transaction edit forms).
 - The account is **hidden from the account list** on the home screen and the account picker in new transaction forms.
 - The account **remains visible** in Settings > Accounts (with reinstatement option, per §5.1.1) and is shown grayed-out in the net worth view (per §5.1.4) if it was previously included.
@@ -474,7 +473,7 @@ Editable fields: name, notes, include-in-net-worth flag, and all category-specif
 - Cannot delete the last remaining account. When exactly one account exists, the **delete action is disabled** (greyed out and non-interactive) on that account, with a tooltip: *"You cannot delete your only account."* This applies regardless of whether the last account has a zero or non-zero balance.
 - **No same-currency account for balance transfer:** When the user initiates deletion of an account with a non-zero balance and no other account in the same currency exists, the balance transfer offer is **skipped entirely**. The app goes directly to the net worth warning: *"No same-currency account is available to receive this balance. Deleting this account will change your net worth. Are you sure?"* If confirmed, the soft-delete proceeds without posting a transfer.
 
-##### 5.1.1.5 Recurring and installment template handling on account deletion
+##### 5.1.1.6 Recurring and installment template handling on account deletion
 
 Before soft-deleting an account, the app checks whether any recurring or installment template with **future-scheduled occurrences** references that account. If such templates exist, a blocking warning is shown before the normal balance-transfer / net-worth-change flow:
 
@@ -485,8 +484,6 @@ The user must choose one of:
 - **Stop templates** — all affected templates are immediately archived; future-scheduled occurrences are cancelled.
 
 The **default pre-selected option is Stop templates**. Deletion does not proceed until the user confirms a choice. Templates with no future-scheduled occurrences are unaffected — their historical child transactions are retained.
-
----
 
 #### 5.1.2 Account Categories (Fixed Set — No Custom Categories)
 
