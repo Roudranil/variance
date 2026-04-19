@@ -75,4 +75,5 @@ lib/generated_plugin_registrant.dart
 .env.*
 !.env.example
 
-Cashew/*
+.claude/mcp.json
+.mcp.json
