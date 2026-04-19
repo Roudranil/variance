@@ -85,17 +85,19 @@ generate_toc() {
     local file="$1"
     
     awk '
+    BEGIN {
+        first_line = 0
+        last_line = 0
+    }
+    
     /^#{1,6} / {
+        if (first_line == 0) first_line = NR
+        last_line = NR
+        
         match($0, /^#+/)
         level = RLENGTH
         text = $0
         sub(/^#+ /, "", text)
-        
-        # Create anchor link (GitHub style: lowercase, replace spaces with -)
-        anchor = tolower(text)
-        gsub(/[^a-z0-9 -]/, "", anchor)
-        gsub(/ +/, "-", anchor)
-        gsub(/-+/, "-", anchor)
         
         # Create indentation
         indent = ""
@@ -103,7 +105,14 @@ generate_toc() {
             indent = indent "  "
         }
         
-        printf "%s- [%s](#%s) *(line %d)*\n", indent, text, anchor, NR
+        printf "%s- %s *(line %d)*\n", indent, text, NR
+    }
+    
+    END {
+        if (first_line > 0) {
+            print "" > "/dev/stderr"
+            print "--- TOC extracted from lines " first_line "-" last_line " ---" > "/dev/stderr"
+        }
     }
     ' "$file"
 }
@@ -119,6 +128,8 @@ extract_toc() {
         toc_found = 0
         toc_lines = ""
         blank_count = 0
+        first_line = 0
+        last_line = 0
     }
     
     # Skip frontmatter
@@ -140,8 +151,17 @@ extract_toc() {
     !in_toc && /^[[:space:]]*[-*+][[:space:]]+\[.+\]\(.+\)/ {
         in_toc = 1
         toc_found = 1
-        toc_lines = toc_lines $0 "\n"
+        if (first_line == 0) first_line = NR
+        
+        # Strip URL/anchor from TOC line
+        line = $0
+        gsub(/\]\([^)]+\)/, "]", line)
+        gsub(/\[/, "", line)
+        gsub(/\]/, "", line)
+        
+        toc_lines = toc_lines line "\n"
         blank_count = 0
+        last_line = NR
         next
     }
     
@@ -159,8 +179,15 @@ extract_toc() {
         
         # TOC line (indented list with link)
         if (/^[[:space:]]*[-*+][[:space:]]+\[.+\]\(.+\)/) {
-            toc_lines = toc_lines $0 "\n"
+            # Strip URL/anchor from TOC line
+            line = $0
+            gsub(/\]\([^)]+\)/, "]", line)
+            gsub(/\[/, "", line)
+            gsub(/\]/, "", line)
+            
+            toc_lines = toc_lines line "\n"
             blank_count = 0
+            last_line = NR
             next
         }
         
@@ -171,6 +198,10 @@ extract_toc() {
     END {
         if (toc_found) {
             printf "%s", toc_lines
+            if (first_line > 0) {
+                print "" > "/dev/stderr"
+                print "--- TOC extracted from lines " first_line "-" last_line " ---" > "/dev/stderr"
+            }
         }
     }
     ' "$file")
@@ -208,7 +239,7 @@ find_heading_grep() {
             text = parts[3]
             
             # Use system grep for pattern matching
-            cmd = "echo \"" text "\" | grep -E \"" pattern "\""
+            cmd = "echo \"" text "\" | grep -E \"" pattern "\" > /dev/null 2>&1"
             if (system(cmd) == 0) {
                 if (!matched || parts[2] < best_level) {
                     best_match = headings[i]
@@ -233,7 +264,7 @@ find_heading_fuzzy() {
     
     # If search text is too short, require exact match
     if [ ${#search_text} -lt $min_length ]; then
-        warning "Search text too short (<$min_length chars), using exact match"
+        warning "Search text too short (<$min_length chars), using exact match. If this not what you intended, try specifying more of the heading."
         find_heading_exact "$file" "$search_text"
         return $?
     fi
@@ -258,7 +289,7 @@ find_heading_fuzzy() {
     # Use fzf for fuzzy selection
     local selected
     selected=$(echo "$headings" | awk -F'|' '{print $3 " (level " $2 ", line " $1 ")"}' | \
-        fzf --filter="$search_text" --no-sort | head -1)
+        fzf --filter="$search_text" | head -1)
     
     if [ -z "$selected" ]; then
         error "No matching heading found for: $search_text"
@@ -497,6 +528,11 @@ main() {
                 match=$(find_heading_grep "$file" "$heading_text")
             elif [ $exact_match -eq 1 ]; then
                 match=$(find_heading_exact "$file" "$heading_text")
+            elif echo "$heading_text" | grep -qE '^[0-9]+(\.[0-9]+)*'; then
+                # Looks like a section number — use grep anchored to start of heading
+                local escaped
+                escaped=$(echo "$heading_text" | sed 's/\./\\./g')
+                match=$(find_heading_grep "$file" "^${escaped}")
             else
                 check_fzf
                 match=$(find_heading_fuzzy "$file" "$heading_text")
@@ -534,5 +570,4 @@ main() {
 }
 
 # Run main
-main "$@
-"
+main "$@"
