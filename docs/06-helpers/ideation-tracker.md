@@ -3,14 +3,14 @@ name: Ideation Phase Tracker
 status: in progress
 owner: pm
 created: 2026-04-13
-last_updated: 2026-04-14
+last_updated: 2026-04-20
 depends_on: [01-product/prd.md]
 outputs_to: []
 ---
 
 # Variance — Ideation Phase Tracker
 
-> **Last Updated:** 2026-04-14
+> **Last Updated:** 2026-04-20
 
 ---
 
@@ -30,7 +30,7 @@ outputs_to: []
 | #   | Deliverable                  | Status                   | Notes                                                                                                                                             |
 | --- | ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **PRD**                      | ✅ **SIGNED OFF & LOCKED** | Founder sign-off 2026-04-14. All docs in `docs/01-product/` are frozen. All 76 Qs, all FGs, all 58 TCs, all 5 founder decisions resolved. No edits without formal change request. |
-| 2   | **System Design Spec (SDS)** | 🟢 Ready to Start         | All PRD blockers resolved. No founder decisions pending. 5 SDS-owned TC items (TC-003, TC-006, TC-009, TC-033, TC-041) to be resolved during SDS authoring. Icon curation (TC-014) is a parallel task. |
+| 2   | **System Design Spec (SDS)** | 🟡 In Progress — Architecture Overview drafted (2026-04-20). Remaining sections: Tech Stack, Data Flow, Layer Design, Core Services, Technology Selection, NFRs, Risks. 5 SDS-owned TC items: TC-003, TC-006, TC-009 remain open; TC-033 and TC-041 resolved in Architecture Overview. |
 | 3   | **UX Flows**                 | 🟢 Ready to Start         | Navigation model (TC-031) resolved — bottom nav with 3 tabs. UX pre-work topics (UX-1 through UX-14) remain as design decisions for UX Flows authoring. |
 | 4   | **API Contracts**            | 🔴 Blocked                | Blocked on SDS                                                                                                                                    |
 | 5   | **Execution Plan (EP)**      | 🔴 Blocked                | Blocked on all above                                                                                                                              |
@@ -233,6 +233,7 @@ outputs_to: []
 |            | **(ERR-1 fixed) §4.5 expense entry sides corrected.** PRD §4.5 previously had expense category on credit side and account on debit side — backwards. Corrected to Dr EC (debit), Cr A (credit). ledger-entry.md updated to remove redundant Q41 flag.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 |            | **(Credit card balance model added — §5.1.6.)** Outstanding balance (live ledger) and statement balance (derived from billing period). Two-action balance edit screen: adjust statement balance (dated to billing date) vs. adjust outstanding balance (dated today).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 |            | **(ledger-entry.md updated.)** Universal formula documented. Former liability cases 2.3c/d and 2.4c/d subsumed by 2.3a/b and 2.4a/b. Case 2.2b updated to sign-based (initial balance < 0). Notation updated to remove "L" as a distinct symbol.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2026-04-20 | **SDS Architecture Overview authored (Session 9).** Decisions baked in: (1) Clean Architecture (three-layer: Presentation, Domain, Data + Infrastructure cross-cut) adopted — DEB engine isolation rationale. (2) Riverpod chosen as state management — provider graph doubles as DI root, fine-grained select watchers for 10k-transaction list performance. (3) Drift (type-safe SQLite ORM) adopted for Data layer — reactive Stream queries, compile-time schema verification, built-in migration support. (4) TC-041 scheduling architecture resolved: hybrid WorkManager (catch-up sweep) + flutter_local_notifications with exact alarms (time-critical notifications). (5) TC-033 application-level error handling pattern specified: ACID atomicity at DB layer, domain-typed exception surface, UI preserves form state on failure. (6) GoRouter with ShellRoute adopted for three-tab bottom navigation — each tab maintains own stack. (7) Domain layer must compile as pure Dart (zero Flutter dependency) — CI enforced. (8) Balance computed as DB aggregate (not cached column) to eliminate balance-drift bugs. |
 | 2026-04-13 | **Session 1 — ALL QUESTIONS RESOLVED (Q47–Q76).** Major decisions:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 |            | (1) **Budget deferred to v2**: Entire budgeting feature (§5.3) moved to v2 for ground-up redesign alongside savings goals. Removes Q59, Q61, Q68, Q69 and "Add to Budget" from v1 scope.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 |            | (2) **Recurring templates: pause/unpause** added to v1 (disable/enable deferred to v2). OS-level local notifications for remind-and-confirm with 24h auto-approve.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -274,13 +275,13 @@ outputs_to: []
 
 ## Readiness Gate
 
-- [ ] PRD signed off ← **pending founder review** (all questions resolved, FG-A and FG-B gaps baked in; FG-C remains open but does not block PRD sign-off)
-- [ ] System Design Spec complete
+- [x] PRD signed off — Founder sign-off 2026-04-14. All docs in `docs/01-product/` frozen.
+- [ ] System Design Spec complete — Architecture Overview drafted 2026-04-20. Remaining sections in progress.
 - [ ] UX Flows complete
 - [ ] API Contracts defined
 - [ ] Execution Plan complete
 
-**Status: 🟡 PRD ready for sign-off — 0 open questions, FG-A and FG-B complete. SDS and UX Flows can begin after sign-off.**
+**Status: 🟡 SDS in progress — Architecture Overview complete. Remaining SDS sections (Tech Stack, Layer Design, Core Services, Technology Selection, NFRs, Risks) next.**
 
 ---
 
@@ -292,7 +293,7 @@ outputs_to: []
 | PRD v2 Draft       | `docs/01-product/prd-v2-draft.md`       | 📋 Collection — all deferred v2 items              |
 | Gaps & Questions   | `docs/06-helpers/gaps-and-questions.md` | 📋 Reference (Part 1 resolved; Parts 2–3 tracked) |
 | Ledger Entry Cases | `docs/01-product/ledger-entry.md`       | ✅ Updated                                        |
-| SDS                | `docs/02-technical/sds.md`              | ⬜ Ready to Start                                 |
+| SDS                | `docs/02-technical/sds.md`              | 🟡 In Progress — Architecture Overview complete    |
 | UX Flows           | `docs/02-technical/ux-flows.md`         | ⬜ Ready to Start                                 |
 | API Contracts      | `docs/02-technical/api-contracts.md`    | ⬜ Not Started                                    |
 | Execution Plan     | `docs/03-planning/task-breakdown.md`    | ⬜ Not Started                                    |
