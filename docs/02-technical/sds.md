@@ -537,3 +537,710 @@ The following are deliberately excluded from the v1 architecture. Adding any of 
 | Server-side push notifications | OS-level local notifications only (NF-1). No FCM, APNs, or push infrastructure. |
 | Biometric authentication | Security model uses device lock + optional PIN (PRD §5.4.6). Biometric is an OS delegate, not an app-level auth layer. |
 | Budgeting features | Deferred to v2 (PRD §5.3, §8.2). No budget entity in the v1 domain layer. |
+
+---
+
+## 2. Tech Stack
+
+### 2.1 Core Runtime
+
+#### 2.1.1 Flutter SDK
+
+| Attribute | Value |
+|-----------|-------|
+| **SDK channel** | `stable` |
+| **Version pin strategy** | Pin to a specific stable version in `.fvmrc` via Flutter Version Management (FVM). Bumps are explicit, reviewed, and committed. No floating `stable` in CI. |
+| **Minimum Flutter version** | 3.24.x (the earliest stable release supporting Material 3 dynamic color with API 31+ constraint without conditional branching) |
+
+**Rationale for FVM pinning:** Floating on `stable` causes silent build-environment divergence between developer machines and CI. FVM pins the exact toolchain to a committed `.fvmrc` file, producing reproducible builds. Version bumps become an explicit PR-reviewed decision.
+
+#### 2.1.2 Dart SDK
+
+| Attribute | Value |
+|-----------|-------|
+| **SDK constraint** | `sdk: '>=3.4.0 <4.0.0'` |
+| **Null safety** | Sound null safety enforced. No `--no-sound-null-safety` flag anywhere in the build pipeline. |
+| **Language version** | Dart 3.x — sealed classes, patterns, records, exhaustive switches all available. |
+
+#### 2.1.3 Android Target
+
+| Attribute | Value |
+|-----------|-------|
+| **`minSdkVersion`** | 31 (Android 12) |
+| **`targetSdkVersion`** | 35 (Android 15) |
+| **`compileSdkVersion`** | 35 |
+| **ABI targets** | `arm64-v8a`, `armeabi-v7a`, `x86_64` |
+| **Material You** | `DynamicColorBuilder` from `dynamic_color` package — always active on API 31+. No API-level conditional required since API 31 is the minimum. |
+
+---
+
+### 2.2 State Management and Reactivity
+
+#### 2.2.1 Riverpod
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `flutter_riverpod ^2.6.1` |
+| **Code-gen annotation package** | `riverpod_annotation ^2.3.5` |
+| **Code-gen builder** | `riverpod_generator ^2.4.3` (dev dependency) |
+| **Lint rules** | `riverpod_lint ^2.3.13` (dev dependency) |
+
+All providers are declared using the `@riverpod` annotation. Raw `Provider(...)` constructor syntax is forbidden outside of legacy or third-party integration code.
+
+#### 2.2.2 Provider Patterns in Use
+
+| Provider Type | Usage |
+|---------------|-------|
+| `@riverpod` `AsyncNotifier<T>` | Repository-backed screen state that loads asynchronously (e.g., `TransactionListNotifier`, `AccountListNotifier`) |
+| `@riverpod` `Notifier<T>` | Synchronous state that is already in memory (e.g., active filter state, form field state) |
+| `@riverpod` `StreamProvider<T>` | Wrapping Drift `Stream<T>` reactive queries — the primary reactivity bridge between the database and UI |
+| `@riverpod` (functional) | Pure derivations — computed values from other providers with no side effects (e.g., filtered transaction list derived from a stream) |
+| `@riverpod` (functional, `keepAlive: true`) | Repository instances and database singletons — constructed once, never disposed |
+
+#### 2.2.3 Dependency Injection Strategy
+
+Riverpod's provider graph is the composition root. Repositories and infrastructure services are exposed as `keepAlive` providers. Use cases receive their dependencies via constructor injection from their own provider. There is no `get_it` or `injectable` package — Riverpod's `ref.watch` / `ref.read` is the only DI mechanism.
+
+```
+DatabaseProvider (keepAlive)
+  └── TransactionDaoProvider (keepAlive)
+        └── TransactionRepositoryProvider (keepAlive)
+              └── CreateTransactionUseCaseProvider
+                    └── TransactionFormNotifier (scoped to screen)
+```
+
+#### 2.2.4 Provider Scoping Rules
+
+- **Global (root) scope:** Database, repositories, infrastructure services (exchange rate cache, notification scheduler).
+- **Route scope (`ProviderScope` override at route level):** Form notifiers, screen-specific state.
+- **Widget scope:** Ephemeral local state that does not need to survive navigation — use `ValueNotifier` + `ValueListenableBuilder` directly, not Riverpod.
+
+---
+
+### 2.3 Database and Persistence
+
+#### 2.3.1 Drift ORM
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `drift ^2.21.0` |
+| **Dev dependency** | `drift_dev ^2.21.0` |
+| **SQLite binding** | `sqlite3_flutter_libs ^0.5.0` (bundles SQLite 3.x for Android; not relying on system SQLite to avoid version fragmentation) |
+| **Database file** | `variance.db` in `getApplicationDocumentsDirectory()` |
+
+#### 2.3.2 WAL Mode and PRAGMA Configuration
+
+The database is opened with the following pragmas applied on every connection:
+
+| PRAGMA | Value | Rationale |
+|--------|-------|-----------|
+| `journal_mode` | `WAL` | Write-ahead logging enables concurrent readers with a writer, reducing UI jank from background writes |
+| `foreign_keys` | `ON` | Enforces referential integrity at the SQLite level — domain constraint, not application-level only |
+| `synchronous` | `NORMAL` | Safe with WAL; `FULL` is unnecessarily slow on mobile |
+| `busy_timeout` | `5000` (ms) | Prevents immediate `SQLITE_BUSY` errors on concurrent access |
+| `cache_size` | `-20000` (20 MB) | Page cache sized for 10,000-transaction datasets; negative value sets kibibytes |
+
+#### 2.3.3 Migration Strategy
+
+- **Versioned migrations only.** Drift's auto-migration (`SchemaVerifier`) is used in development to detect schema drift, but production migrations are hand-written, reviewed, and committed as explicit migration steps.
+- **Schema version file:** `lib/data/database/schema/` contains one `.json` schema dump per version, generated by `drift_dev`. These are committed and diffed in code review.
+- **Migration wrapper:** `MigrationStrategy` with `onUpgrade` callback — each migration step is an idempotent SQL block. `onCreate` runs the full schema for fresh installs.
+- **Destructive fallback:** `destroyEverything()` is explicitly disabled in production. Data loss on migration failure triggers a user-visible error requiring manual backup-restore via the export feature.
+- **No migration downgrades:** Schema version is monotonically increasing. Downgrade protection is enforced by checking `schemaVersion` on open; if the on-disk version is higher than the app's compiled version, the app throws a `SchemaMismatchException` and surfaces a "please update the app" prompt.
+
+#### 2.3.4 DAO Structure
+
+Each domain aggregate has a dedicated DAO. DAOs are Drift `DatabaseAccessor` subclasses. They are not repositories — they execute queries, not domain logic.
+
+| DAO | Responsibility |
+|-----|---------------|
+| `TransactionDao` | CRUD on `transactions` and `entries` tables, atomic transaction+entries writes |
+| `AccountDao` | CRUD on `accounts` table, balance query helpers |
+| `CategoryDao` | CRUD on `categories` table, tree structure queries |
+| `TemplateDao` | CRUD on `recurring_templates` and `installment_templates` |
+| `ExchangeRateDao` | Read/write on `exchange_rate_cache` table |
+| `CurrencyDao` | Read-only access to bundled `currencies` reference table |
+
+---
+
+### 2.4 Navigation
+
+#### 2.4.1 GoRouter
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `go_router ^14.6.2` |
+| **Shell route** | `StatefulShellRoute.indexedStack` for the 3-tab bottom navigation shell, preserving each tab's navigation stack independently |
+
+#### 2.4.2 Route Structure
+
+The app uses a shell-routed 3-tab structure. Each tab is an independent `StatefulNavigationShell` branch.
+
+```
+/                             → HomeScreen (Tab 0: Home)
+  /transaction/new            → CreateTransactionScreen
+  /transaction/:id            → TransactionDetailScreen
+  /transaction/:id/edit       → EditTransactionScreen
+
+/accounts                     → AccountListScreen (Tab 1: Accounts)
+  /accounts/:id               → AccountDetailScreen
+  /accounts/new               → CreateAccountScreen
+
+/settings                     → SettingsScreen (Tab 2: Settings)
+  /settings/currency          → CurrencySettingsScreen
+  /settings/categories        → CategoryManagementScreen
+  /settings/categories/:id    → CategoryDetailScreen
+  /settings/backup            → BackupRestoreScreen
+  /settings/about             → AboutScreen
+```
+
+Modal routes (not part of the shell) are pushed as full-screen dialogs:
+
+```
+/onboarding                   → OnboardingWizardScreen (shown once on fresh install)
+/filter                       → FilterSheet (bottom sheet modal)
+/exchange-rate-detail         → ExchangeRateDetailScreen
+```
+
+#### 2.4.3 Navigation Rules
+
+- The bottom navigation bar is rendered by the `StatefulShellRoute` scaffold — it is never duplicated in individual screens.
+- Deep links within a tab use `context.go(...)` (replaces stack) for tab-root transitions and `context.push(...)` for stack-pushes within a tab.
+- The onboarding wizard uses `redirect` guard: if `onboardingComplete` is `false` in local storage, all routes redirect to `/onboarding`.
+- Route parameters are typed — `GoRouterState.pathParameters` values are parsed and validated at the route builder; invalid parameters navigate to an error screen rather than crashing.
+
+---
+
+### 2.5 Data Modeling and Serialization
+
+#### 2.5.1 Freezed — Domain Entities
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `freezed_annotation ^2.4.4` |
+| **Dev dependency** | `freezed ^2.5.7` |
+
+Freezed is used exclusively for **domain layer entities and value objects**. Every domain entity is a `@freezed` class with:
+- Immutable `const` constructor (enforced by Freezed's generated code).
+- `copyWith` for non-destructive updates.
+- `==` and `hashCode` based on field equality (structural equality, not identity).
+- `when` / `maybeWhen` for sealed union types (e.g., `TransactionStatus`, `PostingCase`).
+
+**Rule:** Freezed classes in the domain layer have zero Flutter dependencies. They do not carry `json_serializable` annotations — JSON conversion belongs in the data layer DTOs.
+
+#### 2.5.2 json_serializable — Data Transfer Objects
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `json_annotation ^4.9.0` |
+| **Dev dependency** | `json_serializable ^6.8.0` |
+
+`json_serializable` is used for:
+- **Data layer DTOs** that map to/from Drift table row types (`fromRow` / `toJson` for import-export).
+- **Exchange rate API response parsing** — the HTTP response from the exchange rate API is deserialized into a DTO before being mapped to a domain `ExchangeRate` value object.
+- **Backup/restore file format** — the JSON export schema uses `json_serializable` annotated classes for forward-compatible versioned serialization.
+
+`json_serializable` is **not** used on domain entities. Domain entities have no serialization knowledge. The data layer `fromRow` / `toEntity` mapping methods are hand-written on the DAO layer, keeping the domain free of framework annotations.
+
+#### 2.5.3 Serialization Field Naming
+
+All `json_serializable` classes use `@JsonSerializable(fieldRename: FieldRename.snake)` to produce `snake_case` JSON keys consistent with the exchange rate API response format and the backup file schema.
+
+---
+
+### 2.6 Scheduling
+
+#### 2.6.1 Decision — TC-041: Hybrid WorkManager + Exact Alarm Model
+
+**Decision:** Hybrid scheduling using WorkManager for silent background posting and `flutter_local_notifications` with exact alarms for user-visible "remind and confirm" notifications.
+
+| Package | Version | Role |
+|---------|---------|------|
+| `workmanager` | `^0.5.2` | Silent background auto-post sweep |
+| `flutter_local_notifications` | `^18.0.1` | Exact-alarm "remind and confirm" notifications |
+
+**Options evaluated:**
+
+| Option | Pros | Cons |
+|--------|------|------|
+| **App-launch sweep only** | Zero permissions, zero background power | Misses postings if user does not open app on posting day |
+| **AlarmManager only** | Exact timing guaranteed | Battery-heavy for frequent periodic work; `SCHEDULE_EXACT_ALARM` requires runtime user grant on API 31+ |
+| **WorkManager only** | OS-managed battery efficiency; survives force-stop after device restart | Cannot guarantee exact delivery time; 15-minute minimum period; unsuitable for time-critical notifications |
+| **WorkManager + Exact Alarm (chosen)** | WorkManager handles silent posting (battery-safe, OS-managed); exact alarm handles only the time-critical notification event — minimal exact alarm usage | Two scheduling systems to maintain; `SCHEDULE_EXACT_ALARM` permission still required |
+
+**Rationale:** WorkManager is the Android-recommended mechanism for deferrable background work. It survives device restart and force-stop (with the `RECEIVE_BOOT_COMPLETED` permission), which satisfies the catch-up requirement. Exact alarms are reserved exclusively for "remind and confirm" notification delivery — the only case where the user has explicitly requested an on-time event. This minimizes exact alarm usage to the OS-permitted minimum and avoids battery-heavy always-on alarms for silent posting.
+
+**Scheduling model:**
+
+1. **App-launch sweep (synchronous, in `AppInitializer`):** On every cold start, before the first frame, sweep all templates and future-dated transactions with `scheduled_date <= today`. Post any overdue items synchronously. This is the primary catch-up mechanism.
+2. **WorkManager periodic task (`PostingSweeperWorker`):** Registered once on install with a 6-hour minimum period. Executes the same catch-up sweep in the background when the device is idle and charging (constraints: `NetworkType.not_required`, `requiresCharging: false`, `requiresDeviceIdle: false`). Ensures postings do not wait until the user next opens the app.
+3. **Exact alarm (`ReminderAlarmScheduler`):** Scheduled only for recurring templates with `posting_mode = REMIND_AND_CONFIRM`. Uses `flutter_local_notifications` `AndroidScheduleMode.exactAllowWhileIdle`. Fires the "review and confirm" notification at the template's scheduled time. If the user denies `SCHEDULE_EXACT_ALARM`, the app degrades gracefully: "remind and confirm" templates fall back to app-launch posting with a settings-screen notice.
+
+**Permission manifest entries:** `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `POST_NOTIFICATIONS` (runtime grant on API 33+).
+
+---
+
+### 2.7 Exchange Rate
+
+#### 2.7.1 Decision — TC-006: Frankfurter API
+
+**Decision:** Use **Frankfurter** (`api.frankfurter.app`) as the exchange rate data source.
+
+**Options evaluated:**
+
+| API | Auth required | Free tier limits | Currency coverage | Self-hostable | Verdict |
+|-----|--------------|------------------|-------------------|---------------|---------|
+| **Frankfurter** (chosen) | None | Unlimited (open-source, ECB data) | ~33 major currencies | Yes (open-source) | **Selected** |
+| Open Exchange Rates | API key required (free tier) | 1,000 req/month on free tier | 170+ currencies | No | Rejected — key management on a local-only app is friction with no user benefit |
+| ExchangeRate-API | API key required | 1,500 req/month free | 160+ currencies | No | Rejected — same key management friction |
+| Fixer.io | API key required (paid for HTTPS) | HTTPS requires paid plan | 170+ currencies | No | Rejected — cost |
+| CurrencyLayer | API key required | 100 req/month free | 168 currencies | No | Rejected — too low free tier |
+
+**Rationale for Frankfurter:**
+- No API key — no secrets management problem on a local-only app.
+- Open-source and self-hostable — no single-point-of-failure dependency.
+- ECB (European Central Bank) source data — authoritative daily rates.
+- 33 major currencies cover the vast majority of Variance user accounts (PRD §7.1 lists supported currencies).
+- Rate: one request per day per user, essentially zero load. Free forever.
+
+**Tradeoff accepted:** 33 currencies vs. 170+ on commercial APIs. If a user creates an account in an exotic currency not in Frankfurter's set, the exchange rate service silently skips that currency pair, and the UI shows "Rate unavailable" inline (PRD §5.2.1 FG-C12). This is acceptable per PRD §7.1.
+
+#### 2.7.2 Fetch Trigger and Schedule
+
+- **Trigger:** WorkManager one-time task, enqueued on app launch if the last successful fetch is older than 23 hours (allowing a daily cadence with a 1-hour tolerance for WorkManager scheduling jitter).
+- **Constraint:** `NetworkType.connected` — only fires when internet is available. No retry on failure (silent failure per TC-006 PM response).
+- **Scope:** Fetch only the currencies for which the user has active accounts (TC-006 PM requirement). The query `SELECT DISTINCT currency FROM accounts WHERE is_deleted = FALSE` is executed before the network call. If the user has only one currency (the home currency), no fetch is issued.
+- **Endpoint:** `GET https://api.frankfurter.app/latest?from={home_currency}&to={comma_separated_other_currencies}`
+- **Timeout:** 10 seconds. On timeout, the WorkManager task exits cleanly; failure is not rethrown.
+
+#### 2.7.3 Cache Schema
+
+```sql
+CREATE TABLE exchange_rate_cache (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_currency   TEXT    NOT NULL,
+    to_currency     TEXT    NOT NULL,
+    rate            REAL    NOT NULL,
+    fetched_at      INTEGER NOT NULL,  -- Unix epoch seconds
+    rate_date       TEXT    NOT NULL,  -- ISO 8601 date from API response (ECB publication date)
+    UNIQUE (from_currency, to_currency)
+);
+
+CREATE INDEX idx_exchange_rate_pair ON exchange_rate_cache (from_currency, to_currency);
+```
+
+- `UNIQUE (from_currency, to_currency)` — `INSERT OR REPLACE` upserts rates on each successful fetch.
+- `fetched_at` — wall-clock time of the fetch; used to compute staleness.
+- `rate_date` — the ECB publication date from the Frankfurter response; shown in the UI alongside the rate.
+
+#### 2.7.4 Staleness and Offline Fallback
+
+| Condition | Behaviour |
+|-----------|-----------|
+| Rate age ≤ 14 days | Use cached rate silently |
+| Rate age > 14 days | Show "Rate last updated N days ago" disclaimer inline (PRD §5.2.1 FG-C12) — transaction can still be saved |
+| No rate exists for a pair | Show "Exchange rate unavailable" — home currency equivalent field is omitted from display |
+| Fetch succeeds | Upsert all returned pairs; update `fetched_at` |
+| Fetch fails / times out | Retain existing cache; no user notification |
+
+#### 2.7.5 Architectural Isolation
+
+The exchange rate service lives entirely in `lib/infrastructure/exchange_rates/`. It has no imports from the domain layer (other than `ExchangeRate` value object from `lib/domain/`). The domain layer reads rates exclusively through `ExchangeRateRepository` — an interface defined in the domain layer and implemented in the data layer. Core functionality (posting, balance calculation) has no compile-time dependency on the exchange rate infrastructure module.
+
+---
+
+### 2.8 Search
+
+#### 2.8.1 Decision — TC-009: SQLite FTS5 with Dart-Side Scoring
+
+**Decision:** SQLite FTS5 virtual table for full-text indexing, with a Dart-side scoring pass for ranking and typo-tolerance.
+
+**Options evaluated:**
+
+| Option | Pros | Cons |
+|--------|------|------|
+| **Pure Dart in-memory filtering** | Simple, no schema dependency, easy typo-tolerance | Requires loading all 10,000 records into memory; O(N) scan on every keystroke; 500ms budget (NF-3) is tight at scale |
+| **SQLite FTS5 only** | Sub-millisecond index lookup; database-native; no memory pressure | FTS5 tokenizer is word-based — typo-tolerance requires custom tokenizer or secondary pass; ranking function (`bm25`) does not support field-weight bias |
+| **FTS5 + Dart scoring pass (chosen)** | FTS5 narrows the candidate set to hundreds of rows; Dart pass applies field-weight ranking and typo-tolerance on the small result set; stays well within 500ms | Two-stage pipeline to maintain; FTS5 virtual table is additional schema surface |
+
+**Rationale:** At 10,000 transactions, a pure Dart O(N) scan on every keystroke risks exceeding the 500ms budget, particularly on mid-range Android devices (PRD NF-3 baseline). FTS5 reduces the candidate set before the Dart pass, bounding the Dart work to a small result set regardless of total transaction count. This hybrid approach satisfies the performance target while enabling the fzf-style ranking the PRD requires.
+
+#### 2.8.2 FTS5 Schema
+
+```sql
+CREATE VIRTUAL TABLE transactions_fts USING fts5(
+    transaction_id UNINDEXED,
+    title,
+    description,
+    account_name,
+    category_name,
+    content='transactions_search_view',
+    content_rowid='id',
+    tokenize='unicode61 remove_diacritics 2'
+);
+```
+
+- `title` and `account_name` are indexed with default tokenization.
+- `description` and `category_name` are included for substring matching.
+- `transaction_id UNINDEXED` is stored in the FTS table for joining back to the main `transactions` table without a rowid translation.
+- `content=` specifies a `transactions_search_view` that denormalizes the joined fields for FTS indexing.
+- `tokenize='unicode61 remove_diacritics 2'` handles accented characters (e.g., "café" matches "cafe").
+
+FTS5 content sync is maintained by `AFTER INSERT`, `AFTER UPDATE`, `AFTER DELETE` triggers on the `transactions` table (Drift trigger definitions in `TransactionDao`).
+
+#### 2.8.3 Ranking Algorithm
+
+Search is executed as a two-stage pipeline:
+
+**Stage 1 — FTS5 prefix and exact match query (SQL):**
+```sql
+SELECT transaction_id, rank
+FROM transactions_fts
+WHERE transactions_fts MATCH '{title account_name}: "^{query}" OR {description category_name}: "{query}"'
+ORDER BY rank
+LIMIT 500;
+```
+
+The `^` prefix in the title/account_name clause matches prefix hits (higher rank). The full-text clause on description/category_name provides substring recall. FTS5 `rank` (`bm25` with default field weights) is used for initial ordering.
+
+**Stage 2 — Dart scoring pass (`SearchRanker`):**
+
+After the FTS5 query returns at most 500 candidates, the Dart `SearchRanker` assigns a composite score:
+
+| Signal | Weight | Rationale |
+|--------|--------|-----------|
+| Exact match on title | 1.00 | Highest confidence — user typed the exact title |
+| Prefix match on title | 0.80 | Strong intent signal |
+| Prefix match on account name | 0.70 | Account names are short and memorable |
+| Substring match on title | 0.60 | Less specific but still title-relevant |
+| Substring match on description | 0.30 | Description is free text; lower signal |
+| Substring match on category name | 0.25 | Category is navigable by other means |
+| Typo-tolerant match (edit distance 1) | 0.40 (title) / 0.20 (other fields) | Applied via Dart-side Levenshtein on the candidate set |
+
+**Tiebreaker:** Equal scores sort by `transaction_date DESC` (most recent first, per TC-009 PM requirement).
+
+**Typo tolerance:** Levenshtein distance-1 matching is applied in Dart on the candidate set returned by FTS5 (at most 500 rows). This is computationally bounded regardless of total transaction count.
+
+#### 2.8.4 Search Scope
+
+- Search operates on the active (non-deleted) transaction set only.
+- The month filter on the home screen and the search query are combined — FTS5 query is augmented with a `WHERE transaction_date BETWEEN :start AND :end` join on the main table (TC-050 scoping per PM response).
+- Unified transaction list search (all-time) uses the FTS5 table without a date filter.
+
+---
+
+### 2.9 Error Handling Patterns
+
+#### 2.9.1 Decision — TC-033: Result Type Pattern
+
+**Decision:** Standardize on a `Result<T, E>` sealed type for all repository and use case return values. Exception-based error propagation is permitted only within a single layer and must not cross layer boundaries.
+
+**Options evaluated:**
+
+| Option | Pros | Cons |
+|--------|------|------|
+| **Exception-based (throw/catch)** | Familiar to most Dart developers; less boilerplate for happy path | Exceptions are invisible in type signatures; callers can silently ignore error paths; hard to exhaustively handle in UI |
+| **Result type (chosen)** | Error paths are explicit in the type signature; callers must handle both branches; `sealed` + `switch` gives exhaustive compile-time checking; aligns with Dart 3 pattern matching idioms | Slightly more verbose in the happy path; requires a thin `Result` type definition |
+
+**Rationale:** Variance is a financial app. Every ledger write failure must be surfaced to the user (TC-033 PM requirement: no silent failures, preserved form state). The Result type makes it structurally impossible to forget the error case — the UI presenter cannot call `.value` without handling `.error` first. Combined with Dart 3 sealed classes and exhaustive switch, this produces compile-time-verified error handling across all ledger operations.
+
+#### 2.9.2 Result Type Definition
+
+```dart
+// lib/domain/core/result.dart
+sealed class Result<T> {
+  const Result();
+}
+
+final class Ok<T> extends Result<T> {
+  const Ok(this.value);
+  final T value;
+}
+
+final class Err<T> extends Result<T> {
+  const Err(this.failure);
+  final Failure failure;
+}
+```
+
+`Failure` is a sealed hierarchy covering all domain error types:
+
+```dart
+// lib/domain/core/failure.dart
+sealed class Failure {
+  const Failure(this.message);
+  final String message;
+}
+
+final class DatabaseFailure extends Failure { ... }
+final class ValidationFailure extends Failure { ... }
+final class NetworkFailure extends Failure { ... }
+final class NotFoundFailure extends Failure { ... }
+final class BusinessRuleFailure extends Failure { ... }
+```
+
+#### 2.9.3 Layer-Boundary Rules
+
+| Layer | Error handling rule |
+|-------|---------------------|
+| **Data layer (DAOs, repositories)** | Catches `DriftDatabaseException` and `SqliteException`; wraps in `Err(DatabaseFailure(...))`. Never rethrows raw exceptions across the boundary. |
+| **Domain layer (use cases)** | Returns `Result<T>`. Business rule violations (e.g., posting to a deleted account) return `Err(BusinessRuleFailure(...))`. Never throws. |
+| **Presentation layer (notifiers)** | Receives `Result<T>` from use cases. Maps `Err` to a `ScreenState.error(message)` variant. Sets `AsyncValue.error` via `AsyncNotifier`. Never swallows errors. |
+| **Infrastructure layer** | Internal exceptions (network timeout, JSON parse error) are caught and converted to `Err(NetworkFailure(...))` before crossing into the domain. |
+
+#### 2.9.4 Ledger Operation Failure Modes
+
+| Failure mode | ACID guarantee | User experience |
+|--------------|---------------|-----------------|
+| Database write fails mid-transaction | Full rollback (Drift wraps in SQLite transaction) | "Unable to save this transaction. Please try again." — form data preserved in notifier state |
+| Validation failure before write | No DB access attempted | Inline field error on the form — no toast or dialog |
+| Reversal succeeds but correction fails | Full rollback — both operations are in a single `database.transaction(() {...})` call | "Unable to update this transaction. Please try again." — form data preserved |
+| Account balance would go negative (future rule) | Rejected at use case level before DB write | `BusinessRuleFailure` → inline error message |
+| Foreign key violation (e.g., deleted account referenced) | DB rejects insert; rolled back | `DatabaseFailure` mapped to generic retry message |
+
+#### 2.9.5 Form State Preservation
+
+The `TransactionFormNotifier` (a Riverpod `Notifier`) holds the full form state. On save failure, the notifier transitions to `FormState.saveError(message)` while retaining all field values. The form screen observes this state and shows a `SnackBar` with the error message — form fields remain populated and editable. The user can correct any issue and retry without re-entering data.
+
+---
+
+### 2.10 Code Generation Pipeline
+
+#### 2.10.1 Build Runner
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `build_runner ^2.4.13` (dev dependency) |
+| **Execution mode** | Single-shot (`dart run build_runner build --delete-conflicting-outputs`) for CI and clean builds. Watch mode (`dart run build_runner watch`) for local development. |
+
+#### 2.10.2 Generator Execution Order
+
+`build_runner` resolves generator order via declared input/output file extensions. The effective execution order is:
+
+```
+1. drift_dev          →  *.drift.dart, *.g.dart (DAO queries, table definitions)
+2. freezed            →  *.freezed.dart (domain entities, union types)
+3. json_serializable  →  *.g.dart (DTO fromJson/toJson)
+4. riverpod_generator →  *.g.dart (provider declarations)
+```
+
+Drift must run before Riverpod because DAOs and table row types generated by Drift are referenced in repository provider declarations.
+
+#### 2.10.3 Output File Conventions
+
+| Generator | Output extension | Committed to repo? |
+|-----------|----------------|--------------------|
+| `drift_dev` | `*.g.dart` | No — generated |
+| `freezed` | `*.freezed.dart` | No — generated |
+| `json_serializable` | `*.g.dart` | No — generated |
+| `riverpod_generator` | `*.g.dart` | No — generated |
+
+All `*.g.dart` and `*.freezed.dart` files are listed in `.gitignore`. They are regenerated in CI as the first build step before compilation.
+
+#### 2.10.4 CI Build Sequence
+
+```
+1. flutter pub get
+2. dart run build_runner build --delete-conflicting-outputs
+3. dart analyze
+4. dart format --set-exit-if-changed .
+5. flutter test
+6. flutter build apk --release (for release CI only)
+```
+
+---
+
+### 2.11 Testing Stack
+
+#### 2.11.1 Test Pyramid Targets
+
+| Test type | Coverage target | Tooling |
+|-----------|----------------|---------|
+| Unit (domain + use cases) | 90% line coverage | `flutter_test` |
+| Unit (repositories + DAOs) | 85% line coverage | `flutter_test` + Drift in-memory DB |
+| Widget tests | All non-trivial widgets | `flutter_test` |
+| Golden tests | All screens, key states (empty, loaded, error) | `alchemist ^0.8.0` |
+| Integration tests | Critical user flows (create transaction, edit transaction, balance check) | `integration_test` |
+| **Overall minimum** | **80%** | — |
+
+#### 2.11.2 Unit Testing
+
+| Attribute | Value |
+|-----------|-------|
+| **Framework** | `flutter_test` (included with Flutter SDK — no separate package) |
+| **Mocking** | `mocktail ^1.0.4` — type-safe mocking without code generation; fakes preferred over mocks for repository boundaries |
+| **Drift in-memory DB** | `NativeDatabase.memory()` from `drift` package — used in repository unit tests to exercise real SQL queries without file I/O |
+
+**Rule:** Domain use cases are tested against fake repository implementations (handwritten classes that implement the repository interface), not mocks. Mocks are used only for infrastructure boundaries (network client, notification scheduler) where the implementation detail is irrelevant to the test.
+
+#### 2.11.3 Widget Testing
+
+Standard `flutter_test` `WidgetTester`. Providers are overridden in a `ProviderScope` wrapper around the widget under test. No `BuildContext` threading — all state is injected via Riverpod overrides.
+
+#### 2.11.4 Golden Tests
+
+| Attribute | Value |
+|-----------|-------|
+| **Package** | `alchemist ^0.8.0` |
+| **Strategy** | Per-screen golden snapshots for: empty state, loading state, populated state, error state |
+| **CI enforcement** | `alchemist` `--ci` mode in CI pipeline; mismatches are build failures |
+| **Update workflow** | Goldens are updated locally by the developer with `--update-goldens`; updated snapshots are committed and reviewed in PR |
+| **Platform baseline** | Goldens are captured on a fixed Android emulator (API 34, Pixel 6 form factor) to ensure consistent rendering |
+
+The founder is the visual reviewer for golden test failures in code review (per project visual testing strategy).
+
+#### 2.11.5 Integration Tests
+
+`integration_test` package (Flutter SDK). Critical flows tested end-to-end on device/emulator:
+
+1. Onboarding → create first account → create first transaction → verify balance.
+2. Create recurring template → advance clock → verify auto-post on app launch.
+3. Edit transaction (non-financial field) → verify in-place update.
+4. Edit transaction (financial field) → verify reversal + correction pair.
+5. Delete account → verify soft-delete and balance zeroing.
+
+---
+
+### 2.12 Build and Release Tooling
+
+#### 2.12.1 App Icon Generation
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `flutter_launcher_icons` | `^0.14.3` (dev) | Generates all Android mipmap icon densities from a single source PNG |
+
+Configuration is in `flutter_launcher_icons.yaml`. The icon source file is `assets/icon/app_icon.png` (1024×1024, no transparency). Adaptive icon foreground and background layers are specified separately for Android API 26+ adaptive icon support.
+
+#### 2.12.2 Splash Screen
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `flutter_native_splash` | `^2.4.3` (dev) | Generates Android 12 splash screen XML and pre-API-31 launch theme |
+
+Configuration is in `flutter_native_splash.yaml`. The splash uses the app's seed color as background with the icon centered. Dark mode variant is specified separately.
+
+#### 2.12.3 ProGuard / R8
+
+`flutter build apk --release` and `flutter build appbundle --release` enable R8 by default. The project maintains `android/app/proguard-rules.pro` with explicit keep rules for:
+
+- Drift reflection stubs (Drift requires keeping database class names for SQLite open).
+- `json_serializable` generated classes (if used in any reflection-dependent path).
+- `workmanager` worker class names (WorkManager resolves worker classes by name at runtime).
+- `flutter_local_notifications` receiver and service classes.
+
+#### 2.12.4 Build Flavors
+
+Three build flavors are defined in `android/app/build.gradle`:
+
+| Flavor | Application ID suffix | Purpose |
+|--------|----------------------|---------|
+| `dev` | `.dev` | Local development — verbose logging, debug overlay |
+| `staging` | `.staging` | QA and pre-release testing — release-mode build, test data seeding permitted |
+| `prod` | _(none)_ | App Store submission — no debug output, no test data |
+
+Flavor-specific configuration (API endpoint for exchange rates, logging level) is injected via `dart-define-from-file` from flavor-specific `.env.json` files. These files are not committed — they are populated in CI from secrets.
+
+#### 2.12.5 Version Management
+
+Version is controlled exclusively via the `version` file at the repo root (owner: founder). The `pubspec.yaml` `version` field is kept in sync with the `version` file by a CI check — a mismatch is a build warning, not a failure, to avoid blocking the founder's workflow.
+
+---
+
+### 2.13 Linting and Static Analysis
+
+#### 2.13.1 Analysis Configuration
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `flutter_lints` | `^5.0.0` (dev) | Flutter-recommended lint ruleset, extends `lints` |
+
+`analysis_options.yaml` extends `package:flutter_lints/flutter.yaml` with the following additional rules enabled:
+
+```yaml
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    missing_required_param: error
+    missing_return: error
+    dead_code: warning
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+
+linter:
+  rules:
+    avoid_print: true
+    prefer_single_quotes: true
+    always_use_package_imports: true
+    avoid_dynamic_calls: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    require_trailing_commas: true
+    use_string_buffers: true
+    avoid_positional_boolean_parameters: true
+    use_super_parameters: true
+```
+
+Generated files (`*.g.dart`, `*.freezed.dart`) are excluded from analysis to avoid false positives from generator output.
+
+#### 2.13.2 Formatting and Auto-Fix
+
+- **`dart format`:** Enforced in CI (`dart format --set-exit-if-changed .`). Line length: 80 characters (Dart default).
+- **`dart fix`:** Run locally as a pre-commit step. Fixes are committed before pushing. CI does not run `dart fix` automatically to avoid non-deterministic CI mutations.
+- **Pre-commit hook:** Defined in `.git/hooks/pre-commit` (installed via `scripts/install-hooks.sh`). Runs `dart format` and `dart analyze` on staged Dart files.
+
+---
+
+### 2.14 Complete Dependency Table
+
+All packages use `^` (caret) constraints. Version numbers reflect the latest stable release as of April 2026. Versions are to be validated against pub.dev at project initialisation and pinned in `pubspec.lock`.
+
+#### 2.14.1 Production Dependencies
+
+| Package | Version constraint | Purpose |
+|---------|-------------------|---------|
+| `flutter_riverpod` | `^2.6.1` | State management and DI graph |
+| `riverpod_annotation` | `^2.3.5` | `@riverpod` annotations for code-gen providers |
+| `drift` | `^2.21.0` | Type-safe SQLite ORM with reactive streams |
+| `sqlite3_flutter_libs` | `^0.5.0` | Bundled SQLite 3.x binary for Android |
+| `go_router` | `^14.6.2` | Declarative routing with deep link and shell route support |
+| `freezed_annotation` | `^2.4.4` | Immutable data class annotations |
+| `json_annotation` | `^4.9.0` | JSON serialization annotations for DTOs |
+| `workmanager` | `^0.5.2` | Android WorkManager for background posting sweeps |
+| `flutter_local_notifications` | `^18.0.1` | Exact-alarm "remind and confirm" notifications |
+| `http` | `^1.2.2` | Exchange rate API HTTP client |
+| `dynamic_color` | `^1.7.0` | Material You dynamic color from Android 12 wallpaper |
+| `flutter_secure_storage` | `^9.2.2` | Secure storage for PIN and sensitive preferences |
+| `intl` | `^0.19.0` | Date/number formatting, locale-aware display |
+| `path_provider` | `^2.1.4` | Platform-aware paths for database and export files |
+| `share_plus` | `^10.1.2` | Share/export backup files via Android share sheet |
+| `file_picker` | `^8.1.4` | Import backup files from device storage |
+| `image_picker` | `^1.1.2` | Attach photos to transactions (camera and gallery) |
+| `flutter_image_compress` | `^2.3.0` | Photo compression before storage (TC-007) |
+| `path` | `^1.9.0` | File path utilities |
+| `collection` | `^1.18.0` | Extended collection utilities (`groupBy`, `sorted`) |
+| `decimal` | `^3.0.2` | Arbitrary-precision decimal arithmetic for currency amounts |
+
+#### 2.14.2 Development Dependencies
+
+| Package | Version constraint | Purpose |
+|---------|-------------------|---------|
+| `riverpod_generator` | `^2.4.3` | Code generator for `@riverpod` annotated providers |
+| `riverpod_lint` | `^2.3.13` | Lint rules enforcing Riverpod best practices |
+| `drift_dev` | `^2.21.0` | Code generator for Drift table definitions and DAOs |
+| `freezed` | `^2.5.7` | Code generator for `@freezed` immutable data classes |
+| `json_serializable` | `^6.8.0` | Code generator for `@JsonSerializable` DTOs |
+| `build_runner` | `^2.4.13` | Build system orchestrating all code generators |
+| `mocktail` | `^1.0.4` | Type-safe mocking for unit tests |
+| `alchemist` | `^0.8.0` | Golden test framework with CI comparison support |
+| `flutter_lints` | `^5.0.0` | Flutter lint ruleset |
+| `flutter_launcher_icons` | `^0.14.3` | Generates Android adaptive icon assets |
+| `flutter_native_splash` | `^2.4.3` | Generates Android 12 splash screen assets |
+
+#### 2.14.3 Dependency Notes
+
+- **`decimal` over `double` for amounts:** All monetary amounts are stored and computed using the `decimal` package's `Decimal` type. `double` is forbidden for financial arithmetic. Amounts are persisted in SQLite as `INTEGER` (smallest currency unit, e.g., paise for INR, cents for USD) and converted to `Decimal` at the DAO boundary.
+- **`http` over `dio`:** A single exchange rate endpoint with no interceptor chain, retry middleware, or auth headers does not justify `dio`'s overhead. `http` is lighter and sufficient.
+- **`sqlite3_flutter_libs` version constraint:** Must be kept in sync with `drift`'s tested SQLite version. Check `drift` changelog on every `drift` version bump.
