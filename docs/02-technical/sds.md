@@ -52,7 +52,75 @@ outputs_to:
       - [1.6.6 Universal Soft-Delete](#166-universal-soft-delete)
       - [1.6.7 Transaction Immutability and Correction Model](#167-transaction-immutability-and-correction-model)
       - [1.6.8 Scheduling Architecture](#168-scheduling-architecture)
+      - [1.6.9 File Size Constraint — 800-Line Maximum](#169-file-size-constraint--800-line-maximum)
+      - [1.6.10 O(1) Date Arithmetic — No Iteration Loops for Period Calculations](#1610-o1-date-arithmetic--no-iteration-loops-for-period-calculations)
     - [1.7 Explicit Out-of-Scope](#17-explicit-out-of-scope)
+  - [2. Tech Stack](#2-tech-stack)
+    - [2.1 Core Runtime](#21-core-runtime)
+      - [2.1.1 Flutter SDK](#211-flutter-sdk)
+      - [2.1.2 Dart SDK](#212-dart-sdk)
+      - [2.1.3 Android Target](#213-android-target)
+    - [2.2 State Management and Reactivity](#22-state-management-and-reactivity)
+      - [2.2.1 Riverpod](#221-riverpod)
+      - [2.2.2 Provider Patterns in Use](#222-provider-patterns-in-use)
+      - [2.2.3 Dependency Injection Strategy](#223-dependency-injection-strategy)
+      - [2.2.4 Provider Scoping Rules](#224-provider-scoping-rules)
+    - [2.3 Database and Persistence](#23-database-and-persistence)
+      - [2.3.1 Drift ORM](#231-drift-orm)
+      - [2.3.2 WAL Mode and PRAGMA Configuration](#232-wal-mode-and-pragma-configuration)
+      - [2.3.3 Migration Strategy](#233-migration-strategy)
+      - [2.3.4 DAO Structure](#234-dao-structure)
+    - [2.4 Navigation](#24-navigation)
+      - [2.4.1 GoRouter](#241-gorouter)
+      - [2.4.2 Route Structure](#242-route-structure)
+      - [2.4.3 Navigation Rules](#243-navigation-rules)
+    - [2.5 Data Modeling and Serialization](#25-data-modeling-and-serialization)
+      - [2.5.1 Freezed — Domain Entities](#251-freezed--domain-entities)
+      - [2.5.2 json\_serializable — Data Transfer Objects](#252-json_serializable--data-transfer-objects)
+      - [2.5.3 Serialization Field Naming](#253-serialization-field-naming)
+    - [2.6 Scheduling](#26-scheduling)
+      - [2.6.1 Decision — TC-041: Hybrid WorkManager + Exact Alarm Model](#261-decision--tc-041-hybrid-workmanager--exact-alarm-model)
+    - [2.7 Exchange Rate](#27-exchange-rate)
+      - [2.7.1 Decision — TC-006: fawazahmed0 Exchange API](#271-decision--tc-006-fawazahmed0-exchange-api)
+      - [2.7.2 Fetch Trigger and Schedule](#272-fetch-trigger-and-schedule)
+      - [2.7.3 Cache Schema](#273-cache-schema)
+      - [2.7.4 Staleness and Offline Fallback](#274-staleness-and-offline-fallback)
+      - [2.7.5 Architectural Isolation](#275-architectural-isolation)
+    - [2.8 Search](#28-search)
+      - [2.8.1 Decision — TC-009: SQLite FTS5 with Dart-Side Scoring](#281-decision--tc-009-sqlite-fts5-with-dart-side-scoring)
+      - [2.8.2 FTS5 Schema](#282-fts5-schema)
+      - [2.8.3 Ranking Algorithm](#283-ranking-algorithm)
+      - [2.8.4 Search Scope](#284-search-scope)
+    - [2.9 Error Handling Patterns](#29-error-handling-patterns)
+      - [2.9.1 Decision — TC-033: Result Type Pattern](#291-decision--tc-033-result-type-pattern)
+      - [2.9.2 Result Type Definition](#292-result-type-definition)
+      - [2.9.3 Layer-Boundary Rules](#293-layer-boundary-rules)
+      - [2.9.4 Ledger Operation Failure Modes](#294-ledger-operation-failure-modes)
+      - [2.9.5 Form State Preservation](#295-form-state-preservation)
+    - [2.10 Code Generation Pipeline](#210-code-generation-pipeline)
+      - [2.10.1 Build Runner](#2101-build-runner)
+      - [2.10.2 Generator Execution Order](#2102-generator-execution-order)
+      - [2.10.3 Output File Conventions](#2103-output-file-conventions)
+      - [2.10.4 CI Build Sequence](#2104-ci-build-sequence)
+    - [2.11 Testing Stack](#211-testing-stack)
+      - [2.11.1 Test Pyramid Targets](#2111-test-pyramid-targets)
+      - [2.11.2 Unit Testing](#2112-unit-testing)
+      - [2.11.3 Widget Testing](#2113-widget-testing)
+      - [2.11.4 Golden Tests](#2114-golden-tests)
+      - [2.11.5 Integration Tests](#2115-integration-tests)
+    - [2.12 Build and Release Tooling](#212-build-and-release-tooling)
+      - [2.12.1 App Icon Generation](#2121-app-icon-generation)
+      - [2.12.2 Splash Screen](#2122-splash-screen)
+      - [2.12.3 ProGuard / R8](#2123-proguard--r8)
+      - [2.12.4 Build Flavors](#2124-build-flavors)
+      - [2.12.5 Version Management](#2125-version-management)
+    - [2.13 Linting and Static Analysis](#213-linting-and-static-analysis)
+      - [2.13.1 Analysis Configuration](#2131-analysis-configuration)
+      - [2.13.2 Formatting and Auto-Fix](#2132-formatting-and-auto-fix)
+    - [2.14 Complete Dependency Table](#214-complete-dependency-table)
+      - [2.14.1 Production Dependencies](#2141-production-dependencies)
+      - [2.14.2 Development Dependencies](#2142-development-dependencies)
+      - [2.14.3 Dependency Notes](#2143-dependency-notes)
 
 
 # System Design Spec — Variance
@@ -197,11 +265,12 @@ Navigation uses **GoRouter** with a `ShellRoute` wrapping the three-tab bottom n
 
 ##### 1.3.2.1 Domain Services
 
-Three domain services encapsulate the DEB engine logic:
+Four domain services encapsulate the DEB engine logic:
 
 - **LedgerEngine** — validates posting cases, constructs entry sets, enforces `Σdebit = Σcredit` invariant (PRD §4.4).
 - **BalanceCalculator** — computes account balances using the universal formula `balance = Σdebit − Σcredit` (PRD §4.6). Handles multi-currency conversion via `exchange_rate_to_home`.
 - **PostingCaseSelector** — given an event type (create, modify, delete, balance-edit) and entity state, selects the correct ledger posting case from PRD §4.11 and `ledger-entry.md`.
+- **PeriodCalculator** — O(1) computation of the current period window for recurring templates and budgets. Takes a start date, period type (daily/weekly/monthly/yearly/custom), and a reference date; returns a `DateRange`. No iteration. Handles month-boundary and leap-year edge cases via Dart `DateTime` constructor arithmetic. See §1.6.10.
 
 These are stateless. They take entities as input and return entry sets or computed values. They have no I/O.
 
@@ -236,9 +305,12 @@ Drift (formerly Moor) is chosen for SQLite access. Rationale: type-safe Dart que
 | Background scheduling | `workmanager` | Recurring transaction auto-post; catch-up sweep on app launch |
 | Exact-alarm notifications | `flutter_local_notifications` | Remind-and-confirm recurring prompts; credit card payment reminders |
 | File I/O | `dart:io` + platform file picker | Backup zip export; photo attachment storage |
-| HTTP (opportunistic) | `dio` | Exchange rate fetch (background, offline-tolerant) |
-| Secure storage | `flutter_secure_storage` | PIN hash; app lock state |
+| HTTP (opportunistic) | `http` | Exchange rate fetch (background, offline-tolerant) |
+| Database encryption | `sqlcipher_flutter_libs` | SQLCipher encryption at rest for all financial data |
+| Secure storage | `flutter_secure_storage` | SQLCipher key material; PIN hash; app lock state (backed by Android Keystore) |
 | Crash reporting | `firebase_crashlytics` (opt-in build flavour) | Crash capture; zero PII |
+
+**Database encryption is a v1 requirement (AP-4 from competitive analysis).** All financial data is encrypted at rest using SQLCipher. The encryption key is derived from a biometric-backed Android Keystore entry, accessed exclusively via `flutter_secure_storage`. There is no unencrypted migration path — the database is created encrypted from first launch. The `sqlite3_flutter_libs` plain SQLite binding is replaced by `sqlcipher_flutter_libs` (see §2.3.1).
 
 Infrastructure services are injected into the Data layer or domain services via constructor injection. They are never imported by the Domain layer directly — domain abstractions (e.g., `IdGenerator`, `ClockService`) are defined in the domain layer and implemented in infrastructure.
 
@@ -293,22 +365,30 @@ Infrastructure services are injected into the Data layer or domain services via 
          ▼
 [Data: TransactionLocalDataSource]
   — drift watchStatement() emits new snapshot on every write
+  — query uses cursor-based pagination: WHERE date < :cursor ORDER BY date DESC LIMIT :pageSize+1
+  — the +1 result determines hasNextPage without a separate COUNT query
          │
          ▼
-[Data: TransactionRepositoryImpl.watchTransactions()]
+[Data: TransactionRepositoryImpl.watchTransactions(cursor, pageSize)]
   — maps DTO rows → domain Transaction entities
-  — emits Stream<List<Transaction>>
+  — emits Stream<PagedResult<Transaction>>
          │
          ▼
 [Domain: no use case involved — reads are pure projections]
          │
          ▼
-[Presentation: transactionsProvider (AsyncNotifier or StreamProvider)]
+[Presentation: transactionsProvider (AsyncNotifier)]
+  — manages current page cursor, loading state, hasNextPage flag
+  — triggers next-page load when user scrolls within threshold of list bottom
   — ref.watch() → rebuilds only affected widgets via select()
          │
          ▼
-[Widget: TransactionListView rebuilds with new data]
+[Widget: TransactionListView — SliverList.builder pattern]
+  — never loads full dataset; renders only the paged window
+  — grouped by date (grouping performed in query layer, not widget layer)
 ```
+
+**Pagination requirement (AP-5 from competitive analysis):** Loading the full transaction table into a `StreamBuilder` (as in Cashew's `DEFAULT_LIMIT = 100000` pattern) is a time bomb at 3,000+ transactions. The transaction list must use cursor-based pagination. The cursor is the `date` of the last-seen transaction; the next page loads records with `date < cursor`. Page size: 50 transactions per page (configurable constant). `SliverList.builder` is the required widget pattern — no `ListView` with a pre-built children list. Financial aggregation (category totals, net worth computation) that operates on more than 500 rows must be offloaded to a background isolate via `Isolate.run()` or `compute()` to protect the main thread from frame drops.
 
 #### 1.4.3 Background Write — Recurring Auto-Post
 
@@ -388,7 +468,8 @@ lib/
 │   └── services/                      # Domain services (no I/O)
 │       ├── ledger_engine.dart
 │       ├── balance_calculator.dart
-│       └── posting_case_selector.dart
+│       ├── posting_case_selector.dart
+│       └── period_calculator.dart
 │
 ├── data/                              # Implements domain interfaces
 │   ├── database/                      # Drift schema + database class
@@ -517,6 +598,22 @@ The following constraints are non-negotiable and architectural decisions must co
 
 Rationale: WorkManager alone cannot guarantee exact-time notification delivery. Exact alarms alone are battery-heavy for frequent postings. The hybrid model uses exact alarms only for user-visible notification events and WorkManager for silent background posting, matching Android OS guidelines for the two permission classes.
 
+#### 1.6.9 File Size Constraint — 800-Line Maximum
+
+**Constraint:** No source file in `lib/` may exceed 800 lines. The target is 200–400 lines per file. This is enforced at code review: any PR introducing a file over 800 lines is rejected by the reviewer.
+
+**Rationale (AP-2 from competitive analysis):** Cashew's `tables.dart` at 7,667 lines and `addTransactionPage.dart` at 5,207 lines demonstrate the compounding cost of unchecked file growth. God files create merge conflict magnets, cognitive overload, and block safe refactoring. The folder structure in §1.5.1 is designed to make large files structurally impossible: domain concepts are split by entity, DAOs are split by aggregate, and presentation screens split by feature. The 800-line cap is the enforcement boundary.
+
+**Architectural implication:** Drift's `@DriftDatabase` class is a thin shell (table registrations and DAO declarations only — under 100 lines). Query methods live in per-aggregate DAO files, not on the database class.
+
+#### 1.6.10 O(1) Date Arithmetic — No Iteration Loops for Period Calculations
+
+**Constraint:** Budget period, recurring template schedule, and any other date-range calculation must be solved using direct arithmetic — not forward-iteration loops. The current period index for any recurring entity with a known start date and period length is computed as `periodIndex = (today - startDate) ~/ periodLength`. For variable-length periods (monthly, yearly), Dart's `DateTime` constructor arithmetic handles overflow natively.
+
+**Rationale (AP-9 from competitive analysis):** Cashew's `getBudgetDate()` iterates forward from the start date one period at a time, up to 10,000 iterations. For a daily budget created two years ago, that is 730 iterations per render on the main thread. At five budgets on the home screen, that is 3,650 iterations per rebuild. O(1) arithmetic replaces this entirely for all period types.
+
+**Architectural implication:** Period calculations live in the domain layer as pure functions in `domain/services/period_calculator.dart`. They are stateless, take a start date, period type, and reference date as inputs, and return a `DateRange`. They are exhaustively unit-tested with edge cases for month boundaries, leap years, and DST transitions.
+
 ---
 
 ### 1.7 Explicit Out-of-Scope
@@ -625,8 +722,10 @@ DatabaseProvider (keepAlive)
 |-----------|-------|
 | **Package** | `drift ^2.21.0` |
 | **Dev dependency** | `drift_dev ^2.21.0` |
-| **SQLite binding** | `sqlite3_flutter_libs ^0.5.0` (bundles SQLite 3.x for Android; not relying on system SQLite to avoid version fragmentation) |
-| **Database file** | `variance.db` in `getApplicationDocumentsDirectory()` |
+| **SQLite binding** | `sqlcipher_flutter_libs ^0.3.0` (SQLCipher-encrypted SQLite; replaces plain `sqlite3_flutter_libs` — all financial data is encrypted at rest) |
+| **Database file** | `variance.db` in `getApplicationDocumentsDirectory()` — encrypted; key stored in Android Keystore via `flutter_secure_storage` |
+
+**Why SQLCipher over plain SQLite:** A personal finance app stores the most sensitive data a user owns. Plain SQLite (as used in Cashew) means any process with filesystem access — a rooted device, a backup extraction tool, a future cloud backup — can read the entire financial history in the clear. SQLCipher adds AES-256 encryption at the page level with ~5–15% overhead on mobile, which is acceptable for a local-first app with no real-time sync requirements. The encryption key is never stored in plaintext; it lives in Android Keystore hardware-backed storage and is retrieved via `flutter_secure_storage` on every database open. See §1.3.4 for the full infrastructure setup.
 
 #### 2.3.2 WAL Mode and PRAGMA Configuration
 
@@ -782,35 +881,45 @@ All `json_serializable` classes use `@JsonSerializable(fieldRename: FieldRename.
 
 ### 2.7 Exchange Rate
 
-#### 2.7.1 Decision — TC-006: Frankfurter API
+#### 2.7.1 Decision — TC-006: fawazahmed0 Exchange API
 
-**Decision:** Use **Frankfurter** (`api.frankfurter.app`) as the exchange rate data source.
+**Decision:** Use the **fawazahmed0/exchange-api** (`cdn.jsdelivr.net/npm/@fawazahmed0/currency-api`) served via jsDelivr CDN as the exchange rate data source.
 
 **Options evaluated:**
 
-| API | Auth required | Free tier limits | Currency coverage | Self-hostable | Verdict |
-|-----|--------------|------------------|-------------------|---------------|---------|
-| **Frankfurter** (chosen) | None | Unlimited (open-source, ECB data) | ~33 major currencies | Yes (open-source) | **Selected** |
+| API | Auth required | Free tier limits | Currency coverage | CDN-backed | Verdict |
+|-----|--------------|------------------|-------------------|------------|---------|
+| **fawazahmed0/exchange-api** (chosen) | None | Unlimited, no rate limits documented | 537 fiat + crypto currencies | Yes (jsDelivr global edge) | **Selected** |
+| Frankfurter | None | Unlimited (open-source, ECB data) | ~33 major currencies only | No (self-hosted) | Rejected — 33-currency ceiling insufficient; no crypto |
 | Open Exchange Rates | API key required (free tier) | 1,000 req/month on free tier | 170+ currencies | No | Rejected — key management on a local-only app is friction with no user benefit |
 | ExchangeRate-API | API key required | 1,500 req/month free | 160+ currencies | No | Rejected — same key management friction |
 | Fixer.io | API key required (paid for HTTPS) | HTTPS requires paid plan | 170+ currencies | No | Rejected — cost |
 | CurrencyLayer | API key required | 100 req/month free | 168 currencies | No | Rejected — too low free tier |
 
-**Rationale for Frankfurter:**
+**Rationale for fawazahmed0/exchange-api:**
 - No API key — no secrets management problem on a local-only app.
-- Open-source and self-hostable — no single-point-of-failure dependency.
-- ECB (European Central Bank) source data — authoritative daily rates.
-- 33 major currencies cover the vast majority of Variance user accounts (PRD §7.1 lists supported currencies).
-- Rate: one request per day per user, essentially zero load. Free forever.
+- 537 currencies including fiat and crypto (BTC, ETH, ADA, DOGE, etc.) — full coverage of PRD §7.1 currency list with room for v2 crypto expansion.
+- CDN-served via jsDelivr global edge network — high availability; no single-origin dependency.
+- Updated daily; response includes a `date` field confirming the publication date.
+- Zero cost, zero auth complexity. Adopted by production open-source finance apps with confirmed reliability (competitive analysis, Bonus Finding 1).
 
-**Tradeoff accepted:** 33 currencies vs. 170+ on commercial APIs. If a user creates an account in an exotic currency not in Frankfurter's set, the exchange rate service silently skips that currency pair, and the UI shows "Rate unavailable" inline (PRD §5.2.1 FG-C12). This is acceptable per PRD §7.1.
+**Response format:**
+```
+GET https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{base_currency}.min.json
+Response: {"date": "2024-01-15", "{base_currency}": {"eur": 0.912, "inr": 83.12, ...}}
+```
+
+**Tradeoffs accepted:**
+- Single maintainer open-source project — no formal SLA or guaranteed uptime. Mitigated by aggressive caching: the 14-day stale threshold (§2.7.4) means a multi-day outage does not degrade the user experience. A provider swap (to Frankfurter or any REST-JSON API) requires changing one URL constant in `ExchangeRateService` — the abstraction boundary in §2.7.5 makes this a one-line change.
+- No historical rates endpoint — only latest rates available (same limitation as Frankfurter). Variance uses only current rates, so this is not a constraint.
+- CDN-cached data (jsDelivr edge may serve a rate up to ~1 hour stale). Acceptable for a daily-fetch cadence.
 
 #### 2.7.2 Fetch Trigger and Schedule
 
 - **Trigger:** WorkManager one-time task, enqueued on app launch if the last successful fetch is older than 23 hours (allowing a daily cadence with a 1-hour tolerance for WorkManager scheduling jitter).
 - **Constraint:** `NetworkType.connected` — only fires when internet is available. No retry on failure (silent failure per TC-006 PM response).
 - **Scope:** Fetch only the currencies for which the user has active accounts (TC-006 PM requirement). The query `SELECT DISTINCT currency FROM accounts WHERE is_deleted = FALSE` is executed before the network call. If the user has only one currency (the home currency), no fetch is issued.
-- **Endpoint:** `GET https://api.frankfurter.app/latest?from={home_currency}&to={comma_separated_other_currencies}`
+- **Endpoint:** `GET https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{base_currency}.min.json` — one request per base currency needed (typically one, the home currency). The response contains all target currency rates in a single payload; no per-pair requests.
 - **Timeout:** 10 seconds. On timeout, the WorkManager task exits cleanly; failure is not rethrown.
 
 #### 2.7.3 Cache Schema
@@ -822,7 +931,7 @@ CREATE TABLE exchange_rate_cache (
     to_currency     TEXT    NOT NULL,
     rate            REAL    NOT NULL,
     fetched_at      INTEGER NOT NULL,  -- Unix epoch seconds
-    rate_date       TEXT    NOT NULL,  -- ISO 8601 date from API response (ECB publication date)
+    rate_date       TEXT    NOT NULL,  -- ISO 8601 date from API response
     UNIQUE (from_currency, to_currency)
 );
 
@@ -831,7 +940,7 @@ CREATE INDEX idx_exchange_rate_pair ON exchange_rate_cache (from_currency, to_cu
 
 - `UNIQUE (from_currency, to_currency)` — `INSERT OR REPLACE` upserts rates on each successful fetch.
 - `fetched_at` — wall-clock time of the fetch; used to compute staleness.
-- `rate_date` — the ECB publication date from the Frankfurter response; shown in the UI alongside the rate.
+- `rate_date` — the publication date from the API response `date` field; shown in the UI alongside the rate.
 
 #### 2.7.4 Staleness and Offline Fallback
 
@@ -846,6 +955,8 @@ CREATE INDEX idx_exchange_rate_pair ON exchange_rate_cache (from_currency, to_cu
 #### 2.7.5 Architectural Isolation
 
 The exchange rate service lives entirely in `lib/infrastructure/exchange_rates/`. It has no imports from the domain layer (other than `ExchangeRate` value object from `lib/domain/`). The domain layer reads rates exclusively through `ExchangeRateRepository` — an interface defined in the domain layer and implemented in the data layer. Core functionality (posting, balance calculation) has no compile-time dependency on the exchange rate infrastructure module.
+
+The provider URL is stored as a single named constant in `ExchangeRateService`. Swapping to an alternative provider (e.g., Frankfurter) requires changing one constant and one response-parsing method — no domain or data layer changes.
 
 ---
 
@@ -1204,7 +1315,7 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 | `flutter_riverpod` | `^2.6.1` | State management and DI graph |
 | `riverpod_annotation` | `^2.3.5` | `@riverpod` annotations for code-gen providers |
 | `drift` | `^2.21.0` | Type-safe SQLite ORM with reactive streams |
-| `sqlite3_flutter_libs` | `^0.5.0` | Bundled SQLite 3.x binary for Android |
+| `sqlcipher_flutter_libs` | `^0.3.0` | SQLCipher-encrypted SQLite for Android — replaces plain `sqlite3_flutter_libs` |
 | `go_router` | `^14.6.2` | Declarative routing with deep link and shell route support |
 | `freezed_annotation` | `^2.4.4` | Immutable data class annotations |
 | `json_annotation` | `^4.9.0` | JSON serialization annotations for DTOs |
@@ -1243,4 +1354,5 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 
 - **`decimal` over `double` for amounts:** All monetary amounts are stored and computed using the `decimal` package's `Decimal` type. `double` is forbidden for financial arithmetic. Amounts are persisted in SQLite as `INTEGER` (smallest currency unit, e.g., paise for INR, cents for USD) and converted to `Decimal` at the DAO boundary.
 - **`http` over `dio`:** A single exchange rate endpoint with no interceptor chain, retry middleware, or auth headers does not justify `dio`'s overhead. `http` is lighter and sufficient.
-- **`sqlite3_flutter_libs` version constraint:** Must be kept in sync with `drift`'s tested SQLite version. Check `drift` changelog on every `drift` version bump.
+- **`sqlcipher_flutter_libs` replaces `sqlite3_flutter_libs`:** Plain SQLite is not acceptable for a personal finance app. `sqlcipher_flutter_libs` drops in as the SQLite binding for Drift with no query-API changes; only the database open call is augmented with the encryption key. Must be kept in sync with `drift`'s tested SQLCipher version — check `drift` changelog and `sqlcipher_flutter_libs` release notes on every `drift` version bump.
+- **SQLCipher key management:** The database key is generated on first launch, stored in Android Keystore via `flutter_secure_storage`, and retrieved on every subsequent open. The key is never written to SharedPreferences, logs, or any plaintext storage. Loss of the key (e.g., uninstall, wiped Keystore) means the database is unrecoverable — this is by design for a local-only app with no cloud sync.
