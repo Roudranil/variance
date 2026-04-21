@@ -40,7 +40,21 @@ outputs_to: []
 
 ## Open Questions (Active)
 
-**None.** All 76 questions (Q1–Q76) are resolved. See the Resolved Questions Log below.
+> v2 draft open questions (OQ-V2-series). Logged 2026-04-21 from founder feature batch.
+
+| ID | Section | Question |
+|---|---|---|
+| OQ-V2-15 | prd-v2 §26.1 | Calendar day cell indicator style: numeric amount vs. dot vs. count badge? |
+| OQ-V2-16 | prd-v2 §26.3 | Heatmap intensity metric: count vs. absolute amount vs. net amount? |
+| OQ-V2-17 | prd-v2 §26.4 | Reports: separate screen or time-scope filter on analytics screen? |
+| OQ-V2-18 | prd-v2 §26.5 | Passbook: separate screen per account or mode within account detail? |
+| OQ-V2-19 | prd-v2 §26.9 | Account group collapse state: per-session or persisted to storage? |
+| OQ-V2-20 | prd-v2 §27.1 | HuggingFace: which models supported? Proposed: user specifies model ID. |
+| OQ-V2-21 | prd-v2 §27.1 | HuggingFace API shape differs from OpenAI-compatible — provider abstraction impact? |
+| OQ-V2-22 | prd-v2 §27.3 | AI usage tracking granularity: per-day vs. cumulative total only? |
+| OQ-V2-23 | prd-v2 §27.4 | Can users edit/delete built-in AI prompt templates or only add custom ones? |
+| OQ-V2-24 | prd-v2 §27.5 | AI title suggestion placement: inline pre-fill vs. chip below field? |
+| OQ-V2-25 | prd-v2 §27.5 | Latency handling for AI title suggestion: loading indicator or defer on pause? |
 
 ---
 

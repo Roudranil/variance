@@ -3,7 +3,7 @@ name: PRD v2 Draft — Deferred Features & Decisions
 status: in progress
 owner: pm
 created: 2026-04-14
-last_updated: 2026-04-15
+last_updated: 2026-04-21
 depends_on: [01-product/prd.md]
 outputs_to: []
 ---
@@ -377,3 +377,130 @@ Automatically detect and record financial transactions from device notifications
 **Out of scope for this feature:** Cloud processing of messages, sharing message content with any server, auto-posting without user review.
 
 **Design work needed:** Full UX flow for review screen, permission request flow, pattern library architecture, account matching algorithm, category suggestion model.
+
+---
+
+## 26. Core UX and Visualization Enhancements
+
+> **Priority:** Medium — power-user ergonomics and engagement features.
+>
+> **Cross-references:** §12 (Trends, Dashboards, Charts), §18 (Home Screen v2).
+
+### 26.1 Calendar View
+
+- Display transactions on a monthly calendar grid.
+- Each day cell shows a summary indicator (e.g. net spend, dot, or count badge).
+- Tapping a day opens that day's transaction list.
+- **OQ-V2-15:** Indicator style — numeric amount vs. colour-coded dot vs. count badge?
+
+### 26.2 Tap Date to Enter Transaction
+
+- From the calendar view, tapping a date pre-fills the transaction date field and opens the Add Transaction flow.
+- Dependency: §26.1 (Calendar View).
+
+### 26.3 GitHub-Style Activity Heatmap
+
+- Full-year heatmap grid (52 columns × 7 rows) showing transaction activity intensity per day.
+- Colour intensity = transaction count or total absolute amount (configurable).
+- Lives within the analytics / trends screen (§12).
+- **OQ-V2-16:** Metric for intensity — count vs. absolute amount vs. net amount?
+
+### 26.4 Periodic Reports (Yearly / Quarterly / Monthly / Weekly)
+
+- Pre-built summary reports scoped to a time period.
+- Report content: income total, expense total, net, top categories, account balances.
+- Exportable (PDF or CSV — depends on §13 Data Management).
+- Relates to §12 analytics suite.
+- **OQ-V2-17:** Should reports be a separate screen or a time-scope filter on the analytics screen?
+
+### 26.5 Daily / Monthly / Annual Passbook / Statement View
+
+- Per-account chronological statement view (passbook style).
+- Shows each posting with running balance.
+- Scoped by period: day / month / year (user selects).
+- Distinct from the main transaction list — account-centric, running balance column.
+- **OQ-V2-18:** Separate screen per account or a mode within the existing account detail view?
+
+### 26.6 Transaction Title Templates by Category
+
+- Per-category list of pre-defined title strings (e.g. "Lunch", "Coffee", "Monthly rent" under Food/Housing).
+- User can add, edit, and delete templates per category.
+- Templates surface as quick-pick chips when the category is selected during transaction entry.
+- Distinct from AI-powered suggestions (§27.5) — these are static, user-curated strings.
+
+### 26.7 Copying Transactions
+
+- Two copy modes:
+  - **Copy with today's date** — duplicates the transaction, sets date to today, opens it in edit mode.
+  - **Copy with original date** — duplicates the transaction preserving the original date, opens it in edit mode.
+- Available from the transaction detail view (long-press or action menu).
+- The duplicate opens pre-filled for review before saving; it is not auto-posted.
+
+### 26.8 Swap From/To in Transfers
+
+- One-tap swap button on the transfer entry form.
+- Swaps the debit account and credit account fields.
+- Applies only to Transfer-type transactions.
+
+### 26.9 Collapse and Expand Account Groups
+
+- Account list (accounts screen and account pickers) supports collapsible groups.
+- Groups correspond to account types or user-defined groups (depends on grouping model in data model).
+- Collapsed state is persisted per session or permanently (configurable).
+- **OQ-V2-19:** Is collapse state per-session or persisted to storage?
+
+---
+
+## 27. AI Features
+
+> **Priority:** Low — opt-in power-user features. All items in this section require the global AI flag (§27.2) to be enabled.
+>
+> **Cross-references:** §24 (LLM-Based Insights BYOK), §26.6 (Title Templates by Category).
+>
+> **Privacy constraint:** Consistent with §24 privacy model — all network calls are user-initiated, opt-in, and data-minimised.
+
+### 27.1 HuggingFace as a BYOK Provider
+
+- Add HuggingFace Inference API as a supported LLM provider alongside OpenAI, Anthropic, and Google (Gemini) listed in §24.
+- Motivation: free-tier models available; reduces cost barrier for personal use.
+- HuggingFace keys follow the same secure storage model as §24 (flutter_secure_storage, never logged).
+- **OQ-V2-20:** Which HuggingFace models are supported? Proposed: user specifies model ID; app validates the endpoint responds before saving.
+- **OQ-V2-21:** HuggingFace Inference API has different request/response shapes than OpenAI-compatible APIs — provider abstraction layer in §24 must be extended.
+
+### 27.2 Global AI Feature Flag
+
+- Single toggle in Settings: **Enable AI Features** (default: off).
+- When off: all AI surfaces (insights, title suggestions, usage tracking) are hidden from the UI entirely.
+- When on: individual AI features may have their own sub-toggles.
+- Disabling the flag mid-session clears any in-memory state; no queued or background calls are made.
+- Relates to §24 opt-in model; this is the master switch above all individual AI feature toggles.
+
+### 27.3 AI Usage Tracking In-App
+
+- Settings screen (AI section) shows a usage summary: requests made, estimated tokens consumed, estimated cost (per provider, based on published pricing).
+- Data stored locally only — no telemetry or usage reporting to Variance.
+- Reset option: user can clear usage history.
+- **OQ-V2-22:** Granularity — per-day breakdown vs. cumulative total only?
+
+### 27.4 Pre-Defined AI Analysis Options
+
+- A set of canned prompt templates surfaced in the Insights screen (§24).
+- Examples:
+  - "Analyze my spending this month"
+  - "Where am I overspending compared to last month?"
+  - "What are my top 3 spending categories this quarter?"
+  - "Show savings opportunities based on recent spending"
+- User taps a template → app constructs the data payload → sends to LLM → displays result.
+- Resolves OQ-V2-12 from §24 partially: pre-defined prompts coexist with free-form queries.
+- User can extend the list with custom templates (v2+ scope).
+- **OQ-V2-23:** Can users edit or delete the built-in templates, or only add custom ones?
+
+### 27.5 AI-Powered Title Suggestion (On the Fly)
+
+- During transaction entry, after the user selects a category, the app suggests a title in real time using the LLM.
+- Suggestion appears as a pre-fill or chip below the title field; user can accept, ignore, or type their own.
+- Context sent to LLM: category, amount, account, date — no raw transaction history unless user opts in.
+- Requires global AI flag enabled (§27.2) and a configured provider (§24).
+- Distinct from static title templates (§26.6) — AI suggestions are generated, not user-curated.
+- **OQ-V2-24:** Should AI suggestions be shown inline (pre-fill) or as a chip/button below the field?
+- **OQ-V2-25:** Latency concern — suggestion must not block the user. Show a loading indicator or defer until the user pauses typing?
