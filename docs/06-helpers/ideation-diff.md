@@ -5,38 +5,59 @@ owner: le
 updated: 2026-04-21
 ---
 
-# Ideation Diff — Session 2026-04-21 (SDS §5 Cross-cutting Concerns)
+# Ideation Diff — Session 2026-04-21 (SDS §4 + §5 Verification)
 
 ## 1. Files Modified
 
-### `docs/02-technical/sds.md`
+| File | Change type |
+|------|-------------|
+| `docs/02-technical/sds.md` | Targeted edits to §4 and §5 only |
+| `docs/06-helpers/ideation-diff.md` | Overwritten (this file) |
 
-- Appended **§5 Cross-cutting Concerns** (new top-level section)
+## 2. Changes Made
 
-#### §5 — Subsections added
+### §4.3.4 PIN Recovery
 
-| Subsection | Content |
-|---|---|
-| 5.1 Logging | Three-subsystem model: dev logs (transient), user action log (persistent), error/crash log (persistent) |
-| 5.1.1 Dev Logs | `dart:developer log()` only; 4 tags; release-silent via R8/assert |
-| 5.1.2 User Action Log | Append-only audit trail; `filesDir/logs/actions/`; 4-field format; 2 MB/5 files/10 MB rotation; excluded from Android auto-backup |
-| 5.1.3 Error / Crash Log | Unhandled error capture; `filesDir/logs/errors/`; timestamp+type+stack+version; same rotation; user-export only; no remote TX |
-| 5.2 Analytics | Zero analytics — prohibited (PRD NF-1, §1.6.5) |
-| 5.3 Crash Reporting | No remote crash reporting; local error log is sole mechanism |
-| 5.4 i18n / l10n | English-only v1; `NumberFormat` + `intl` for currency/date; RTL via `Directionality` |
-| 5.5 Accessibility | WCAG 2.1 AA; font scaling to 200%; semantic labels; TalkBack best-effort v1; complex widget audit deferred v2 |
-| 5.6 Theme and Dark Mode | Material 3 light+dark; dynamic color API 31+ with OEM fallback (TC-048); centralized `ThemeData` |
+- Added: "If no device security configured: user directed to OS Settings to set it up before PIN reset is permitted."
+- Source: PRD §5.4.6.3 step 3 (previously omitted).
 
-### `docs/06-helpers/ideation-tracker.md`
+### §4.6 Dev Log Hygiene
 
-- SDS deliverable row updated: Sections 1–5 complete as of 2026-04-21.
+- Removed: `firebase_crashlytics (opt-in flavour)` line — Crashlytics is explicitly prohibited by PRD NF-1 and §5.3. Inconsistency removed.
+- Replaced with: reference to §5.3 prohibition.
 
-## 2. Files Unchanged This Session
+### §4.7 Persistent Log Files
 
-- `docs/01-product/prd.md` — LOCKED, not touched
-- `docs/01-product/technical-clarifications.md` — not touched
-- `docs/02-technical/data-model.md` — not touched
+- Resolved OQ-SDS-SC-002: user action log is in v1 scope (§5.1.2 fully specifies it). OQ removed.
+- Updated table: "if implemented" → confirmed v1 scope with §5.1.2/§5.1.3 references.
+- Updated paths: `filesDir/logs/` → `filesDir/logs/actions/` and `filesDir/logs/errors/` (consistent with §5.1.2/§5.1.3).
+- Replaced stale OQ bullet with cross-reference to §5.1 specs.
 
-## 3. New Open Questions Introduced
+### §5.7 Dependency Licensing (new)
 
-None this session.
+- Added §5.7 to cover PRD NF-6 (MIT license; permissive deps only).
+- Gap: NF-6 had no coverage in §4 or §5.
+
+### §5.8 Self-Contained Assets (new)
+
+- Added §5.8 to cover PRD NF-11 (all assets bundled; zero runtime asset calls).
+- Gap: NF-11 had no coverage in §4 or §5.
+
+## 3. Sources Verified
+
+| Source | Sections checked |
+|--------|-----------------|
+| PRD | §5.4.6, §5.4.11, §6 (NF-1–NF-11) |
+| Technical Clarifications | TC-007, TC-048, TC-054 |
+| Competitive Analysis | §6.1–§6.3 (threat model, v1 must-haves) |
+| Ledger Entry Cases | §11.2–§11.3 (void/reversal, photo deletion) |
+| Input Fields | §2.2 (encrypted fields), §1.4 (validation) |
+| Data Model | §3.2 (account_details), §5.1 (attachments), §11 (audit) |
+
+## 4. Open Questions Status
+
+| ID | Status | Notes |
+|----|--------|-------|
+| OQ-SDS-SC-001 | Still open | `flutter_secure_storage` backup exclusion on API 31+ |
+| OQ-SDS-SC-002 | **Resolved** | User action log confirmed v1 scope in §5.1.2; removed from §4.7 |
+| OQ-SDS-SC-003 | Still open | CAMERA permission for photo attachments |

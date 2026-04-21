@@ -3,7 +3,7 @@ name: System Design Spec
 status: in-progress
 owner: architect
 created: 2026-04-20
-last_updated: 2026-04-20
+last_updated: 2026-04-21
 depends_on:
   - 01-product/prd.md
   - 01-product/ledger-entry.md
@@ -54,6 +54,8 @@ outputs_to:
       - [1.6.8 Scheduling Architecture](#168-scheduling-architecture)
       - [1.6.9 File Size Constraint — 800-Line Maximum](#169-file-size-constraint--800-line-maximum)
       - [1.6.10 O(1) Date Arithmetic — No Iteration Loops for Period Calculations](#1610-o1-date-arithmetic--no-iteration-loops-for-period-calculations)
+      - [1.6.11 Bundled Assets — Zero Runtime Asset Fetches](#1611-bundled-assets--zero-runtime-asset-fetches)
+      - [1.6.12 Security Lock Scope — Sensitive Fields Only](#1612-security-lock-scope--sensitive-fields-only)
     - [1.7 Explicit Out-of-Scope](#17-explicit-out-of-scope)
   - [2. Tech Stack](#2-tech-stack)
     - [2.1 Core Runtime](#21-core-runtime)
@@ -621,6 +623,22 @@ Rationale: WorkManager alone cannot guarantee exact-time notification delivery. 
 **Rationale (AP-9 from competitive analysis):** Cashew's `getBudgetDate()` iterates forward from the start date one period at a time, up to 10,000 iterations. For a daily budget created two years ago, that is 730 iterations per render on the main thread. At five budgets on the home screen, that is 3,650 iterations per rebuild. O(1) arithmetic replaces this entirely for all period types.
 
 **Architectural implication:** Period calculations live in the domain layer as pure functions in `domain/services/period_calculator.dart`. They are stateless, take a start date, period type, and reference date as inputs, and return a `DateRange`. They are exhaustively unit-tested with edge cases for month boundaries, leap years, and DST transitions.
+
+---
+
+#### 1.6.11 Bundled Assets — Zero Runtime Asset Fetches
+
+**Constraint (PRD NF-11, C5):** All fonts, icons, category seed data, and the ISO currency list are bundled in the APK. No runtime HTTP call is made for any asset.
+
+**Architectural implication:** Currency list and default category icons are read-only tables seeded at first launch from bundled JSON/assets processed in `infrastructure/` at app init. No CDN, no remote asset URL, no dynamic icon download. The only permitted runtime network call is the exchange rate fetch (§1.6.5).
+
+---
+
+#### 1.6.12 Security Lock Scope — Sensitive Fields Only
+
+**Constraint (PRD §5.4.6.1):** The in-app lock never gates core functionality. Transaction recording, balance viewing, and all finance features are always accessible without authentication. The lock protects sensitive account detail fields only (card numbers, bank account numbers).
+
+**Architectural implication:** `pin_service.dart` and the Android Keyguard delegate (`local_auth`) are invoked only inside the account details view — not on any other route. GoRouter guards must not redirect unauthenticated users away from the main app. Failed-PIN wipe (PRD §5.4.6.4) deletes only encrypted rows in `account_details` — never `transactions`, `entries`, or `accounts`.
 
 ---
 
@@ -1512,6 +1530,8 @@ All other color roles use Material 3 `ColorScheme` built-in tokens directly (29 
 | Search results (10,000 records) | < 500 ms | TC-009 |
 | Batch category migration (N = 500) | < 5 s | TC-034 |
 | Account balance read | O(1) via indexed query | §1.4.4 |
+| On-launch recurring catch-up sweep | < 200 ms | LE budget — must complete before first frame |
+| Financial aggregation offload threshold | > 500 rows → `Isolate.run()` / `compute()` | AP-5; §1.4.2 |
 
 ### 3.2 Frame Rate Requirements
 
@@ -1659,6 +1679,7 @@ All filter columns and join columns must be indexed. See `data-model.md §13` fo
 #### 4.3.4 PIN Recovery (PRD §5.4.6.3)
 
 - Reset only via device credential (Android Keyguard).
+- If no device security configured: user directed to OS Settings to set it up before PIN reset is permitted.
 - No email recovery, no cloud recovery. Local-only by design.
 
 ---
@@ -1706,7 +1727,7 @@ All filter columns and join columns must be indexed. See `data-model.md §13` fo
 - `dart:developer log` calls are used in debug/profile; suppressed or no-op in release.
 - **No raw amounts, account numbers, card numbers, or PII** in any `log()` call.
 - ProGuard/R8 (§2.12.3) strips unused debug symbols in release APK.
-- `firebase_crashlytics` (opt-in flavour) captures stack traces only — zero financial data in crash payloads.
+- No remote crash service (Crashlytics, Sentry, etc.) — prohibited by PRD NF-1; see §5.3.
 
 ---
 
@@ -1714,12 +1735,12 @@ All filter columns and join columns must be indexed. See `data-model.md §13` fo
 
 | Log type | Purpose | Location | Backup | Cleared on |
 |----------|---------|----------|--------|------------|
-| User action log | Audit trail (if implemented) | `filesDir/logs/` | Excluded from backup manifest | Full data wipe |
-| Error / crash log | Offline diagnostics | `filesDir/logs/` | Excluded from backup manifest | Full data wipe |
+| User action log | Local audit trail — v1 (§5.1.2) | `filesDir/logs/actions/` | Excluded from backup manifest | Full data wipe |
+| Error / crash log | Offline diagnostics — v1 (§5.1.3) | `filesDir/logs/errors/` | Excluded from backup manifest | Full data wipe |
 
 - Both logs are **app-private** (`filesDir`); not accessible to other apps.
 - Must **never** contain raw amounts, account numbers, or card numbers.
-- OQ-SDS-SC-002: Confirm whether a persistent user action log is in v1 scope (not yet specified in PRD). If yes, define retention limit.
+- Full format, retention, and rotation specs: §5.1.2 (action log) and §5.1.3 (error log).
 
 ---
 
@@ -1912,3 +1933,29 @@ Three distinct subsystems. Each is independent.
 
 - No per-feature color overrides outside the centralized theme.
 - Implementation detail: see §2.1.3 (Android target) and §2.14.1 (dependency table).
+
+---
+
+### 5.7 Dependency Licensing
+
+| Rule | Detail |
+|------|--------|
+| App license | MIT |
+| Permitted dependency licenses | MIT, Apache 2.0, MPL 2.0 |
+| Prohibited | GPL, LGPL, AGPL, proprietary |
+| Enforcement | Manual review on each `pubspec.yaml` change; `pub license` check in CI |
+
+Source: PRD NF-6.
+
+---
+
+### 5.8 Self-Contained Assets
+
+| Asset type | Bundled? | Notes |
+|-----------|----------|-------|
+| Fonts | Yes | No runtime CDN fetch |
+| Icons | Yes | Curated subset of `material_symbols_icons` (TC-014) |
+| Category data | Yes | Seed categories in migration or asset JSON |
+| ISO currency list | Yes | Static asset; no network fetch |
+
+- Zero external asset calls at runtime. Source: PRD NF-11.
