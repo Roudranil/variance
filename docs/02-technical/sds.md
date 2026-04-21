@@ -716,6 +716,8 @@ DatabaseProvider (keepAlive)
 
 ### 2.3 Database and Persistence
 
+> **Full schema reference:** See [`docs/02-technical/data-model.md`](data-model.md) for the complete entity definitions, column specifications, index catalogue, Drift type mappings, and soft-delete/void-chain policies.
+
 #### 2.3.1 Drift ORM
 
 | Attribute | Value |
