@@ -121,6 +121,14 @@ outputs_to:
       - [2.14.1 Production Dependencies](#2141-production-dependencies)
       - [2.14.2 Development Dependencies](#2142-development-dependencies)
       - [2.14.3 Dependency Notes](#2143-dependency-notes)
+    - [2.15 Photo Compression](#215-photo-compression)
+      - [2.15.1 Decision — TC-007: JPEG Compression with 1920px Cap](#2151-decision--tc-007-jpeg-compression-with-1920px-cap)
+    - [2.16 Currency Bundle](#216-currency-bundle)
+      - [2.16.1 Decision — TC-044: Bundled ISO 4217 Static Asset](#2161-decision--tc-044-bundled-iso-4217-static-asset)
+    - [2.17 Backup Format](#217-backup-format)
+      - [2.17.1 Decision — TC-054: Versioned ZIP Archive with Manifest](#2171-decision--tc-054-versioned-zip-archive-with-manifest)
+    - [2.18 Theming Architecture](#218-theming-architecture)
+      - [2.18.1 Decision: Type-Safe ThemeExtension](#2181-decision-type-safe-themeextension)
 
 
 # System Design Spec — Variance
@@ -988,7 +996,7 @@ CREATE VIRTUAL TABLE transactions_fts USING fts5(
     account_name,
     category_name,
     content='transactions_search_view',
-    content_rowid='id',
+    content_rowid='rowid',
     tokenize='unicode61 remove_diacritics 2'
 );
 ```
@@ -1335,6 +1343,8 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 | `path` | `^1.9.0` | File path utilities |
 | `collection` | `^1.18.0` | Extended collection utilities (`groupBy`, `sorted`) |
 | `decimal` | `^3.0.2` | Arbitrary-precision decimal arithmetic for currency amounts |
+| `material_symbols_icons` | `^4.2832.0` | Curated vector icon set for category icons (TC-014; ~250 icon subset, tree-shaken) |
+| `local_auth` | `^2.3.0` | Biometric and device-credential authentication for sensitive account detail lock (PRD §5.4.6) |
 
 #### 2.14.2 Development Dependencies
 
@@ -1358,3 +1368,547 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 - **`http` over `dio`:** A single exchange rate endpoint with no interceptor chain, retry middleware, or auth headers does not justify `dio`'s overhead. `http` is lighter and sufficient.
 - **`sqlcipher_flutter_libs` replaces `sqlite3_flutter_libs`:** Plain SQLite is not acceptable for a personal finance app. `sqlcipher_flutter_libs` drops in as the SQLite binding for Drift with no query-API changes; only the database open call is augmented with the encryption key. Must be kept in sync with `drift`'s tested SQLCipher version — check `drift` changelog and `sqlcipher_flutter_libs` release notes on every `drift` version bump.
 - **SQLCipher key management:** The database key is generated on first launch, stored in Android Keystore via `flutter_secure_storage`, and retrieved on every subsequent open. The key is never written to SharedPreferences, logs, or any plaintext storage. Loss of the key (e.g., uninstall, wiped Keystore) means the database is unrecoverable — this is by design for a local-only app with no cloud sync.
+- **`material_symbols_icons` tree-shaking:** Import only named constants from the curated ~250-icon subset. Do not import the full symbol set. The exact subset is defined during the icon curation task (TC-014 dependency for category seeding). Each icon constant is a `const IconData`; unused constants are tree-shaken by the Dart compiler at build time. Use `MaterialSymbols` class with selective imports, not `Icons.xxx`.
+- **`local_auth` scope:** Used exclusively to authenticate the user before displaying sensitive account fields (card numbers, bank account numbers). Not used to gate app launch or core functionality (PRD §5.4.6.1). The `BiometricType` availability check determines whether to show biometric or fall back to the in-app PIN flow.
+
+---
+
+### 2.15 Photo Compression
+
+#### 2.15.1 Decision — TC-007: JPEG Compression with 1920px Cap
+
+**Decision:** Use `flutter_image_compress` to compress all photo attachments to JPEG before on-device storage.
+
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| Output format | JPEG | TC-007 PM response |
+| Max dimension (width or height) | 1920 px | TC-007 PM response |
+| Target file size | < 500 KB | TC-007 PM response (guideline, not hard cap) |
+| JPEG quality | 85 (starting point) | SDS decision — within "legible for receipt text" floor |
+| Upscale images smaller than 1920px | No | TC-007 PM response |
+| Preserve original | No | TC-007 PM response |
+
+**Compression pipeline:**
+
+1. User selects photo via `image_picker` (camera or gallery).
+2. `PhotoCompressionService` runs `flutter_image_compress` synchronously on a background thread (the package uses isolates internally).
+3. If the result exceeds 500 KB at quality 85, reduce quality in 5-point steps until < 500 KB or quality reaches 60 (floor — below this, receipt text may be illegible).
+4. Store the compressed bytes in `getApplicationDocumentsDirectory()/attachments/{uuid}.jpg`.
+5. Record the file path in the `attachments` table.
+
+**Why JPEG quality 85:** Industry baseline for legible document/receipt scans. The iterative reduction handles edge cases (high-detail images, low compression ratio scenes) without requiring a fixed quality parameter that may fail the legibility floor for some inputs.
+
+---
+
+### 2.16 Currency Bundle
+
+#### 2.16.1 Decision — TC-044: Bundled ISO 4217 Static Asset
+
+**Decision:** Bundle the full active ISO 4217 currency list as a static JSON asset. No runtime network fetch.
+
+| Attribute | Value | Source |
+|-----------|-------|--------|
+| Source | ISO 4217 active currencies | TC-044 PM response |
+| Scope | ~180 active currencies; obsolete excluded | TC-044 PM response |
+| Fields per entry | `code`, `name`, `symbol`, `minor_units` | TC-044 PM response |
+| Asset path | `assets/data/currencies.json` | SDS decision |
+| Maintenance | Updated via app update if ISO list changes | TC-044 LE note |
+
+**Asset schema (per currency entry):**
+```json
+{
+  "code": "USD",
+  "name": "US Dollar",
+  "symbol": "$",
+  "minor_units": 2
+}
+```
+
+**`minor_units` usage:**
+
+| Context | Rule |
+|---------|------|
+| Amount input field | Decimal keyboard restricts to `minor_units` decimal places. JPY (`minor_units=0`): no decimal point accepted. BHD (`minor_units=3`): up to 3 places. |
+| Amount display | Format to `minor_units` decimal places. |
+| Storage | Amounts stored as `INTEGER` in minor units (e.g., 50000 = USD $500.00). |
+| Exchange rate storage | Rates stored with 6 decimal places of precision (`rate_micro` as integer, divide by 1,000,000). |
+
+**Loading strategy:** `CurrencyRepository` loads the asset once on app startup via `rootBundle.loadString`, parses into a `List<Currency>` domain object, and holds it in a `keepAlive` Riverpod provider. No DB table needed for the reference list (read-only static data). The `currencies` table in the schema is the in-DB representation used by foreign key references and joins — it is seeded from this asset on fresh install.
+
+---
+
+### 2.17 Backup Format
+
+#### 2.17.1 Decision — TC-054: Versioned ZIP Archive with Manifest
+
+**Decision:** Backup is a ZIP archive containing a manifest file plus a database export. The manifest enables forward-compatible restore in v2.
+
+| Attribute | Value | Source |
+|-----------|-------|--------|
+| Archive format | ZIP | PRD §5.4.10 |
+| Manifest filename | `manifest.json` | SDS decision |
+| Export filename | `variance_export.json` | SDS decision |
+
+**Manifest schema (v1):**
+```json
+{
+  "backup_format_version": 1,
+  "app_version": "1.0.0",
+  "created_at": "2026-04-21T10:00:00Z",
+  "schema_version": 1
+}
+```
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `backup_format_version` | `integer` | Incremented when backup structure changes. v2 restore reads this to select the correct importer. |
+| `app_version` | `string` | Semver of the app that created the backup. |
+| `created_at` | `string` (ISO 8601 UTC) | Backup timestamp. |
+| `schema_version` | `integer` | DB schema version at time of backup. Used by v2 importer to detect schema migrations needed. |
+
+**Export content:** `variance_export.json` is a `json_serializable`-annotated full-data export (all non-deleted entities serialized using versioned DTOs). Soft-deleted entities are excluded from export (they are recoverable via the ledger correction chain, not needed for restore).
+
+**v1 constraint:** v1 ships export only. Import/restore is v2. The manifest is a forward-compatibility requirement baked into v1 so v2 can detect and handle v1 backups.
+
+---
+
+### 2.18 Theming Architecture
+
+#### 2.18.1 Decision: Type-Safe ThemeExtension
+
+**Decision:** `ThemeExtension<VarianceColors>` with named getters. No string-keyed color lookups.
+
+| Attribute | Value | Source |
+|-----------|-------|--------|
+| Base | `ColorScheme.fromSeed()` | Material 3 standard |
+| Dynamic color | `DynamicColorBuilder` from `dynamic_color` package | TC-048; PRD §5.4.1 |
+| Fallback (OEM restriction) | Custom seed color from `app_settings.color_seed` | TC-048 PM clarification |
+| User preference | `app_settings.color_scheme_mode`: `dynamic` or `custom` | PRD §5.4.1 |
+| Custom token layer | `ThemeExtension<VarianceColors>` — named getters, compile-time safe | Competitive analysis §5 |
+
+**`VarianceColors` semantic tokens (minimal set):**
+
+| Token | Purpose |
+|-------|---------|
+| `incomeAmount` | Positive financial amounts (green shade, theme-adaptive) |
+| `expenseAmount` | Negative financial amounts (red shade, theme-adaptive) |
+| `warningAmount` | Budget/threshold warning (orange shade, theme-adaptive) |
+| `accentPastel` | Lightened/darkened accent for category chips, surfaces |
+
+All other color roles use Material 3 `ColorScheme` built-in tokens directly (29 roles cover the remaining surfaces). Tokens are added to `VarianceColors` only when `ColorScheme` roles are insufficient.
+
+**Why `dynamic_color` over `system_theme` package:** `dynamic_color` is the official Google-maintained package for Material You wallpaper-based color extraction. `system_theme` (used by the reference open-source app) requires manual `Color.alphaBlend` blending and has known Samsung OEM bugs. No advantage over the official approach.
+
+---
+
+## 3. Performance Constraints
+
+### 3.1 Latency Budgets
+
+| Operation | Budget | Source |
+|-----------|--------|--------|
+| Cold start (mid-range hardware) | < 2 s | NF-3 |
+| Transaction list render (10,000 records) | < 500 ms | NF-3 |
+| Search results (10,000 records) | < 500 ms | TC-009 |
+| Batch category migration (N = 500) | < 5 s | TC-034 |
+| Account balance read | O(1) via indexed query | §1.4.4 |
+
+### 3.2 Frame Rate Requirements
+
+| Context | Target |
+|---------|--------|
+| List scroll (transaction list, account list) | 60 fps — no jank |
+| Home screen rebuild | 60 fps — no jank |
+
+- No expensive ops (DB queries, Decimal arithmetic) in `build()`.
+- Heavy computation (e.g., balance aggregation) runs in `Isolate` or background `Provider` via `AsyncNotifier`.
+
+### 3.3 Query Performance Rules
+
+#### 3.3.1 Index Requirements
+
+All filter columns and join columns must be indexed. See `data-model.md §13` for full catalogue. Key indexes:
+
+| Query pattern | Index |
+|---------------|-------|
+| Default transaction list (status + purpose filter) | `idx_txn_status_purpose` |
+| Date range queries | `idx_txn_date` |
+| Account ledger (entries by account) | `idx_entries_account` |
+| Balance computation (debit/credit split) | `idx_entries_account_side` |
+| Scheduler sweep (overdue recurring) | `idx_sched_occ_status_date`, `idx_templates_next` |
+| Category aggregation | `idx_entries_category` |
+| Search (FTS5) | `transactions_fts` virtual table |
+
+#### 3.3.2 Query Rules
+
+- No N+1 queries. Entry lists fetched in single JOIN with parent transaction.
+- No unbounded queries. All list queries require `LIMIT` + cursor/offset pagination.
+- Soft-delete filter (`WHERE is_deleted = FALSE`) applied at DAO layer, backed by `idx_accounts_deleted`.
+- Balance is computed via SQL aggregate (`SUM`) over `entries` — never iterated in Dart.
+
+### 3.4 Date and Period Arithmetic
+
+- All period calculations use O(1) direct arithmetic. No forward-iteration loops. (§1.6.10)
+- Formula: `periodIndex = (today − startDate) ~/ periodLength`
+- Variable-length periods (monthly, yearly) use `DateTime` constructor overflow arithmetic.
+- Implementation: `domain/services/period_calculator.dart` — pure, stateless, no Flutter dependency.
+
+### 3.5 Memory and Storage Budgets
+
+| Resource | Budget | Rationale |
+|----------|--------|-----------|
+| APK install size | < 50 MB | Mobile install size baseline |
+| Photo attachment (per photo) | < 500 KB after JPEG compression | TC-007 |
+| Photo max dimension | 1920 px (longest side) | TC-007; legibility floor |
+| Original photo | Not preserved — compressed only | TC-007 |
+| In-memory state | Only active screen providers loaded | Riverpod `autoDispose` |
+
+### 3.6 Background Task Constraints
+
+| Task | Mechanism | Constraint |
+|------|-----------|------------|
+| Recurring auto-post sweep | WorkManager periodic | OS-scheduled; no wall-clock guarantee |
+| Remind-and-confirm notifications | `flutter_local_notifications` exact alarm | `SCHEDULE_EXACT_ALARM` permission; battery cost justified by user-visible event only |
+| On-launch catch-up sweep | Synchronous in `main.dart` init | Must complete before first frame render; keep < 200 ms |
+| Exchange rate fetch | WorkManager opportunistic | Failure must never block any user flow (§1.6.5) |
+
+### 3.7 Batch Operation Thresholds
+
+| Operation | Threshold | Behaviour |
+|-----------|-----------|-----------|
+| Category migration progress dialog | N > 10 | Show "Migrating... [X of N]" dialog |
+| Category migration extra confirmation | N > 50 | Show "N transactions will be migrated. Cannot be undone." |
+| Category migration implementation | Any N | Single DB transaction with batched writes; atomic (TC-034) |
+
+### 3.8 File Size Constraint
+
+- Max 800 lines per source file in `lib/`. Target 200–400 lines. (§1.6.9)
+- Drift `@DriftDatabase` class: < 100 lines (table registrations + DAO declarations only).
+- Enforced at code review; PRs with files > 800 lines are rejected.
+
+---
+
+## 4. Security Considerations
+
+### 4.1 Threat Surface Summary
+
+| Surface | Exposure | Mitigation |
+|---------|----------|-----------|
+| SQLite database on disk | Full read if rooted or backup-extracted | SQLCipher AES-256 at rest (§2.3.1) |
+| SQLCipher key | Exposure if stored in plaintext | Android Keystore hardware-backed; accessed via `flutter_secure_storage` only |
+| Sensitive account fields (card/account numbers) | Column-level exposure | Encrypted column `detail_value_encrypted` in `account_details` (§3.2) |
+| Backup zip exported to user-chosen location | Plain filesystem; shared storage | User-controlled path; no auto-upload; sensitive fields AES-encrypted inside zip |
+| Exchange rate HTTP fetch | Only outbound network surface | Scoped to `infrastructure/exchange_rates/`; failure never blocks core flows (§1.6.5) |
+| Android auto-backup | Could expose DB to Google cloud | DB file must be excluded from Android auto-backup manifest (see §4.5) |
+| Logcat (dev builds) | Financial amounts in debug output | PII/amounts stripped from release build logs (see §4.6) |
+| In-app user action / error logs | Persistent files with financial context | `filesDir` only; excluded from backup; cleared on data wipe (see §4.7) |
+| App lock bypass | PIN brute-force | 5-attempt lockout, 1-hour timeout, wipe at 15 failures (PRD §5.4.6.4) |
+
+---
+
+### 4.2 Local Data Protection
+
+#### 4.2.1 Database Encryption
+
+- **SQLCipher AES-256** encrypts the entire `variance.db` at page level.
+- Key generated on first launch; never stored in plaintext, SharedPreferences, or logs.
+- Key lives in **Android Keystore** (hardware-backed on supported devices); retrieved via `flutter_secure_storage` on every DB open.
+- Key loss (uninstall, wiped Keystore) = unrecoverable DB. Acceptable: no cloud sync in v1.
+- No unencrypted migration path — database is created encrypted from day one.
+
+#### 4.2.2 Sensitive Field Encryption
+
+- `account_details.detail_value_encrypted` stores card numbers and account numbers as AES-encrypted blobs (§3.2).
+- Plain-text `detail_value` is used only for non-sensitive fields (bank name, branch, etc.).
+- Revealed only after lock authentication (PRD §5.4.6.1).
+
+#### 4.2.3 Storage Location
+
+- All app data (`variance.db`, photos, logs) in `getApplicationDocumentsDirectory()` / `filesDir` — app-private, not world-readable.
+- No files written to external shared storage except user-initiated backup export (via system file picker).
+
+---
+
+### 4.3 Biometric / App Lock
+
+#### 4.3.1 Scope (PRD §5.4.6.1)
+
+- Lock protects **sensitive account detail fields only** (card numbers, account numbers).
+- Core features (transactions, balances, accounts list) always accessible without auth.
+- No whole-app lock.
+
+#### 4.3.2 Lock Mechanism (PRD §5.4.6.2)
+
+| Priority | Mechanism | Condition |
+|----------|-----------|-----------|
+| 1 | Android Keyguard (biometrics / device PIN) | Device lock configured |
+| 2 | Device-level per-app biometric lock | OS supports it |
+| 3 | In-app PIN | Fallback only |
+
+- Lock re-engages on app backgrounding per configured timeout (`Immediately` default).
+- In-app PIN hash stored in `flutter_secure_storage` (Keystore-backed).
+
+#### 4.3.3 Failed PIN Lockout (PRD §5.4.6.4)
+
+| Event | Action |
+|-------|--------|
+| 5 consecutive failures | 1-hour lockout; no further attempts accepted |
+| 15 total failures (3 cycles) | `detail_value_encrypted` rows deleted; transaction history unaffected |
+| Successful auth | Failure count reset |
+
+#### 4.3.4 PIN Recovery (PRD §5.4.6.3)
+
+- Reset only via device credential (Android Keyguard).
+- No email recovery, no cloud recovery. Local-only by design.
+
+---
+
+### 4.4 Backup Exposure
+
+#### 4.4.1 User-Initiated Backup (PRD §5.4.10.1)
+
+| Item | Included | Notes |
+|------|----------|-------|
+| `variance.db` | Yes (encrypted) | SQLCipher-encrypted; unreadable without key |
+| `account_details` sensitive fields | Yes (encrypted) | `detail_value_encrypted` blobs included |
+| Transaction photos | Yes | Attached images bundled in zip |
+| `manifest.json` | Yes (required) | `backup_format_version`, `app_version`, `created_at`, `schema_version` (TC-054) |
+
+- User selects destination via system file picker. App does not auto-upload.
+- No v1 restore path — export only.
+
+#### 4.4.2 Android Auto-Backup
+
+- **`variance.db` MUST be excluded** from Android auto-backup (`android/app/res/xml/backup_rules.xml`).
+- **`flutter_secure_storage` key material** is automatically excluded (Keystore-backed; not backed up by Android).
+- Log files (§4.7) MUST be excluded from backup rules.
+- OQ-SDS-SC-001: Confirm `flutter_secure_storage` backup exclusion behavior on all supported API levels (31+).
+
+---
+
+### 4.5 Network Surface
+
+> Zero-network constraint: §1.6.5. This section scopes the single exception.
+
+| Endpoint | Trigger | Scope |
+|----------|---------|-------|
+| `cdn.jsdelivr.net/gh/fawazahmed0/...` (exchange rates) | WorkManager background task | `infrastructure/exchange_rates/` only |
+
+- No user credentials, device IDs, or financial data transmitted.
+- Failure = staleness warning in UI; never blocks transaction save.
+- Domain layer reads only from local cache (`exchange_rate_cache` table).
+- No other outbound HTTP in v1.
+
+---
+
+### 4.6 Dev Log Hygiene (Release Builds)
+
+- `dart:developer log` calls are used in debug/profile; suppressed or no-op in release.
+- **No raw amounts, account numbers, card numbers, or PII** in any `log()` call.
+- ProGuard/R8 (§2.12.3) strips unused debug symbols in release APK.
+- `firebase_crashlytics` (opt-in flavour) captures stack traces only — zero financial data in crash payloads.
+
+---
+
+### 4.7 Persistent Log Files
+
+| Log type | Purpose | Location | Backup | Cleared on |
+|----------|---------|----------|--------|------------|
+| User action log | Audit trail (if implemented) | `filesDir/logs/` | Excluded from backup manifest | Full data wipe |
+| Error / crash log | Offline diagnostics | `filesDir/logs/` | Excluded from backup manifest | Full data wipe |
+
+- Both logs are **app-private** (`filesDir`); not accessible to other apps.
+- Must **never** contain raw amounts, account numbers, or card numbers.
+- OQ-SDS-SC-002: Confirm whether a persistent user action log is in v1 scope (not yet specified in PRD). If yes, define retention limit.
+
+---
+
+### 4.8 Ledger History Tamper-Resistance
+
+- Posted entries never `UPDATE`d. Financial corrections produce reversal + correction pair (§1.6.7).
+- Soft-deletes are `status='voided'` + a `purpose='reversal'` insert — original row preserved (§11.3 data-model).
+- No physical row deletion for transactions (hard-delete not supported).
+- `corrects_transaction_id` chain is immutable once written; integrity enforced at domain layer (not DB FK, to avoid cascade complications).
+
+---
+
+### 4.9 Input Validation
+
+| Boundary | Validation location | Enforcement |
+|----------|--------------------|----|
+| User form input | Presentation layer (form validators) | Immediate UI feedback |
+| Domain invariants (amounts, dates, account types) | Domain layer use cases | `Result.failure` returned; never throws to UI |
+| Repository writes | Data layer DAOs | Type-safe Drift DSL; parameterized queries only |
+| Backup import (v2) | Not applicable in v1 | — |
+
+- No raw SQL string concatenation anywhere. Drift DSL + parameterized queries only.
+- All amounts stored as `INTEGER` minor units; no floating-point arithmetic at persistence boundary.
+
+---
+
+### 4.10 Permissions
+
+| Permission | Purpose | When requested |
+|-----------|---------|----------------|
+| `POST_NOTIFICATIONS` (API 33+) | Recurring remind-and-confirm; CC payment reminders | On first use of scheduling feature |
+| `SCHEDULE_EXACT_ALARM` | Exact-time notification delivery | On first use |
+| `USE_BIOMETRIC` / `USE_FINGERPRINT` | Lock auth delegation to Keyguard | On first access to sensitive account details |
+| `INTERNET` | Exchange rate fetch | Declared in manifest; no runtime prompt |
+| Storage (via SAF) | Backup export to user-chosen path | System file picker; no `READ/WRITE_EXTERNAL_STORAGE` |
+
+- Minimum permission footprint. No location, contacts, or camera permissions in v1.
+- OQ-SDS-SC-003: Confirm whether `CAMERA` permission is needed for photo attachments or if the SAF/photo picker path avoids it.
+
+---
+
+## 5. Cross-cutting Concerns
+
+### 5.1 Logging
+
+Three distinct subsystems. Each is independent.
+
+#### 5.1.1 Dev Logs (transient)
+
+| Property | Value |
+|----------|-------|
+| API | `dart:developer log()` only |
+| Tags | `DB`, `STATE`, `NAV`, `ERROR` |
+| Release behavior | Silent — `assert`-guarded or stripped by R8 (§2.12.3) |
+| PII rule | No amounts, no field values, no entity content in messages |
+| Entity IDs | Permitted in dev logs; stripped from persistent logs |
+
+#### 5.1.2 User Action Log (persistent)
+
+- **Purpose:** Local audit trail of all user-initiated mutations.
+- **Covered events:** create / edit / delete / void transactions; account changes; category changes; settings changes.
+- **Storage path:** `filesDir/logs/actions/` — app-private, not world-readable.
+- **Android auto-backup:** Excluded (see §4.7 when written; declared in `res/xml/backup_rules.xml`).
+
+**Format — append-only structured lines:**
+
+| Field | Value |
+|-------|-------|
+| `ts` | ISO-8601 timestamp (UTC) |
+| `action` | Enum string — `CREATE`, `EDIT`, `DELETE`, `VOID`, `ACCOUNT_CHANGE`, `CATEGORY_CHANGE`, `SETTINGS_CHANGE` |
+| `entity_type` | Enum string — `TRANSACTION`, `ACCOUNT`, `CATEGORY`, `SETTING` |
+| `entity_id` | UUID — opaque; no user-readable content |
+
+- No raw amounts, no currency codes, no display text.
+
+**Rotation policy:**
+
+| Property | Limit |
+|----------|-------|
+| Max file size | 2 MB |
+| Max files | 5 (oldest purged at limit) |
+| Total budget | ≤ 10 MB |
+| Purge trigger | Rotation limit hit OR full data wipe |
+
+#### 5.1.3 Error / Crash Log (persistent)
+
+- **Purpose:** Silent local capture of unhandled errors and caught exceptions.
+- **Storage path:** `filesDir/logs/errors/` — same privacy rules as §5.1.2.
+- **Android auto-backup:** Excluded (same rule as §5.1.2).
+- **No automatic remote transmission** — zero telemetry (§1.6.5).
+- **Export:** User-initiated share sheet only (support use case).
+- **Purge:** On full data wipe.
+
+**Format:**
+
+| Field | Value |
+|-------|-------|
+| `ts` | ISO-8601 timestamp (UTC) |
+| `error_type` | Exception class name |
+| `stack_trace` | Full Dart stack trace |
+| `app_version` | Semver string from `pubspec.yaml` |
+
+- No user financial data in any field.
+
+**Rotation policy:** Identical to §5.1.2 (2 MB / 5 files / ≤ 10 MB).
+
+---
+
+### 5.2 Analytics
+
+| Property | Value |
+|----------|-------|
+| In-app analytics | None — prohibited (PRD NF-1, §1.6.5) |
+| Third-party SDKs | None — Firebase Analytics, Mixpanel, etc. explicitly excluded |
+| Usage telemetry | None |
+
+---
+
+### 5.3 Crash Reporting
+
+| Property | Value |
+|----------|-------|
+| Remote crash reporting | None — prohibited (PRD NF-1, §1.6.5) |
+| Services | Crashlytics, Sentry, etc. explicitly excluded |
+| Sole capture mechanism | Local error log (§5.1.3) |
+| Support path | User exports log manually via share sheet |
+
+---
+
+### 5.4 Internationalisation / Localisation
+
+#### 5.4.1 App Language
+
+- English only — v1 and all foreseeable versions (PRD §5.4.2 scope note).
+- Non-English localisation out of scope.
+
+#### 5.4.2 Number and Currency Formatting
+
+| Concern | Implementation |
+|---------|----------------|
+| Currency formatting | `NumberFormat` with device locale; symbol placement and spacing from user setting (PRD §5.4.2) |
+| Decimal separator | User-overridable; inferred from locale (comma or period) |
+| Thousands grouping | Standard 3-digit or Indian lakh/crore (2-2-3); inferred from locale; user-overridable (PRD FG-C11) |
+| Symbol placement | Prefix / suffix inferred from home currency locale; user-overridable |
+
+- No hardcoded format strings in UI layer.
+
+#### 5.4.3 Date and Time Formatting
+
+| Concern | Implementation |
+|---------|----------------|
+| Date display | Device locale via `intl` package — no hardcoded formats |
+| Time format | 12h / 24h inferred from device; user-overridable (PRD §5.4.2) |
+| Week start | Monday default; user-overridable to Sunday (PRD §5.4.2) |
+| Timezone | Device local time for display; UTC for storage |
+
+#### 5.4.4 RTL Layout
+
+- Supported in v1 via Flutter's `Directionality` system (PRD §5.4.11).
+- No manual RTL overrides; use `EdgeInsetsDirectional` and directional icons throughout.
+
+---
+
+### 5.5 Accessibility
+
+| Dimension | v1 Requirement | Source |
+|-----------|----------------|--------|
+| Standard | WCAG 2.1 AA baseline | PRD NF-5 |
+| Contrast | ≥ 4.5:1 text-to-background | WCAG 2.1 AA |
+| Touch targets | ≥ 48 × 48 dp (Material 3 baseline) | Material 3 |
+| Font scaling | UI adapts to system font scale up to 200%; layouts reflow, no overflow | PRD §5.4.11 |
+| Semantic labels | All buttons, icons, form fields carry content descriptions | PRD §5.4.11 |
+| TalkBack | Best-effort v1; complex custom widgets and charts may defer to v2 | PRD §5.4.11 |
+| RTL | `Directionality` system; see §5.4.4 | PRD §5.4.11 |
+
+- No in-app accessibility toggles; all a11y settings are system-level.
+- Screen reader audit for complex financial widgets deferred to v2.
+
+---
+
+### 5.6 Theme and Dark Mode
+
+| Property | Value |
+|----------|-------|
+| Design system | Material 3 (Material You) — §1.6.4, PRD NF-10 |
+| Light + dark | Both themes required; `theme` + `darkTheme` in `MaterialApp` |
+| Dynamic color | API 31+ via `DynamicColorTheme`; fallback to custom seed color on OEM restriction (TC-048) |
+| Seed color | User-selectable in Settings > Appearance (PRD §5.4.1) |
+| Theme definition | Centralized `ThemeData` in `presentation/theme/` — not duplicated per feature |
+
+- No per-feature color overrides outside the centralized theme.
+- Implementation detail: see §2.1.3 (Android target) and §2.14.1 (dependency table).
