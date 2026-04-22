@@ -88,6 +88,8 @@ You have two primary subagents. Use the appropriate agent for each phase of work
 - Use numbered headings everywhere possible.
 - Be liberal with using headings on markdown files. This will help you to read the file easily.
 - Add a docstring comment block to the top of any code file that you generate.
+- **Docs: decision only. Reason optional, 3–5 words max.** "UUID. Sync-friendly." enough. No paragraphs.
+- Tables and bullets. No prose. No summaries.
 
 ### Never
 
