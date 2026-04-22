@@ -2,62 +2,36 @@
 title: Ideation Diff
 status: current
 owner: le
-updated: 2026-04-21
+updated: 2026-04-22
 ---
 
-# Ideation Diff — Session 2026-04-21 (SDS §4 + §5 Verification)
+# Ideation Diff — Session 2026-04-22 (Feature DAG)
 
 ## 1. Files Modified
 
 | File | Change type |
 |------|-------------|
-| `docs/02-technical/sds.md` | Targeted edits to §4 and §5 only |
+| `docs/02-technical/feature-dag.md` | Completed — §3 (Mermaid DAG + critical path), §5 (build phases), §6 (reference index), §7 (open questions), TOC filled |
+| `docs/06-helpers/ideation-tracker.md` | Updated — Feature DAG row (2b) added |
 | `docs/06-helpers/ideation-diff.md` | Overwritten (this file) |
+| `docs/06-helpers/dag-parts/` | Deleted (staging files) |
 
 ## 2. Changes Made
 
-### §4.3.4 PIN Recovery
+- Feature DAG v1 completed: 57 nodes across 11 domains
+- §3 Mermaid dependency diagram generated from all node dependency fields; HARD edges as solid arrows, SOFT as dashed
+- §3.2 Critical path identified: 11-hop chain INFRA-1 → INFRA-7 → ACC-01/CAT-01 → TXN-01 → ACC-04 → TXN-05 → TXN-08 → HOME-01 → HOME-02
+- §5 Build phases derived from dependency graph (Phase 0 through Phase 9); parallel execution within each phase documented
+- §5.1 Critical path analysis table: top 10 nodes by downstream block count
+- §6 Reference index: PRD section → node, TC → node, DM table → node
+- §7 3 open questions/flags logged
+- TOC placeholder filled with full section hierarchy
+- Staging files (`docs/06-helpers/dag-parts/`) deleted
 
-- Added: "If no device security configured: user directed to OS Settings to set it up before PIN reset is permitted."
-- Source: PRD §5.4.6.3 step 3 (previously omitted).
-
-### §4.6 Dev Log Hygiene
-
-- Removed: `firebase_crashlytics (opt-in flavour)` line — Crashlytics is explicitly prohibited by PRD NF-1 and §5.3. Inconsistency removed.
-- Replaced with: reference to §5.3 prohibition.
-
-### §4.7 Persistent Log Files
-
-- Resolved OQ-SDS-SC-002: user action log is in v1 scope (§5.1.2 fully specifies it). OQ removed.
-- Updated table: "if implemented" → confirmed v1 scope with §5.1.2/§5.1.3 references.
-- Updated paths: `filesDir/logs/` → `filesDir/logs/actions/` and `filesDir/logs/errors/` (consistent with §5.1.2/§5.1.3).
-- Replaced stale OQ bullet with cross-reference to §5.1 specs.
-
-### §5.7 Dependency Licensing (new)
-
-- Added §5.7 to cover PRD NF-6 (MIT license; permissive deps only).
-- Gap: NF-6 had no coverage in §4 or §5.
-
-### §5.8 Self-Contained Assets (new)
-
-- Added §5.8 to cover PRD NF-11 (all assets bundled; zero runtime asset calls).
-- Gap: NF-11 had no coverage in §4 or §5.
-
-## 3. Sources Verified
-
-| Source | Sections checked |
-|--------|-----------------|
-| PRD | §5.4.6, §5.4.11, §6 (NF-1–NF-11) |
-| Technical Clarifications | TC-007, TC-048, TC-054 |
-| Competitive Analysis | §6.1–§6.3 (threat model, v1 must-haves) |
-| Ledger Entry Cases | §11.2–§11.3 (void/reversal, photo deletion) |
-| Input Fields | §2.2 (encrypted fields), §1.4 (validation) |
-| Data Model | §3.2 (account_details), §5.1 (attachments), §11 (audit) |
-
-## 4. Open Questions Status
+## 3. Open Questions Status
 
 | ID | Status | Notes |
 |----|--------|-------|
-| OQ-SDS-SC-001 | Still open | `flutter_secure_storage` backup exclusion on API 31+ |
-| OQ-SDS-SC-002 | **Resolved** | User action log confirmed v1 scope in §5.1.2; removed from §4.7 |
-| OQ-SDS-SC-003 | Still open | CAMERA permission for photo attachments |
+| OQ-SDS-SC-001 | Still open | `flutter_secure_storage` backup exclusion on Android API 31+; blocks SET-06 ship |
+| OQ-SDS-SC-003 | Still open | CAMERA permission for photo attachments (TXN-04) |
+| OQ-DAG-001 | New — needs SDS fix | SDS §2.8.4 contradicts TC-050; search scope must be corrected before TXN-08 or HOME-02 implementation starts |
