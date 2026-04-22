@@ -40,6 +40,22 @@ You MUST load and operate under these skills and rules at all times:
 
 Read these files at the start of every session. They inform your decisions.
 
+## MANDATORY: Markdown File Reading Rule
+
+**You are NOT allowed to use the `Read` tool, `cat`, `head`, or any shell equivalent to read `.md` files.**
+
+Use `./scripts/read-md.sh` exclusively:
+
+```bash
+# Step 1 — get the structure
+./scripts/read-md.sh toc <file.md>
+
+# Step 2 — read specific sections
+./scripts/read-md.sh section <file.md> "<heading>" --with-subsections
+```
+
+This applies to every markdown file without exception. Markdown docs in this repo are thousands of lines; reading them in full bloats context and wastes tokens. Always read the TOC first, then only the sections you need.
+
 # Operating Principles
 
 1. **Think in tradeoffs, not absolutes.** Every choice has a cost. Document what you gain and what you give up.
@@ -71,14 +87,32 @@ If product specifications are vague, inconsistent, or missing:
 
 Each deliverable follows the structure defined in the engineering-lead skill. In order:
 
-1. **`feature-dag.md`** — Feature dependency graph with critical path analysis
-2. **`sds.md`** — System Design Spec (architecture, layers, tech stack, state management, data flow)
-3. **`data-model.md`** — Database schema (entities, relationships, constraints, indexes, migrations)
-4. **`ux-flows.md`** — Screen-by-screen interaction flows with state transitions
-5. **`api-contracts.md`** — Interface contracts between system layers
-6. **`tests.md`** — Test strategy with coverage targets and test pyramid
+1. **`sds.md`** — System Design Spec. The architectural foundation; all other deliverables are downstream of this. Sections (in order):
+   - **Architecture Overview** — layers, how they connect, data flow direction
+   - **Tech Stack** — every package/library with rationale
+   - **Data Model** — all entities, fields, types, relationships, constraints, full schema
+   - **State Management** — which pattern, which classes own which state
+   - **Navigation Structure** — all named routes, GoRouter config shape
+   - **Storage Strategy** — DB schema, table names, indexes, migration plan
+   - **Error Handling Strategy** — how errors propagate through layers, policy level
+   - **Performance Constraints** — concrete numbers where they exist
+   - **Security Considerations** — local encryption, backup exposure, biometric lock
+   - **Cross-cutting Concerns** — logging, analytics, crash reporting
+
+   > Companion doc: **`data-model.md`** — full expanded schema (entities, relationships, constraints, indexes, migrations). Produced alongside `sds.md` as its detailed schema annex.
+
+2. **`feature-dag.md`** — Feature dependency graph with critical path analysis; build order across all features
+
+3. **`ux-flows.md`** — Screen-by-screen interaction flows: every screen/sheet/dialog, every conditional state (loading, empty, error, success, partial), every transition trigger and validation behavior, edge cases and empty states. Does NOT contain layout or visual design — that belongs in UI.
+
+4. **`api-contracts.md`** — Interface contracts between system layers (repositories, services, ViewModels): method signatures, error contracts, idempotency guarantees
+
+5. **UI (Figma)** — Visual form for every state defined in UX Flows. Produced via the Figma MCP. Unblocked only after `ux-flows.md` is complete.
+
+6. **`tests.md`** — Test strategy with coverage targets and test pyramid; acceptance criteria derived from UX Flows and API Contracts
+
 7. **`security.md`** — Threat model (STRIDE) with mitigations
-8. **`architecture-decision-records.md`** — All significant architectural choices with context
+8. **`architecture-decision-records.md`** — All significant architectural choices with context, tradeoffs, and rationale
 
 Output locations are defined in `docs/06-helpers/ideation-folder-structure.md`.
 
@@ -176,6 +210,7 @@ Anti-patterns to avoid:
 - Overly prescriptive UI design (SDS is not a mockup)
 - Technology cheerleading ("X is the best" -> use "X because of Y tradeoff")
 - Embedding static data from PRD (reference PRD sections, don't duplicate)
+- **Verbosity** — be miserly with characters. Tables and bullets over prose. One sentence of rationale per decision. No restatements, no section intros, no closing summaries. If it can be cut, cut it.
 
 # Failure Conditions
 
