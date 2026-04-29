@@ -788,6 +788,20 @@ Each domain aggregate has a dedicated DAO. DAOs are Drift `DatabaseAccessor` sub
 | `ExchangeRateDao` | Read/write on `exchange_rate_cache` table |
 | `CurrencyDao` | Read-only access to bundled `currencies` reference table |
 
+#### 2.3.5 Data Model Design Decisions
+
+> **Full schema:** `docs/02-technical/data-model.md` — entity definitions, column specs, index catalogue, Drift type mappings, soft-delete/void-chain policies.
+
+| Principle | Decision |
+|-----------|----------|
+| **Primary keys** | UUID v4 (`TEXT`) on all tables except `exchange_rates` (autoincrement) and `schema_migrations` (version number) |
+| **Monetary amounts** | `INTEGER` minor units — eliminates floating-point error |
+| **Exchange rates** | `INTEGER` micro-units (rate × 1,000,000) — 6-decimal precision |
+| **Timestamps** | Unix epoch seconds as `INTEGER` — no timezone ambiguity |
+| **Soft deletes** | `is_deleted` + `deleted_at` on every mutable entity |
+| **Void/correction chains** | `voided_by_id` / `corrects_id` foreign keys on `transactions` |
+| **Tables** | 18 tables + 1 FTS5 virtual table + 1 search view |
+
 ---
 
 ### 2.4 Navigation
@@ -1351,6 +1365,7 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 | `flutter_local_notifications` | `^18.0.1` | Exact-alarm "remind and confirm" notifications |
 | `http` | `^1.2.2` | Exchange rate API HTTP client |
 | `dynamic_color` | `^1.7.0` | Material You dynamic color from Android 12 wallpaper |
+| `catppuccin_flutter` | `^1.0.0` | Catppuccin palette (Latte/Frappé/Macchiato/Mocha) for `catppuccin` color scheme mode |
 | `flutter_secure_storage` | `^9.2.2` | Secure storage for PIN and sensitive preferences |
 | `intl` | `^0.19.0` | Date/number formatting, locale-aware display |
 | `path_provider` | `^2.1.4` | Platform-aware paths for database and export files |
@@ -1501,7 +1516,7 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 | Base | `ColorScheme.fromSeed()` | Material 3 standard |
 | Dynamic color | `DynamicColorBuilder` from `dynamic_color` package | TC-048; PRD §5.4.1 |
 | Fallback (OEM restriction) | Custom seed color from `app_settings.color_seed` | TC-048 PM clarification |
-| User preference | `app_settings.color_scheme_mode`: `dynamic` or `custom` | PRD §5.4.1 |
+| User preference | `app_settings.color_scheme_mode`: `dynamic` \| `custom` \| `catppuccin` | PRD §5.4.1 |
 | Custom token layer | `ThemeExtension<VarianceColors>` — named getters, compile-time safe | Competitive analysis §5 |
 
 **`VarianceColors` semantic tokens (minimal set):**
@@ -1516,6 +1531,70 @@ All packages use `^` (caret) constraints. Version numbers reflect the latest sta
 All other color roles use Material 3 `ColorScheme` built-in tokens directly (29 roles cover the remaining surfaces). Tokens are added to `VarianceColors` only when `ColorScheme` roles are insufficient.
 
 **Why `dynamic_color` over `system_theme` package:** `dynamic_color` is the official Google-maintained package for Material You wallpaper-based color extraction. `system_theme` (used by the reference open-source app) requires manual `Color.alphaBlend` blending and has known Samsung OEM bugs. No advantage over the official approach.
+
+#### 2.18.2 Catppuccin Color Scheme Mode
+
+**Decision:** `catppuccin` is a first-class `color_scheme_mode` value alongside `dynamic` and `custom`. Implemented via `catppuccin_flutter` package.
+
+| Attribute | Value |
+|-----------|-------|
+| Package | `catppuccin_flutter` |
+| Light mode flavour | Latte |
+| Dark mode flavour | Mocha |
+| Frappé / Macchiato | Deferred to v2 (user-selectable flavour) |
+| `ColorScheme` base | Built from Catppuccin palette via `ColorScheme.fromSeed(seedColor: flavour.mauve)` |
+| Theme-mode binding | `ThemeMode.light` → Latte; `ThemeMode.dark` → Mocha; `ThemeMode.system` → resolved at runtime |
+
+**`VarianceColors` token mapping when `color_scheme_mode == catppuccin`:**
+
+| Token | Catppuccin palette color | Flavour field |
+|-------|--------------------------|---------------|
+| `incomeAmount` | Green | `flavour.green` |
+| `expenseAmount` | Red | `flavour.red` |
+| `warningAmount` | Peach | `flavour.peach` |
+| `accentPastel` | Lavender | `flavour.lavender` |
+
+**Activation logic:**
+
+| `color_scheme_mode` | Color source |
+|---------------------|-------------|
+| `dynamic` | `DynamicColorBuilder` wallpaper extraction; falls back to `custom` seed |
+| `custom` | `ColorScheme.fromSeed(seedColor: app_settings.color_seed)` |
+| `catppuccin` | `CatppuccinColors` palette for active flavour; `VarianceColors` tokens mapped per table above |
+
+#### 2.18.3 TypographyExtension
+
+**Decision:** `ThemeExtension<VarianceTypography>` is always active, independent of `color_scheme_mode`. Provides compile-time font family and size constants; eliminates magic numbers in widgets.
+
+**Font families** (placeholders — actual pairing decided at UX Flows stage):
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `displayFont` | `String` | `''` | Hero/display text family |
+| `bodyFont` | `String` | `''` | Body and label text family |
+| `numericFont` | `String` | `''` | Monospaced/tabular numeric family |
+
+**Font size constants** (`double`, named):
+
+| Constant | Size (sp) | Use case |
+|----------|-----------|----------|
+| `displayHeroAmount` | `48` | Home screen balance hero |
+| `displayLargeAmount` | `36` | Account detail hero amount |
+| `sectionHeading` | `20` | Section / group headers |
+| `bodyLarge` | `16` | Primary body text, transaction titles |
+| `bodyMedium` | `14` | Secondary body text, descriptions |
+| `bodySmall` | `12` | Captions, timestamps, metadata |
+| `numericLarge` | `24` | Transaction amount in detail view |
+| `numericMedium` | `16` | Transaction amount in list row |
+| `numericSmall` | `13` | Inline balance / running total |
+| `label` | `11` | Form field labels, input hints |
+| `tabLabel` | `12` | Bottom nav / tab bar labels |
+| `chipText` | `12` | Category chip, filter chip text |
+| `buttonText` | `14` | Filled / text button label |
+
+**Constraints:**
+- All widget font size references must use `VarianceTypography` constants — no raw numeric literals.
+- Extension is registered in `ThemeData.extensions` alongside `VarianceColors` regardless of color scheme mode.
 
 ---
 

@@ -2,36 +2,41 @@
 title: Ideation Diff
 status: current
 owner: le
-updated: 2026-04-22
+updated: 2026-04-28
 ---
 
-# Ideation Diff — Session 2026-04-22 (Feature DAG)
+# Ideation Diff — Session 2026-04-28 (Theming — Catppuccin + Typography)
 
 ## 1. Files Modified
 
 | File | Change type |
 |------|-------------|
-| `docs/02-technical/feature-dag.md` | Completed — §3 (Mermaid DAG + critical path), §5 (build phases), §6 (reference index), §7 (open questions), TOC filled |
-| `docs/06-helpers/ideation-tracker.md` | Updated — Feature DAG row (2b) added |
+| `docs/02-technical/sds.md` | Targeted edits — §2.14.1, §2.18.1, new §2.18.2, new §2.18.3 |
+| `docs/06-helpers/ideation-tracker.md` | Key decisions row added |
 | `docs/06-helpers/ideation-diff.md` | Overwritten (this file) |
-| `docs/06-helpers/dag-parts/` | Deleted (staging files) |
 
 ## 2. Changes Made
 
-- Feature DAG v1 completed: 57 nodes across 11 domains
-- §3 Mermaid dependency diagram generated from all node dependency fields; HARD edges as solid arrows, SOFT as dashed
-- §3.2 Critical path identified: 11-hop chain INFRA-1 → INFRA-7 → ACC-01/CAT-01 → TXN-01 → ACC-04 → TXN-05 → TXN-08 → HOME-01 → HOME-02
-- §5 Build phases derived from dependency graph (Phase 0 through Phase 9); parallel execution within each phase documented
-- §5.1 Critical path analysis table: top 10 nodes by downstream block count
-- §6 Reference index: PRD section → node, TC → node, DM table → node
-- §7 3 open questions/flags logged
-- TOC placeholder filled with full section hierarchy
-- Staging files (`docs/06-helpers/dag-parts/`) deleted
+### `docs/02-technical/sds.md`
+
+- **§2.14.1** — Added `catppuccin_flutter ^1.0.0` to production dependency table
+- **§2.18.1** — Updated `app_settings.color_scheme_mode` valid values: `dynamic | custom | catppuccin`
+- **§2.18.2** (new) — Catppuccin color scheme mode spec:
+  - `catppuccin` is a third first-class `color_scheme_mode` value
+  - Light → Latte; Dark → Mocha; Frappé/Macchiato deferred to v2
+  - `ColorScheme` seeded from `flavour.mauve`
+  - `VarianceColors` token mapping: `incomeAmount→green`, `expenseAmount→red`, `warningAmount→peach`, `accentPastel→lavender`
+  - Activation logic table (all three modes side-by-side)
+- **§2.18.3** (new) — `ThemeExtension<VarianceTypography>` spec:
+  - 3 font family fields (`displayFont`, `bodyFont`, `numericFont`) as `String` placeholders
+  - 13 named `double` font size constants covering all app use cases
+  - Constraint: no raw numeric font size literals in widgets
+  - Always registered in `ThemeData.extensions` regardless of color scheme mode
 
 ## 3. Open Questions Status
 
 | ID | Status | Notes |
 |----|--------|-------|
-| OQ-SDS-SC-001 | Still open | `flutter_secure_storage` backup exclusion on Android API 31+; blocks SET-06 ship |
+| OQ-SDS-SC-001 | Still open | `flutter_secure_storage` backup exclusion on Android API 31+ |
 | OQ-SDS-SC-003 | Still open | CAMERA permission for photo attachments (TXN-04) |
-| OQ-DAG-001 | New — needs SDS fix | SDS §2.8.4 contradicts TC-050; search scope must be corrected before TXN-08 or HOME-02 implementation starts |
+| OQ-DAG-001 | Still open | SDS §2.8.4 contradicts TC-050; search scope must be corrected before TXN-08/HOME-02 |
