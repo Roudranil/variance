@@ -33,8 +33,8 @@ outputs_to: []
 | 2   | **System Design Spec (SDS)** | 🟡 In Progress — §1 + §3 verified (2026-04-21): 4 gaps patched — §1.6.11 (NF-11 bundled assets), §1.6.12 (PRD §5.4.6.1 lock scope), §3.1 on-launch sweep budget row, §3.1 isolate threshold row. TOC updated. Earlier: §2 verified (5 gaps patched). Remaining: UX Flows, API Contracts, Tests, Security (05-quality), ADRs. |
 | 2a  | **Data Model**               | ✅ **PRODUCED** (2026-04-20) | `docs/02-technical/data-model.md` — Full schema for all 18 tables + FTS virtual table + search view. All TC-001/TC-024/TC-025/TC-026/TC-027/TC-028 entity schemas resolved. Amount storage as integer minor units. UUID PKs. Soft-delete + void/reversal chain + correction chain policies documented. 5 open questions logged (DM-001 through DM-005). |
 | 2b  | **Feature DAG**              | ✅ **PRODUCED** (2026-04-22) | `docs/02-technical/feature-dag.md` — 57 nodes, 11 domains, Mermaid diagram, build phases (Phase 0–9), reference index (PRD/TC/DM table → node). 3 open questions/flags logged (OQ-SDS-SC-001, OQ-SDS-SC-003, OQ-DAG-001). |
-| 3   | **UX Flows**                 | 🟢 Ready to Start         | Navigation model (TC-031) resolved — bottom nav with 3 tabs. UX pre-work topics (UX-1 through UX-14) remain as design decisions for UX Flows authoring. |
-| 4   | **API Contracts**            | 🔴 Blocked                | Blocked on SDS                                                                                                                                    |
+| 3   | **UX Flows**                 | ✅ **PRODUCED** (2026-04-29) | `docs/02-technical/ux-flows.md` — 2081 lines, 10 sections. All UX-1–UX-14 resolved. 30+ screens, 9 sub-flows, 22+ end-to-end flows. |
+| 4   | **API Contracts**            | ⏭️ Skipped                | Skipped by founder decision 2026-04-29. Not required before execution planning.                                                                    |
 | 5   | **Execution Plan (EP)**      | 🔴 Blocked                | Blocked on all above                                                                                                                              |
 
 ---
@@ -295,11 +295,11 @@ outputs_to: []
 
 - [x] PRD signed off — Founder sign-off 2026-04-14. All docs in `docs/01-product/` frozen.
 - [ ] System Design Spec complete — Architecture Overview drafted 2026-04-20. Remaining sections in progress.
-- [ ] UX Flows complete
-- [ ] API Contracts defined
+- [x] UX Flows complete — `docs/02-technical/ux-flows.md` produced 2026-04-29.
+- [x] API Contracts — skipped by founder decision 2026-04-29.
 - [ ] Execution Plan complete
 
-**Status: 🟡 SDS in progress — Architecture Overview complete. Remaining SDS sections (Tech Stack, Layer Design, Core Services, Technology Selection, NFRs, Risks) next.**
+**Status: 🟡 SDS + UX Flows done. UI Spec, Tests spec, Security spec remaining before execution planning.**
 
 ---
 
@@ -312,6 +312,6 @@ outputs_to: []
 | Gaps & Questions   | `docs/06-helpers/gaps-and-questions.md` | 📋 Reference (Part 1 resolved; Parts 2–3 tracked) |
 | Ledger Entry Cases | `docs/01-product/ledger-entry.md`       | ✅ Updated                                        |
 | SDS                | `docs/02-technical/sds.md`              | 🟡 In Progress — Architecture Overview complete    |
-| UX Flows           | `docs/02-technical/ux-flows.md`         | ⬜ Ready to Start                                 |
-| API Contracts      | `docs/02-technical/api-contracts.md`    | ⬜ Not Started                                    |
+| UX Flows           | `docs/02-technical/ux-flows.md`         | ✅ Produced 2026-04-29                             |
+| API Contracts      | `docs/02-technical/api-contracts.md`    | ⏭️ Skipped (founder decision 2026-04-29)          |
 | Execution Plan     | `docs/03-planning/task-breakdown.md`    | ⬜ Not Started                                    |
