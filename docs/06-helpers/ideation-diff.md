@@ -5,44 +5,45 @@ owner: le
 updated: 2026-04-29
 ---
 
-# Ideation Diff — Session 2026-04-29 (UX Flows)
+# Ideation Diff — Session 2026-04-29 (UI Spec)
 
 ## 1. Files Modified
 
 | File | Change |
 |------|--------|
-| `docs/02-technical/ux-flows.md` | Created — 2081 lines |
-| `docs/06-helpers/ideation-tracker.md` | UX Flows → ✅ PRODUCED; API Contracts → ⏭️ Skipped; Readiness Gate updated |
+| `docs/02-technical/ui-spec.md` | Created — 2280 lines |
+| `docs/06-helpers/ideation-tracker.md` | UI Spec → ✅ PRODUCED; Readiness Gate + Document Index updated |
 
 ## 2. Changes Made
 
-### `docs/02-technical/ux-flows.md`
+### `docs/02-technical/ui-spec.md`
 
 | § | Section | Content |
 |---|---------|---------|
-| 1 | Shared Sub-flows | 9 sub-flows: category picker, payee picker, tag picker, account picker, currency picker, amount entry, photo attachment, photo viewer, draft auto-save |
-| 2 | UX Pre-work Resolutions | UX-1 through UX-14 all resolved |
-| 3 | App Shell & Navigation | Route map, tab behaviour, back-stack rules |
-| 4 | Onboarding & First Launch | 5-step wizard with per-step states and conditions |
-| 5 | App Lock & Security Flows | App lock overlay, PIN setup, PIN entry, PIN reset — 9 flows |
-| 6 | Home Tab | Dashboard states, greeting, summary card, month selector, alerts strip, catch-up banner, FAB, transaction list |
-| 7 | Transaction Screens & Flows | 12 screens + 9 flows (expense, income, transfer, recurring, installment, edit, void, filter, search) |
-| 8 | Accounts Tab | Account list, detail, create, edit — 4 screens |
-| 9 | Settings Tab | 19 screens + 6 flows |
-| 10 | Immutable Field Reference | Consolidated table |
+| 1 | Global Design Decisions | 9 global decisions resolved: SpeedDial (UX-2), system keyboard (UX-12), abstract geometric empty states (UX-13), snackbar+undo policy (UX-9), bottom nav icons/labels, category chip style, account detail hero, home greeting |
+| 2 | App Shell & Navigation | NavigationBar spec, ShellRoute+GoRouter route map, tab behaviour, back-stack rules, transition defaults |
+| 3 | Onboarding & First Launch | 5-step wizard — per-step scaffold, component/token tables, states |
+| 4 | App Lock & Security Screens | Lock overlay, PIN entry, PIN setup, PIN change — M3 components, states, lockout flow |
+| 5 | Home Tab | Home screen, Exchange Rate Detail, Color Scheme Preview, 3 warning dialogs |
+| 6 | Transaction Screens & Flows | Transaction Detail, Create (expense/income/transfer), Recurring setup, Installment setup, Edit/correction, Filter sheet, Search overlay, Void/Delete flows |
+| 7 | Accounts Tab | Account List, Account Detail (hero + history strip), Create Account, Edit Account (immutable currency warning) |
+| 8 | Shared Components | Category Picker, Payee Picker, Tag Picker, Account Picker, Currency Picker, Amount Entry, Photo Attachment, Photo Viewer, Draft auto-save indicator |
+| 9 | Settings Tab | 19 screens: Hub, Appearance, Locale & Format, Transaction Entry, Warnings & Limits, Profile, Security, Category Management, Category Detail, Currency, Tags, Payees, Recurring Templates, Recurring Detail, Installment Plans, Installment Detail, Backup & Restore, About, Drafts |
 
 ### `docs/06-helpers/ideation-tracker.md`
 
 | Field | Before | After |
 |-------|--------|-------|
-| UX Flows status | 🟢 Ready to Start | ✅ PRODUCED 2026-04-29 |
-| API Contracts status | 🔴 Blocked | ⏭️ Skipped (founder decision) |
-| Readiness Gate — UX Flows | `[ ]` | `[x]` |
-| Readiness Gate — API Contracts | `[ ]` | `[x]` skipped |
-| Document Index — UX Flows | ⬜ Ready to Start | ✅ Produced 2026-04-29 |
+| UI Spec row | — | ✅ PRODUCED 2026-04-29 |
+| Execution Plan blocked note | "Blocked on all above" | "Blocked on Tests spec + Security spec" |
+| Readiness Gate — UI Spec | — | `[x]` produced, founder review pending |
+| Readiness Gate — Tests spec | — | `[ ]` added |
+| Readiness Gate — Security spec | — | `[ ]` added |
+| Status line | "UI Spec, Tests spec, Security spec remaining" | "UI Spec done (founder review pending). Tests + Security remaining" |
+| Document Index — UI Spec | — | ✅ Produced 2026-04-29 |
+| Document Index — Tests Spec | — | ⬜ Not Started |
+| Document Index — Security Spec | — | ⬜ Not Started |
 
 ## 3. Open Questions Status
 
-| ID | Status | Notes |
-|----|--------|-------|
-| UX-1–UX-14 | ✅ All resolved | Embedded in `ux-flows.md` §2 |
+None added this session.

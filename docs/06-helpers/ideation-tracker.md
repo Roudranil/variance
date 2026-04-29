@@ -34,8 +34,9 @@ outputs_to: []
 | 2a  | **Data Model**               | ✅ **PRODUCED** (2026-04-20) | `docs/02-technical/data-model.md` — Full schema for all 18 tables + FTS virtual table + search view. All TC-001/TC-024/TC-025/TC-026/TC-027/TC-028 entity schemas resolved. Amount storage as integer minor units. UUID PKs. Soft-delete + void/reversal chain + correction chain policies documented. 5 open questions logged (DM-001 through DM-005). |
 | 2b  | **Feature DAG**              | ✅ **PRODUCED** (2026-04-22) | `docs/02-technical/feature-dag.md` — 57 nodes, 11 domains, Mermaid diagram, build phases (Phase 0–9), reference index (PRD/TC/DM table → node). 3 open questions/flags logged (OQ-SDS-SC-001, OQ-SDS-SC-003, OQ-DAG-001). |
 | 3   | **UX Flows**                 | ✅ **PRODUCED** (2026-04-29) | `docs/02-technical/ux-flows.md` — 2081 lines, 10 sections. All UX-1–UX-14 resolved. 30+ screens, 9 sub-flows, 22+ end-to-end flows. |
+| 3a  | **UI Spec**                  | ✅ **PRODUCED** (2026-04-29) | `docs/02-technical/ui-spec.md` — 2280 lines, 9 sections. Global decisions resolved (FAB/SpeedDial, snackbar/dialog, empty states). All screens specced: M3 components, VarianceTypography/VarianceColors tokens, states. Awaiting founder review before Figma. |
 | 4   | **API Contracts**            | ⏭️ Skipped                | Skipped by founder decision 2026-04-29. Not required before execution planning.                                                                    |
-| 5   | **Execution Plan (EP)**      | 🔴 Blocked                | Blocked on all above                                                                                                                              |
+| 5   | **Execution Plan (EP)**      | 🔴 Blocked                | Blocked on Tests spec + Security spec                                                                                                              |
 
 ---
 
@@ -296,10 +297,13 @@ outputs_to: []
 - [x] PRD signed off — Founder sign-off 2026-04-14. All docs in `docs/01-product/` frozen.
 - [ ] System Design Spec complete — Architecture Overview drafted 2026-04-20. Remaining sections in progress.
 - [x] UX Flows complete — `docs/02-technical/ux-flows.md` produced 2026-04-29.
+- [x] UI Spec complete — `docs/02-technical/ui-spec.md` produced 2026-04-29. Awaiting founder review before Figma.
 - [x] API Contracts — skipped by founder decision 2026-04-29.
+- [ ] Tests spec complete
+- [ ] Security spec complete
 - [ ] Execution Plan complete
 
-**Status: 🟡 SDS + UX Flows done. UI Spec, Tests spec, Security spec remaining before execution planning.**
+**Status: 🟡 UI Spec done (founder review pending). Tests spec + Security spec remaining before execution planning.**
 
 ---
 
@@ -313,5 +317,8 @@ outputs_to: []
 | Ledger Entry Cases | `docs/01-product/ledger-entry.md`       | ✅ Updated                                        |
 | SDS                | `docs/02-technical/sds.md`              | 🟡 In Progress — Architecture Overview complete    |
 | UX Flows           | `docs/02-technical/ux-flows.md`         | ✅ Produced 2026-04-29                             |
+| UI Spec            | `docs/02-technical/ui-spec.md`          | ✅ Produced 2026-04-29 — founder review pending    |
 | API Contracts      | `docs/02-technical/api-contracts.md`    | ⏭️ Skipped (founder decision 2026-04-29)          |
+| Tests Spec         | `docs/05-quality/tests.md`              | ⬜ Not Started                                    |
+| Security Spec      | `docs/05-quality/security.md`           | ⬜ Not Started                                    |
 | Execution Plan     | `docs/03-planning/task-breakdown.md`    | ⬜ Not Started                                    |
