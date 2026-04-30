@@ -1,11 +1,10 @@
 ---
 paths:
-  - "**/*.dart"
-  - "**/pubspec.yaml"
+    - "**/*.dart"
+    - "**/pubspec.yaml"
 ---
-# Dart/Flutter Patterns
 
-> This file extends [common/patterns.md](../common/patterns.md) with Dart, Flutter, and common ecosystem-specific content.
+# Dart/Flutter Patterns
 
 ## Repository Pattern
 
