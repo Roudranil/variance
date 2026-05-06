@@ -148,7 +148,7 @@ references_block=$(
   echo "$work_item_text" | awk '
     /^### References/ { in_refs=1; next }
     in_refs && /^##/ { exit }
-    in_refs && /^- \[/ { print }
+    in_refs && /^- `/ { print }
   '
 )
 
@@ -160,29 +160,23 @@ fi
 # ---------------------------------------------------------------------------
 # Step 3: Parse each reference line and fetch content
 # ---------------------------------------------------------------------------
-# Reference line format: - [Display Title](path/to/file.md#anchor-slug)
-# We need to extract: display title, file path, anchor (optional)
+# Reference line format: - `Exact Heading Text` (`docs/path/to/file.md`)
+# We need to extract: heading_text, file_path
 
 any_error=0
 
 while IFS= read -r ref_line; do
-  # Skip blank or non-reference lines
+  # Skip blank lines
   [[ -z "$ref_line" ]] && continue
-  [[ ! "$ref_line" =~ ^\-[[:space:]]\[ ]] && continue
 
-  # Extract display title: text between [ and ]
-  display_title=$(echo "$ref_line" | sed -E 's/^- \[([^]]+)\].*/\1/')
+  # Match format: - `Heading Text` (`path/to/file.md`)
+  # Use sed to extract: first backtick-quoted token = heading, second = file path
+  heading_text=$(echo "$ref_line" | sed -n 's/^- `\([^`]*\)`.*/\1/p')
+  file_path=$(echo "$ref_line" | sed -n 's/^- `[^`]*` (`\([^`]*\)`)/\1/p')
 
-  # Extract URL: text between ( and )
-  url=$(echo "$ref_line" | sed -E 's/^- \[[^]]+\]\(([^)]+)\)/\1/')
-
-  # Split URL on '#' into file path and anchor
-  if [[ "$url" == *"#"* ]]; then
-    file_path="${url%%#*}"
-    anchor="${url#*#}"
-  else
-    file_path="$url"
-    anchor=""
+  if [[ -z "$heading_text" || -z "$file_path" ]]; then
+    # Skip lines that don't match the expected format
+    continue
   fi
 
   # Resolve to absolute path
@@ -197,48 +191,45 @@ while IFS= read -r ref_line; do
 
   # Print annotation header
   echo ""
-  echo "=== [$display_title]($url) ==="
+  echo "=== ${heading_text} (${file_path}) ==="
   echo ""
 
-  # Fetch content
-  if [[ -z "$anchor" ]]; then
-    # No anchor: output full file
-    cat "$abs_file_path"
-  else
-    # Anchor present: derive a grep-friendly search pattern from the slug.
-    # GFM anchor slugs: lowercase, spaces→hyphens, non-alphanum stripped.
-    # Reverse: replace hyphens with spaces to approximate the heading text.
-    # We keep the original anchor as the grep pattern since read-md.sh
-    # --grep uses extended regex against heading text (not slugs). We also
-    # build a space-separated version as a fallback display.
-    anchor_pattern=$(echo "$anchor" | sed 's/-/ /g')
+  # Fetch section content: three-step fallback chain
+  # 1. Exact match — heading text copied verbatim from TOC
+  section_content=$(
+    "$READ_MD" section "$abs_file_path" "$heading_text" \
+      --exact \
+      --with-subsections \
+      2>/dev/null
+  ) || true
 
-    # Try grep-based match (anchor slug → approximate heading text)
+  if [[ -z "$section_content" ]]; then
+    # 2. Grep match — useful for headings with special chars (em-dashes etc.)
     section_content=$(
-      "$READ_MD" section "$abs_file_path" "$anchor_pattern" \
-        --grep "$anchor_pattern" \
+      "$READ_MD" section "$abs_file_path" "$heading_text" \
+        --grep \
         --with-subsections \
         2>/dev/null
     ) || true
+  fi
 
-    if [[ -z "$section_content" ]]; then
-      # Fallback: try fuzzy match on the anchor pattern if fzf is available
-      section_content=$(
-        "$READ_MD" section "$abs_file_path" "$anchor_pattern" \
-          --with-subsections \
-          2>/dev/null
-      ) || true
-    fi
+  if [[ -z "$section_content" ]]; then
+    # 3. Fuzzy match via fzf
+    section_content=$(
+      "$READ_MD" section "$abs_file_path" "$heading_text" \
+        --with-subsections \
+        2>/dev/null
+    ) || true
+  fi
 
-    if [[ -z "$section_content" ]]; then
-      echo "(warning: could not locate section for anchor '#${anchor}' in $file_path)" >&2
-    else
-      echo "$section_content"
-    fi
+  if [[ -z "$section_content" ]]; then
+    echo "(warning: could not locate section '${heading_text}' in $file_path)" >&2
+  else
+    echo "$section_content"
   fi
 
   echo ""
-  echo "=== end: $display_title ==="
+  echo "=== end: ${heading_text} ==="
   echo ""
 
 done <<< "$references_block"

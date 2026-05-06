@@ -120,9 +120,9 @@ fi
 # Work item headings follow the format:  ## E-1 — Title
 # We grep for the heading line anchored at the start of the line.
 # --with-subsections ensures all ### subsections are included in the output.
-grep_pattern="^## ${id} "
+grep_pattern="^${id} "
 
-"$READ_MD" section "$abs_file" "$id" --grep "$grep_pattern" --with-subsections
+"$READ_MD" section "$abs_file" "$grep_pattern" --grep --with-subsections
 exit_code=$?
 
 # read-md.sh exit code 4 means section not found — propagate as our exit 4
