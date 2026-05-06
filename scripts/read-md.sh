@@ -7,8 +7,8 @@
 
 set -euo pipefail
 
-MAX_CHARS=10000
-MAX_LINES=200
+MAX_CHARS=${MAX_CHARS:-10000}
+MAX_LINES=${MAX_LINES:-200}
 
 # Color codes for output
 RED='\033[0;31m'
