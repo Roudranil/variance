@@ -9,11 +9,11 @@ description: Defines the three-level work-item hierarchy (Epic → Story → Tas
 
 Three levels only. No other levels exist.
 
-| Level | File                          | ID Format | Heading Pattern      |
-| ----- | ----------------------------- | --------- | -------------------- |
-| Epic  | `docs/03-planning/epics.md`   | `E-{N}`   | `## E-{N} — {Title}` |
-| Story | `docs/03-planning/stories.md` | `S-{N}`   | `## S-{N} — {Title}` |
-| Task  | `docs/03-planning/tasks.md`   | `T-{N}`   | `## T-{N} — {Title}` |
+| Level | File                          | ID Format | Heading Pattern      | Definition                                                                                                                                  |
+| ----- | ----------------------------- | --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Epic  | `docs/03-planning/epics.md`   | `E-{N}`   | `## E-{N} — {Title}` | A broad, shippable vertical slice of the product. Corresponds to one or more feature-dag nodes or a full domain. Contains multiple Stories. |
+| Story | `docs/03-planning/stories.md` | `S-{N}`   | `## S-{N} — {Title}` | One deliverable capability within an Epic. Framed as a user story ("as a … I want … so that …"). Maps to one PR.                            |
+| Task  | `docs/03-planning/tasks.md`   | `T-{N}`   | `## T-{N} — {Title}` | An atomic unit of work (≤ 4 hours). Independently testable. Maps to one commit-level unit within a Story.                                   |
 
 - IDs are sequential integers starting at 1 (`E-1`, `E-2`, …)
 - IDs are globally unique within each file
@@ -86,7 +86,7 @@ No other H1 headings appear in these files.
 
 ### References
 
-- [Section Title](docs/path/to/file.md#anchor)
+- `Exact Heading Text As It Appears In TOC` (`docs/path/to/file.md`)
 ```
 
 **Epic scope:** broad. Corresponds to one or more feature-dag nodes or a full domain.
@@ -97,6 +97,8 @@ No other H1 headings appear in these files.
 ## S-N — Title
 
 **Parent Epic:** E-N — Epic Title
+
+**Story:** As a {role}, I want to {action} so that {benefit}.
 
 ### Objectives
 
@@ -112,7 +114,7 @@ No other H1 headings appear in these files.
 
 ### References
 
-- [Section Title](docs/path/to/file.md#heading-anchor)
+- `Exact Heading Text As It Appears In TOC` (`docs/path/to/file.md`)
 ```
 
 **Story scope:** one deliverable capability within an epic. Maps to one PR.
@@ -136,80 +138,75 @@ No other H1 headings appear in these files.
 
 ### References
 
-- [Section Title](docs/path/to/file.md#deepest-available-anchor)
+- `Exact Heading Text As It Appears In TOC` (`docs/path/to/file.md`)
 ```
 
 **Task scope:** atomic (≤ 4 hours). Independently testable. Maps to one commit-level unit.
 
 ---
 
-## 4. Reference URL Rules
+## 4. Reference Rules
 
-### 4.1 Structure
+### 4.1 Format
 
-References appear in a `### References` subsection as a markdown unordered list of URLs:
+References appear in a `### References` subsection as a markdown unordered list using this exact format:
 
 ```markdown
 ### References
 
-- [Display Title](relative/path/to/file.md)
-- [Display Title](relative/path/to/file.md#heading-anchor)
+- `Exact Heading Text` (`docs/path/to/file.md`)
 ```
 
-- Paths are relative to the repository root (not the document location)
+- The heading text inside backticks must be **copied verbatim** from the output of `./scripts/read-md.sh toc <file>`
+- The file path inside the second pair of backticks is relative to the repository root
 - Every work item MUST have a `### References` section with at least one entry
-- Display title must match or closely describe the heading or file being referenced
+- No anchors, no GFM slugs, no invented titles — exact heading text only
+- References can be to any file/section in a file in `01-product` or `02-technical`.
 
 ### 4.2 Allowed Heading Depth by Level
 
-| Work Item | Allowed Anchor Depth                                                                                           | Rationale                                                       |
-| --------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Epic      | Top-level section only — anchors with a single path segment (e.g. `#1-overview`, `#4-feature-nodes-by-domain`) | Epics are broad; deep links are noise                           |
-| Story     | Any heading level (`##` and below)                                                                             | Stories are targeted                                            |
-| Task      | Deepest available heading level                                                                                | Tasks are maximally scoped; developer reads only what is needed |
+| Work Item | Allowed Heading Depth                                                      | Rationale                                                       |
+| --------- | -------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Epic      | Top-level sections only (e.g. `1. Overview`, `4. Feature Nodes by Domain`) | Epics are broad; deep links are noise                           |
+| Story     | Any heading level                                                          | Stories are targeted                                            |
+| Task      | Deepest available heading                                                  | Tasks are maximally scoped; developer reads only what is needed |
 
-### 4.3 Anchor Slug Convention
+### 4.3 How to Find the Exact Heading Text
 
-Anchors follow GitHub-Flavoured Markdown (GFM) rules:
+1. Run `./scripts/read-md.sh toc <file>` to get the table of contents
+2. Copy the heading text **exactly as it appears** in the TOC output — including numbers, punctuation, and capitalisation
+3. Paste it verbatim between backticks in the reference entry
 
-- All characters lowercased
-- Spaces replaced with hyphens
-- All non-alphanumeric characters **except hyphens** are stripped
-- Leading and trailing hyphens trimmed
-
-**Examples:**
-
-| Heading text                  | Anchor                     |
-| ----------------------------- | -------------------------- |
-| `## 2. Infrastructure`        | `#2-infrastructure`        |
-| `### 3.2.1 Accounts Table`    | `#321-accounts-table`      |
-| `## INFRA-1 — Database Setup` | `#infra-1--database-setup` |
-| `### 4.1 Accounts Domain`     | `#41-accounts-domain`      |
-
-> **Note:** The `read-references.sh` script derives a search pattern from the anchor by replacing hyphens with spaces and passing the result to `read-md.sh --grep`. Anchors must be deterministic. Avoid Unicode punctuation inside headings; use ASCII hyphens or numbered prefixes.
+**Never invent or paraphrase a heading.** If the heading does not appear in the TOC, do not reference it.
 
 ### 4.4 Reference Examples by Level
 
 **Epic reference (top-level section only):**
 
 ```markdown
-- [PRD — Overview](docs/01-product/prd.md#1-overview)
-- [SDS — Feature Domains](docs/02-technical/sds.md#4-feature-domains)
+- `1. Overview` (`docs/01-product/prd.md`)
+- `4. Feature Nodes by Domain` (`docs/02-technical/feature-dag.md`)
 ```
 
 **Story reference (any depth):**
 
 ```markdown
-- [SDS § 2.1 Database Layer](docs/02-technical/sds.md#21-database-layer)
-- [UX Flows § 3.2 Account Creation](docs/02-technical/ux-flows.md#32-account-creation)
+- `2.3 Database and Persistence` (`docs/02-technical/sds.md`)
+- `3.2 Account Creation Flow` (`docs/02-technical/ux-flows.md`)
 ```
 
 **Task reference (deepest available):**
 
 ```markdown
-- [Data Model § 3.2.1 accounts table](docs/02-technical/data-model.md#321-accounts-table)
-- [API Contracts § 4.1.2 createAccount](docs/02-technical/api-contracts.md#412-createaccount)
+- `3.2.1 accounts table` (`docs/02-technical/data-model.md`)
+- `INFRA-1 — Database Schema + Drift Setup` (`docs/02-technical/feature-dag.md`)
 ```
+
+### 4.5 Reference rigor by work item
+
+- Epics have a small list of high level references. This is because epics have a broad coverage.
+- Stories have a slightly longer list of slightly lower level references contained within their parent epic's references. This is because a story is concerned with a specific area within the project.
+- Tasks have a longer list of deepest level references within their parent story's references. Tasks must contain as many references as needed to give the developer a clear picture of what background information it needs to complete its task. It should be self sufficient, and the developer must not have to read some other source to understand something else.
 
 ---
 
