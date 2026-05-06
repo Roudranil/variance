@@ -172,11 +172,12 @@ docs/
 │   ├── sds.md
 │   ├── data-model.md
 │   ├── api-contracts.md
-│   ├── architecture-decision-records.md
+│   ├── ui-spec.md
 │   └── ux-flows.md
 ├── 03-planning/                    # Execution planning
-│   ├── task-breakdown.md
-│   └── sprint-plans.md
+│   ├── epics.md
+│   ├── stories.md
+│   └── tasks.md
 ├── 04-implementation/              # Sprint-scoped delivery artifacts
 │   └── sprint{n}/
 ├── 05-quality/                     # Quality and security
@@ -195,7 +196,7 @@ docs/
 | -------------------- | -------------------------------- | --------- | ----------------------------------------------------- |
 | `01-product/`        | Product definition               | pm        | PRD, ledger entry cases, product decisions            |
 | `02-technical/`      | Technical specifications         | architect | SDS, data model, API contracts, UX flows, feature DAG |
-| `03-planning/`       | Execution planning               | tpm       | Task breakdown, sprint plans                          |
+| `03-planning/`       | Execution planning               | tpm       | Epics, stories, tasks                                 |
 | `04-implementation/` | Sprint-scoped delivery artifacts | tpm/dev   | Per-sprint notes, changelogs                          |
 | `05-quality/`        | Quality and security             | architect | Test specs, security review docs                      |
 | `06-helpers/`        | Process and reference aids       | all       | Ideation tracker, gap analysis, diff logs             |
@@ -219,5 +220,7 @@ docs/
 | Data Model               | `docs/02-technical/data-model.md`              | Schema and entity design                                           |
 | API Contracts            | `docs/02-technical/api-contracts.md`           | Internal interfaces                                                |
 | UX Flows                 | `docs/02-technical/ux-flows.md`                | User interaction specification                                     |
-| Task Breakdown           | `docs/03-planning/task-breakdown.md`           | Task breakdown and dependencies                                    |
-| Sprint Plans             | `docs/03-planning/sprint-plans.md`             | Sprint-level delivery plans                                        |
+| UI Spec                  | `docs/02-technical/ui-spec.md`                 | Screen-level UI specifications and component design                |
+| Epics                    | `docs/03-planning/epics.md`                    | Top-level feature domains (E-1 … E-10)                             |
+| Stories                  | `docs/03-planning/stories.md`                  | Deliverable capabilities within epics                              |
+| Tasks                    | `docs/03-planning/tasks.md`                    | Atomic implementation units within stories                         |
