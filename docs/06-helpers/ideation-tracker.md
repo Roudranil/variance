@@ -19,8 +19,8 @@ outputs_to: []
 | Phase                  | Status                                                                        |
 | ---------------------- | ----------------------------------------------------------------------------- |
 | 1 – Problem Definition | ✅ Complete                                                                    |
-| 2 – Specification      | 🟡 In Progress — PRD complete (all Qs, FGs, TCs resolved, 5 founder decisions locked). SDS, UX Flows, API Contracts next. |
-| 3 – Execution Planning | ⬜ Not Started                                                                 |
+| 2 – Specification      | ✅ Complete (2026-05-06) — All spec docs produced. API Contracts locked. Tests + Security covered by SDS. |
+| 3 – Execution Planning | 🟢 Ready to Start                                                              |
 | 4 – Readiness Gate     | ⬜ Not Started                                                                 |
 
 ---
@@ -35,8 +35,10 @@ outputs_to: []
 | 2b  | **Feature DAG**              | ✅ **PRODUCED** (2026-04-22) | `docs/02-technical/feature-dag.md` — 57 nodes, 11 domains, Mermaid diagram, build phases (Phase 0–9), reference index (PRD/TC/DM table → node). 3 open questions/flags logged (OQ-SDS-SC-001, OQ-SDS-SC-003, OQ-DAG-001). |
 | 3   | **UX Flows**                 | ✅ **PRODUCED** (2026-04-29) | `docs/02-technical/ux-flows.md` — 2081 lines, 10 sections. All UX-1–UX-14 resolved. 30+ screens, 9 sub-flows, 22+ end-to-end flows. |
 | 3a  | **UI Spec**                  | ✅ **PRODUCED** (2026-04-29) | `docs/02-technical/ui-spec.md` — 2280 lines, 9 sections. Global decisions resolved (FAB/SpeedDial, snackbar/dialog, empty states). All screens specced: M3 components, VarianceTypography/VarianceColors tokens, states. Awaiting founder review before Figma. |
-| 4   | **API Contracts**            | ⏭️ Skipped                | Skipped by founder decision 2026-04-29. Not required before execution planning.                                                                    |
-| 5   | **Execution Plan (EP)**      | 🔴 Blocked                | Blocked on Tests spec + Security spec                                                                                                              |
+| 4   | **API Contracts**            | ✅ **PRODUCED** (2026-05-06) | `docs/02-technical/api-contracts.md` — 10 domain sections. Repo interfaces, use cases, notifiers. High-level only. |
+| 4a  | **Tests Spec**               | ✅ **COVERED** — no doc needed | SDS §2.11: full pyramid, tooling, mocking rules, 5 integration scenarios. |
+| 4b  | **Security Spec**            | ✅ **COVERED** — no doc needed | SDS §4: 10-section threat model. Sufficient for v1 single-user. |
+| 5   | **Execution Plan (EP)**      | 🟢 Ready to Start         | Unblocked. TPM agent → task-breakdown.md + sprint-plans.md |
 
 ---
 
@@ -295,15 +297,15 @@ outputs_to: []
 ## Readiness Gate
 
 - [x] PRD signed off — Founder sign-off 2026-04-14. All docs in `docs/01-product/` frozen.
-- [ ] System Design Spec complete — Architecture Overview drafted 2026-04-20. Remaining sections in progress.
+- [x] System Design Spec complete — `docs/02-technical/sds.md` complete.
 - [x] UX Flows complete — `docs/02-technical/ux-flows.md` produced 2026-04-29.
-- [x] UI Spec complete — `docs/02-technical/ui-spec.md` produced 2026-04-29. Awaiting founder review before Figma.
-- [x] API Contracts — skipped by founder decision 2026-04-29.
-- [ ] Tests spec complete
-- [ ] Security spec complete
+- [x] UI Spec complete — `docs/02-technical/ui-spec.md` produced 2026-04-29.
+- [x] API Contracts complete — `docs/02-technical/api-contracts.md` produced 2026-05-06.
+- [x] Tests spec — covered by SDS §2.11. No separate doc needed.
+- [x] Security spec — covered by SDS §4. No separate doc needed.
 - [ ] Execution Plan complete
 
-**Status: 🟡 UI Spec done (founder review pending). Tests spec + Security spec remaining before execution planning.**
+**Status: 🟢 Phase 2 complete. All spec docs locked. Ready for execution planning (TPM).**
 
 ---
 
@@ -315,10 +317,11 @@ outputs_to: []
 | PRD v2 Draft       | `docs/01-product/prd-v2-draft.md`       | 📋 Collection — all deferred v2 items              |
 | Gaps & Questions   | `docs/06-helpers/gaps-and-questions.md` | 📋 Reference (Part 1 resolved; Parts 2–3 tracked) |
 | Ledger Entry Cases | `docs/01-product/ledger-entry.md`       | ✅ Updated                                        |
-| SDS                | `docs/02-technical/sds.md`              | 🟡 In Progress — Architecture Overview complete    |
+| SDS                | `docs/02-technical/sds.md`              | ✅ Complete                                        |
 | UX Flows           | `docs/02-technical/ux-flows.md`         | ✅ Produced 2026-04-29                             |
-| UI Spec            | `docs/02-technical/ui-spec.md`          | ✅ Produced 2026-04-29 — founder review pending    |
-| API Contracts      | `docs/02-technical/api-contracts.md`    | ⏭️ Skipped (founder decision 2026-04-29)          |
-| Tests Spec         | `docs/05-quality/tests.md`              | ⬜ Not Started                                    |
-| Security Spec      | `docs/05-quality/security.md`           | ⬜ Not Started                                    |
-| Execution Plan     | `docs/03-planning/task-breakdown.md`    | ⬜ Not Started                                    |
+| UI Spec            | `docs/02-technical/ui-spec.md`          | ✅ Produced 2026-04-29                             |
+| API Contracts      | `docs/02-technical/api-contracts.md`    | ✅ Produced 2026-05-06                             |
+| Tests Spec         | —                                       | ✅ Covered by SDS §2.11                            |
+| Security Spec      | —                                       | ✅ Covered by SDS §4                               |
+| Task Breakdown     | `docs/03-planning/task-breakdown.md`    | ⬜ Not Started                                    |
+| Sprint Plans       | `docs/03-planning/sprint-plans.md`      | ⬜ Not Started                                    |

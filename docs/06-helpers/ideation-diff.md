@@ -2,48 +2,46 @@
 title: Ideation Diff
 status: current
 owner: le
-updated: 2026-04-29
+updated: 2026-05-06
 ---
 
-# Ideation Diff — Session 2026-04-29 (UI Spec)
+# Ideation Diff — Session 2026-05-06 (API Contracts)
 
 ## 1. Files Modified
 
-| File | Change |
-|------|--------|
-| `docs/02-technical/ui-spec.md` | Created — 2280 lines |
-| `docs/06-helpers/ideation-tracker.md` | UI Spec → ✅ PRODUCED; Readiness Gate + Document Index updated |
+| File | Action |
+|---|---|
+| `docs/02-technical/api-contracts.md` | CREATED |
+| `docs/06-helpers/ideation-tracker.md` | UPDATED |
+| `docs/06-helpers/ideation-diff.md` | OVERWRITTEN (this file) |
 
 ## 2. Changes Made
 
-### `docs/02-technical/ui-spec.md`
+### `docs/02-technical/api-contracts.md`
 
-| § | Section | Content |
-|---|---------|---------|
-| 1 | Global Design Decisions | 9 global decisions resolved: SpeedDial (UX-2), system keyboard (UX-12), abstract geometric empty states (UX-13), snackbar+undo policy (UX-9), bottom nav icons/labels, category chip style, account detail hero, home greeting |
-| 2 | App Shell & Navigation | NavigationBar spec, ShellRoute+GoRouter route map, tab behaviour, back-stack rules, transition defaults |
-| 3 | Onboarding & First Launch | 5-step wizard — per-step scaffold, component/token tables, states |
-| 4 | App Lock & Security Screens | Lock overlay, PIN entry, PIN setup, PIN change — M3 components, states, lockout flow |
-| 5 | Home Tab | Home screen, Exchange Rate Detail, Color Scheme Preview, 3 warning dialogs |
-| 6 | Transaction Screens & Flows | Transaction Detail, Create (expense/income/transfer), Recurring setup, Installment setup, Edit/correction, Filter sheet, Search overlay, Void/Delete flows |
-| 7 | Accounts Tab | Account List, Account Detail (hero + history strip), Create Account, Edit Account (immutable currency warning) |
-| 8 | Shared Components | Category Picker, Payee Picker, Tag Picker, Account Picker, Currency Picker, Amount Entry, Photo Attachment, Photo Viewer, Draft auto-save indicator |
-| 9 | Settings Tab | 19 screens: Hub, Appearance, Locale & Format, Transaction Entry, Warnings & Limits, Profile, Security, Category Management, Category Detail, Currency, Tags, Payees, Recurring Templates, Recurring Detail, Installment Plans, Installment Detail, Backup & Restore, About, Drafts |
+- Created from scratch
+- 10 domain sections: Accounts, Transactions, Entries, Categories, Currency/FX, Recurring, Installments, Payees/Tags, Settings/Drafts, Home
+- Each section: repo interface methods + use cases + notifiers (tables only)
+- Cross-cutting types: `Result<T>`, `Failure`, `Money`, `AppSettings`
+- Constraints table at bottom (layer rules)
 
 ### `docs/06-helpers/ideation-tracker.md`
 
 | Field | Before | After |
-|-------|--------|-------|
-| UI Spec row | — | ✅ PRODUCED 2026-04-29 |
-| Execution Plan blocked note | "Blocked on all above" | "Blocked on Tests spec + Security spec" |
-| Readiness Gate — UI Spec | — | `[x]` produced, founder review pending |
-| Readiness Gate — Tests spec | — | `[ ]` added |
-| Readiness Gate — Security spec | — | `[ ]` added |
-| Status line | "UI Spec, Tests spec, Security spec remaining" | "UI Spec done (founder review pending). Tests + Security remaining" |
-| Document Index — UI Spec | — | ✅ Produced 2026-04-29 |
-| Document Index — Tests Spec | — | ⬜ Not Started |
-| Document Index — Security Spec | — | ⬜ Not Started |
+|---|---|---|
+| Phase 2 status | 🟡 In Progress | ✅ Complete |
+| Phase 3 status | ⬜ Not Started | 🟢 Ready to Start |
+| API Contracts row | ⏭️ Skipped (2026-04-29) | ✅ PRODUCED (2026-05-06) |
+| Execution Plan blocked note | Blocked on Tests + Security | Unblocked |
+| Readiness Gate — SDS | `[ ]` | `[x]` |
+| Readiness Gate — Tests spec | `[ ]` | `[x]` covered by SDS §2.11 |
+| Readiness Gate — Security spec | `[ ]` | `[x]` covered by SDS §4 |
+| Status line | UI Spec done, Tests+Security remaining | Phase 2 complete. Ready for execution planning. |
 
-## 3. Open Questions Status
+## 3. Decisions
 
-None added this session.
+| Decision | Rationale |
+|---|---|
+| Skip `tests.md` | SDS §2.11: full pyramid, tooling, 5 integration scenarios |
+| Skip `security.md` | SDS §4: 10-section threat model — sufficient for v1 single-user |
+| API Contracts: high-level only | Developer infers detail from SDS + data model |
