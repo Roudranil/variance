@@ -20,7 +20,7 @@ outputs_to: []
 | ---------------------- | ----------------------------------------------------------------------------- |
 | 1 – Problem Definition | ✅ Complete                                                                    |
 | 2 – Specification      | ✅ Complete (2026-05-06) — All spec docs produced. API Contracts locked. Tests + Security covered by SDS. |
-| 3 – Execution Planning | 🟡 In Progress (2026-05-07) — Story + task scratch files complete for all 10 epics; Wave 2 collation pending |
+| 3 – Execution Planning | ✅ Complete (2026-05-07) — Epics, stories, tasks collated. Sprint roadmap produced (`docs/04-implementation/roadmap.md`). 10 sprints, 208 tasks, DAG build-order enforced. |
 | 4 – Readiness Gate     | ⬜ Not Started                                                                 |
 
 ---
@@ -38,7 +38,7 @@ outputs_to: []
 | 4   | **API Contracts**            | ✅ **PRODUCED** (2026-05-06) | `docs/02-technical/api-contracts.md` — 10 domain sections. Repo interfaces, use cases, notifiers. High-level only. |
 | 4a  | **Tests Spec**               | ✅ **COVERED** — no doc needed | SDS §2.11: full pyramid, tooling, mocking rules, 5 integration scenarios. |
 | 4b  | **Security Spec**            | ✅ **COVERED** — no doc needed | SDS §4: 10-section threat model. Sufficient for v1 single-user. |
-| 5   | **Execution Plan (EP)**      | 🟡 In Progress (2026-05-07) | Scratch files produced for all 10 epics (82 stories, 208 tasks total). Wave 2 collation pending → will append to `docs/03-planning/stories.md` + `tasks.md`. Sprint planning follows collation. |
+| 5   | **Execution Plan (EP)**      | ✅ **COMPLETE** (2026-05-07) | `docs/03-planning/epics.md` (10 epics), `stories.md` (82 stories), `tasks.md` (208 tasks). Sprint roadmap: `docs/04-implementation/roadmap.md` — 10 sprints, DAG build-order enforced, blocking dependencies mapped. |
 
 ---
 
