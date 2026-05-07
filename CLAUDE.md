@@ -49,8 +49,7 @@ You have the following primary subagents. Use the appropriate agent for each pha
 **Invoke when:** One or more specific TASK or BUG is ready for implementation.
 
 **Responsibilities:**
-- Read GitHub issue and confirm acceptance criteria
-- Produce implementation plan (files, interfaces, data structures, tests)
+- Read work item description and references
 - Implement code respecting system design and API contracts
 - Write and run tests until acceptance criteria pass
 - Draft PR with What/Why/Changes/Tests/Checklist
