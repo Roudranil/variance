@@ -79,6 +79,10 @@ You have the following primary subagents. Use the appropriate agent for each pha
 |-------|-------------|
 | `dart-build-resolver` | `flutter build` or `dart pub get` fails and the error is not immediately obvious |
 
+When spawning subagents:
+- make sure they read this CLAUDE.md document and your memories
+- dont repeat instructions already in their spec in the prompt you give to them
+
 ## Behavioral Rules
 
 ### Always
@@ -97,6 +101,7 @@ You have the following primary subagents. Use the appropriate agent for each pha
 - Add a docstring comment block to the top of any code file that you generate.
 - **Docs: decision only. Reason optional, 3–5 words max.** "UUID. Sync-friendly." enough. No paragraphs.
 - Tables and bullets. No prose. No summaries.
+- When you are coding be sure to read [coding-style.md](.claude/rules/common/coding-style.md). These rules are 100% compulsory for you to follow.
 
 ### Never
 

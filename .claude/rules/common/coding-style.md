@@ -1,18 +1,27 @@
 # Coding Style
 
-## Immutability (CRITICAL)
+## 1. Think Before Coding
 
-ALWAYS create new objects, NEVER mutate existing ones:
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-```
-// Pseudocode
-WRONG:  modify(original, field, value) -> changes original in-place
-CORRECT: update(original, field, value) -> returns new copy with change
-```
+Before implementing:
 
-Rationale: Immutable data prevents hidden side effects, makes debugging easier, and enables safe concurrency.
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-## Core Principles
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
 ### KISS (Keep It Simple)
 
@@ -32,7 +41,45 @@ Rationale: Immutable data prevents hidden side effects, makes debugging easier, 
 - Avoid speculative generality
 - Start simple, then refactor when the pressure is real
 
-## File Organization
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+## 5. General rules
+
+### File Organization
 
 MANY SMALL FILES > FEW LARGE FILES:
 
@@ -41,7 +88,7 @@ MANY SMALL FILES > FEW LARGE FILES:
 - Extract utilities from large modules
 - Organize by feature/domain, not by type
 
-## Error Handling
+### Error Handling
 
 ALWAYS handle errors comprehensively:
 
@@ -50,7 +97,7 @@ ALWAYS handle errors comprehensively:
 - Log detailed error context on the server side
 - Never silently swallow errors
 
-## Input Validation
+### Input Validation
 
 ALWAYS validate at system boundaries:
 
@@ -59,7 +106,7 @@ ALWAYS validate at system boundaries:
 - Fail fast with clear error messages
 - Never trust external data (API responses, user input, file content)
 
-## Naming Conventions
+### Naming Conventions
 
 - Variables and functions: `camelCase` with descriptive names
 - Booleans: prefer `is`, `has`, `should`, or `can` prefixes
@@ -67,7 +114,7 @@ ALWAYS validate at system boundaries:
 - Constants: `UPPER_SNAKE_CASE`
 - Custom hooks: `camelCase` with a `use` prefix
 
-## Code Smells to Avoid
+## 6. Code Smells to Avoid
 
 ### Deep Nesting
 
@@ -81,7 +128,7 @@ Use named constants for meaningful thresholds, delays, and limits.
 
 Split large functions into focused pieces with clear responsibilities.
 
-## Code Quality Checklist
+## 7. Code Quality Checklist
 
 Before marking work complete:
 
