@@ -14,10 +14,9 @@ targets:
           # Use the SQL dialect for drift table definitions.
           sql:
             dialect: sqlite
-          # Enforce WAL mode and foreign key PRAGMAs in generated code (supplementary comment only).
-          # Actual PRAGMAs are set programmatically in AppDatabase.open().
-          compact_query_methods: true
-          # Generate schema exports for migration verification.
+          # generate_values_in_copy_with and data_class_to_companions are
+          # valid drift_dev 2.31.0 options.
+          # compact_query_methods was removed in drift_dev 2.x; omitted here.
           generate_values_in_copy_with: true
           data_class_to_companions: true
 
