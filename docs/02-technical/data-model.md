@@ -15,55 +15,6 @@ depends_on:
 
 # Data Model
 
-## Table of Contents
-
-1. [Overview](#1-overview)
-   1. [ER Diagram (Mermaid)](#11-er-diagram-mermaid)
-   2. [Design Principles](#12-design-principles)
-   3. [Extensibility Strategy](#13-extensibility-strategy)
-2. [Schema Migration Policy](#2-schema-migration-policy)
-   1. [Drift Migration Setup](#21-drift-migration-setup)
-   2. [Versioning Convention](#22-versioning-convention)
-   3. [Additive-Only Policy](#23-additive-only-policy)
-3. [Core Tables](#3-core-tables)
-   1. [accounts](#31-accounts)
-   2. [account_details](#32-account_details)
-   3. [transactions](#33-transactions)
-   4. [entries](#34-entries)
-   5. [categories](#35-categories)
-   6. [tags](#36-tags)
-   7. [transaction_tags](#37-transaction_tags)
-   8. [payees](#38-payees)
-4. [Currency & Rates](#4-currency--rates)
-   1. [currencies](#41-currencies)
-   2. [exchange_rates](#42-exchange_rates)
-5. [Attachments](#5-attachments)
-   1. [attachments](#51-attachments)
-6. [Budgets](#6-budgets)
-   1. [budgets](#61-budgets)
-   2. [budget_periods](#62-budget_periods)
-7. [Recurring & Scheduled](#7-recurring--scheduled)
-   1. [recurring_templates](#71-recurring_templates)
-   2. [scheduled_occurrences](#72-scheduled_occurrences)
-8. [Installments](#8-installments)
-   1. [installment_plans](#81-installment_plans)
-   2. [installment_occurrences](#82-installment_occurrences)
-9. [App Config](#9-app-config)
-   1. [app_settings](#91-app_settings)
-   2. [drafts](#92-drafts)
-10. [Search](#10-search)
-    1. [transactions_fts](#101-transactions_fts)
-    2. [transactions_search_view](#102-transactions_search_view)
-11. [Audit & Versioning](#11-audit--versioning)
-    1. [schema_migrations](#111-schema_migrations)
-    2. [Soft Delete Policy](#112-soft-delete-policy)
-    3. [Void/Reversal Chain Policy](#113-voidreversal-chain-policy)
-12. [Drift Type Mappings & Converters](#12-drift-type-mappings--converters)
-13. [Index Catalogue](#13-index-catalogue)
-14. [Open Questions](#14-open-questions)
-
----
-
 ## 1. Overview
 
 ### 1.1 ER Diagram (Mermaid)

@@ -1,6 +1,6 @@
 ---
 name: flutter-developer
-description: Executes Flutter/Dart tasks via TDD. Reads specs, implements code, commits locally, and opens a PR.
+description: Executes Flutter/Dart tasks via TDD. Reads specs, implements code, commits locally, and opens a PR. One or more task ids (of the form `T-N`) must be provided as input.
 model: sonnet
 color: red
 ---
@@ -31,10 +31,10 @@ ALWAYS prefer `dart-mcp-server` tools over bash commands.
 
 # Workflow
 
-Input: One or more tasks.
+Input: One or more tasks as task id (task id is of the form `T-N`. story id is of the form `S-N`)
 Create a single git branch for all tasks in this run.
 
-For each task:
+Start working on a single task at a time. For each task do the 3 steps below. Tasks are to be tackled sequentially. Only execute them at one go if they overlap significantly.
 
 1. **Context**
     - Read task: `./scripts/read-work-item.sh --task <task_id>`
@@ -42,6 +42,7 @@ For each task:
     - Read parent story if needed: `./scripts/read-work-item.sh --story <story_id>`. Read the references if you want with `./scripts/read-references.sh --story <story_id>`.
     - If a feature DAG node is referenced, read its `sources` field references manually using `scripts/read-md.sh --section ...`.
 2. **Implement (TDD)**
+    - We follow test driven development.
     - Write tests first if tests relevant to the work item does not exist.
     - Edit existing tests if needed.
     - Run `flutter test` -> expect to see tests fail
@@ -53,13 +54,19 @@ For each task:
             - [dart specific coding patterns](../rules/dart/patterns.md). Some patterns are also in the [flutter-dart-patterns skill](../skills/flutter-dart-patterns/)
             - [flutter specific coding rules](../rules/flutter/flutter-rule.md)
         - follow the skill instructions that you have loaded at the beginning.
+        - use the dart mcp provided tools to regularly analyze your code and search for documentation if needed.
+        - use analyze to check for syntax, logical, linting, formatting, lsp prompted errors - and fix them immediately.
+        - use `dart_format` to format code uniformly
     - Run `flutter test` again -> expect to see tests pass. If not, fix and repeat.
     - Make minimal code changes everytime
     - Include extensive comments on changes.
     - Include all test cases in tests files in comments at the top
 3. **Commit**
+    - create git branch locally (not separate worktrees). Branch names should be of the form `task/<id>-<short desc>`
     - `git add` and `git commit` in small chunks.
-    - Use minimal one-liner Conventional Commits.
+    - Use minimal one-line commits.
+    - commit message description must be short.
+    - commit messages and PR titles must follow conventional commits discipline.
 
 ## Review Checklist
 
