@@ -1,0 +1,545 @@
+// lib/presentation/navigation/app_router.dart
+//
+// GoRouter route tree for the entire Variance app.
+//
+// Structure:
+//   StatefulShellRoute.indexedStack — 3-tab shell (Home / Accounts / Settings)
+//     Branch 0: / → HomeScreen
+//       /transaction/new      → CreateTransactionScreen (modal, not in shell)
+//       /transaction/:id      → TransactionDetailScreen (in-tab push)
+//       /transaction/:id/edit → EditTransactionScreen (in-tab push)
+//     Branch 1: /accounts → AccountListScreen
+//       /accounts/:id  → AccountDetailScreen (in-tab push)
+//       /accounts/new  → CreateAccountScreen (in-tab push)
+//     Branch 2: /settings → SettingsScreen
+//       /settings/currency          → CurrencySettingsScreen
+//       /settings/categories        → CategoryManagementScreen
+//       /settings/categories/:id    → CategoryDetailScreen
+//       /settings/backup            → BackupRestoreScreen
+//       /settings/about             → AboutScreen
+//
+//   Modal routes (outside shell — full-screen):
+//     /onboarding         → OnboardingScreen
+//     /filter             → FilterSheet (bottom sheet modal)
+//     /exchange-rate-detail → ExchangeRateDetailScreen
+//
+// Navigation rules (SDS §2.4.3):
+//   - context.go(...)   for tab-root transitions (replaces tab stack)
+//   - context.push(...) for within-tab stack pushes
+//
+// Onboarding guard (T-16):
+//   - If onboarding_complete == false in app_settings, all routes redirect
+//     to /onboarding.
+//   - /onboarding itself bypasses the guard to prevent redirect loops.
+//
+// Route parameter validation (SDS §2.4.3):
+//   - All :id parameters are validated at the builder.
+//   - Invalid parameters navigate to RouteErrorScreen instead of crashing.
+//
+// Test cases (see test/navigation/app_router_test.dart):
+//   - Fresh install (onboardingComplete=false) redirects all routes to /onboarding
+//   - Returning user (onboardingComplete=true) routes to home shell normally
+//   - Each tab tap navigates to the correct placeholder screen
+//   - No GoException on any defined path parameter
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:variance/domain/entities/app_settings.dart';
+import 'package:variance/presentation/features/accounts/account_list_screen.dart';
+import 'package:variance/presentation/features/home/home_screen.dart';
+import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
+import 'package:variance/presentation/features/settings/settings_screen.dart';
+import 'package:variance/presentation/features/shared/route_error_screen.dart';
+import 'package:variance/presentation/providers/app_settings_providers.dart';
+
+// ---------------------------------------------------------------------------
+// Route path constants
+// ---------------------------------------------------------------------------
+
+/// Named route path constants.
+///
+/// Use these instead of raw string literals in push/go calls to prevent
+/// typos and make refactoring safe.
+// ignore: avoid_classes_with_only_static_members — intentional namespace
+abstract final class AppRoutes {
+  /// Tab 0 root.
+  static const home = '/';
+
+  /// New transaction modal.
+  static const transactionNew = '/transaction/new';
+
+  /// Transaction detail (in-tab push on Tab 0).
+  static const transactionDetail = '/transaction/:id';
+
+  /// Transaction edit (in-tab push on Tab 0).
+  static const transactionEdit = '/transaction/:id/edit';
+
+  /// Tab 1 root.
+  static const accounts = '/accounts';
+
+  /// Account detail (in-tab push on Tab 1).
+  static const accountDetail = '/accounts/:id';
+
+  /// New account form (in-tab push on Tab 1).
+  static const accountNew = '/accounts/new';
+
+  /// Tab 2 root.
+  static const settings = '/settings';
+
+  /// Currency settings (in-tab push on Tab 2).
+  static const settingsCurrency = '/settings/currency';
+
+  /// Category management (in-tab push on Tab 2).
+  static const settingsCategories = '/settings/categories';
+
+  /// Category detail (in-tab push on Tab 2).
+  static const settingsCategoryDetail = '/settings/categories/:id';
+
+  /// Backup & restore (in-tab push on Tab 2).
+  static const settingsBackup = '/settings/backup';
+
+  /// About screen (in-tab push on Tab 2).
+  static const settingsAbout = '/settings/about';
+
+  /// Onboarding wizard (full-screen modal, outside shell).
+  static const onboarding = '/onboarding';
+
+  /// Transaction filter bottom sheet (full-screen modal, outside shell).
+  static const filter = '/filter';
+
+  /// Exchange rate detail (full-screen modal, outside shell).
+  static const exchangeRateDetail = '/exchange-rate-detail';
+}
+
+// ---------------------------------------------------------------------------
+// Settings listenable — drives GoRouter redirect re-evaluation
+// ---------------------------------------------------------------------------
+
+/// A [ChangeNotifier] that notifies listeners whenever [AppSettings] emits
+/// a new value from the Riverpod provider.
+///
+/// Passed to [GoRouter.refreshListenable] so that the `redirect` callback is
+/// re-evaluated every time the settings stream emits (e.g. when onboarding
+/// completes).
+class _SettingsListenable extends ChangeNotifier {
+  /// Creates a [_SettingsListenable] that listens to [appSettingsProvider].
+  ///
+  /// Parameters:
+  /// - [ref]: The Riverpod [WidgetRef] used to subscribe to the provider.
+  _SettingsListenable(WidgetRef ref) {
+    // Listen for any change in app settings and notify GoRouter to re-run
+    // the redirect callback.
+    ref.listen<AsyncValue<AppSettings>>(
+      appSettingsProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Router factory
+// ---------------------------------------------------------------------------
+
+/// Creates a [GoRouter] backed by a [WidgetRef] so the onboarding redirect
+/// guard can watch the live [AppSettings] stream.
+///
+/// The [_SettingsListenable] is wired to [GoRouter.refreshListenable] so that
+/// GoRouter re-runs the `redirect` callback whenever [appSettingsProvider]
+/// emits a new value.
+///
+/// Prefer [AppRouterWidget] for production. Call [makeAppRouter] directly in
+/// widget tests that need a custom [WidgetRef].
+GoRouter makeAppRouter(WidgetRef ref) {
+  return GoRouter(
+    initialLocation: AppRoutes.home,
+    // Re-evaluate the redirect callback whenever AppSettings changes.
+    refreshListenable: _SettingsListenable(ref),
+    // ---------------------------------------------------------------------------
+    // Onboarding redirect guard (T-16)
+    //
+    // Reads onboardingComplete from the live AppSettings stream.
+    // If false, every route redirects to /onboarding.
+    // The /onboarding route itself is whitelisted to prevent redirect loops.
+    // ---------------------------------------------------------------------------
+    redirect: (BuildContext context, GoRouterState state) {
+      final settingsValue = ref.read(appSettingsProvider);
+
+      // While the settings stream is loading, do not redirect — let the user
+      // see the shell. Once settings load, a rebuild will re-evaluate.
+      // AsyncValue<AppSettings>.value returns T? (null when loading or error).
+      final AppSettings? settings = settingsValue.value;
+      if (settings == null) return null;
+
+      final isOnboarding = state.matchedLocation == AppRoutes.onboarding;
+      final onboardingComplete = settings.onboardingComplete;
+
+      // Not onboarded → redirect everything to /onboarding.
+      if (!onboardingComplete && !isOnboarding) return AppRoutes.onboarding;
+
+      // Onboarded and already at /onboarding → go home.
+      if (onboardingComplete && isOnboarding) return AppRoutes.home;
+
+      return null;
+    },
+
+    routes: [
+      // -----------------------------------------------------------------------
+      // Shell route — 3-tab bottom navigation
+      // -----------------------------------------------------------------------
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return _AppShell(navigationShell: navigationShell);
+        },
+        branches: [
+          // Branch 0: Home
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => const HomeScreen(),
+                routes: [
+                  // /transaction/:id — in-tab push (context.push)
+                  GoRoute(
+                    path: 'transaction/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'];
+                      if (id == null || id.isEmpty) {
+                        return const RouteErrorScreen(
+                          errorMessage: 'Transaction ID is missing.',
+                        );
+                      }
+                      // TODO(dev): return TransactionDetailScreen(id: id);
+                      return const RouteErrorScreen(
+                        errorMessage: 'Transaction detail not yet implemented.',
+                      );
+                    },
+                    routes: [
+                      // /transaction/:id/edit — in-tab push (context.push)
+                      GoRoute(
+                        path: 'edit',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id'];
+                          if (id == null || id.isEmpty) {
+                            return const RouteErrorScreen(
+                              errorMessage: 'Transaction ID is missing.',
+                            );
+                          }
+                          // TODO(dev): return EditTransactionScreen(id: id);
+                          return const RouteErrorScreen(
+                            errorMessage:
+                                'Transaction edit not yet implemented.',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Branch 1: Accounts
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.accounts,
+                builder: (context, state) => const AccountListScreen(),
+                routes: [
+                  // /accounts/new — in-tab push (context.push)
+                  GoRoute(
+                    path: 'new',
+                    builder: (context, state) {
+                      // TODO(dev): return CreateAccountScreen();
+                      return const RouteErrorScreen(
+                        errorMessage: 'Create account not yet implemented.',
+                      );
+                    },
+                  ),
+                  // /accounts/:id — in-tab push (context.push)
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'];
+                      if (id == null || id.isEmpty) {
+                        return const RouteErrorScreen(
+                          errorMessage: 'Account ID is missing.',
+                        );
+                      }
+                      // TODO(dev): return AccountDetailScreen(id: id);
+                      return const RouteErrorScreen(
+                        errorMessage: 'Account detail not yet implemented.',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Branch 2: Settings
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'currency',
+                    builder: (context, state) {
+                      // TODO(dev): return CurrencySettingsScreen();
+                      return const RouteErrorScreen(
+                        errorMessage: 'Currency settings not yet implemented.',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'categories',
+                    builder: (context, state) {
+                      // TODO(dev): return CategoryManagementScreen();
+                      return const RouteErrorScreen(
+                        errorMessage:
+                            'Category management not yet implemented.',
+                      );
+                    },
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id'];
+                          if (id == null || id.isEmpty) {
+                            return const RouteErrorScreen(
+                              errorMessage: 'Category ID is missing.',
+                            );
+                          }
+                          // TODO(dev): return CategoryDetailScreen(id: id);
+                          return const RouteErrorScreen(
+                            errorMessage:
+                                'Category detail not yet implemented.',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'backup',
+                    builder: (context, state) {
+                      // TODO(dev): return BackupRestoreScreen();
+                      return const RouteErrorScreen(
+                        errorMessage: 'Backup & restore not yet implemented.',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'about',
+                    builder: (context, state) {
+                      // TODO(dev): return AboutScreen();
+                      return const RouteErrorScreen(
+                        errorMessage: 'About screen not yet implemented.',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // -----------------------------------------------------------------------
+      // Modal routes — outside shell (no bottom navigation bar)
+      // -----------------------------------------------------------------------
+
+      // /onboarding — full-screen modal, shown on fresh install.
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // /transaction/new — full-screen slide-up modal.
+      GoRoute(
+        path: AppRoutes.transactionNew,
+        builder: (context, state) {
+          // TODO(dev): return CreateTransactionScreen();
+          return const RouteErrorScreen(
+            errorMessage: 'Create transaction not yet implemented.',
+          );
+        },
+      ),
+
+      // /filter — bottom sheet modal for transaction filtering.
+      GoRoute(
+        path: AppRoutes.filter,
+        builder: (context, state) {
+          // TODO(dev): return FilterSheet();
+          return const RouteErrorScreen(
+            errorMessage: 'Filter sheet not yet implemented.',
+          );
+        },
+      ),
+
+      // /exchange-rate-detail — exchange rate detail modal.
+      GoRoute(
+        path: AppRoutes.exchangeRateDetail,
+        builder: (context, state) {
+          // TODO(dev): return ExchangeRateDetailScreen();
+          return const RouteErrorScreen(
+            errorMessage: 'Exchange rate detail not yet implemented.',
+          );
+        },
+      ),
+    ],
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Provider-aware router widget (production entry point)
+// ---------------------------------------------------------------------------
+
+/// A [ConsumerWidget] that builds a [GoRouter] with access to [WidgetRef].
+///
+/// The onboarding redirect guard calls [ref.read(appSettingsProvider)], which
+/// requires a Riverpod context. Using a [ConsumerWidget] as the top-level
+/// router host gives us that context without storing [BuildContext] in
+/// long-lived objects.
+///
+/// [VarianceApp] should use [AppRouterWidget] as the root of [MaterialApp]:
+/// ```dart
+/// MaterialApp(home: AppRouterWidget())
+/// // or simply:
+/// AppRouterWidget()  // renders MaterialApp.router internally
+/// ```
+class AppRouterWidget extends ConsumerWidget {
+  /// Creates the [AppRouterWidget].
+  const AppRouterWidget({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Router is created once and stored in a local variable. It is not
+    // memoized here because GoRouter is already kept alive by the widget tree.
+    final router = makeAppRouter(ref);
+    return MaterialApp.router(
+      title: 'Variance',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
+      ),
+      themeMode: ThemeMode.system,
+      routerConfig: router,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy appRouter (used only in tests that do not need the redirect guard)
+// ---------------------------------------------------------------------------
+
+/// A minimal [GoRouter] that does not include the onboarding redirect guard.
+///
+/// Used in widget tests that only need to verify navigation structure without
+/// a live Riverpod container. Tests requiring the redirect guard should call
+/// [makeAppRouter] directly with a [WidgetRef].
+final GoRouter appRouter = GoRouter(
+  initialLocation: AppRoutes.home,
+  routes: [
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          _AppShell(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.home,
+              builder: (context, state) => const HomeScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.accounts,
+              builder: (context, state) => const AccountListScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.settings,
+              builder: (context, state) => const SettingsScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      builder: (context, state) => const OnboardingScreen(),
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Shell scaffold widget
+// ---------------------------------------------------------------------------
+
+/// The 3-tab shell scaffold with an M3 [NavigationBar].
+///
+/// This widget is the builder for [StatefulShellRoute] and renders the
+/// bottom navigation bar. It is never used standalone — it is provided by
+/// GoRouter's shell route infrastructure.
+///
+/// Navigation rules:
+///   - Tapping a tab destination uses `navigationShell.goBranch()` which
+///     internally calls context.go() — this replaces the root of that
+///     tab's stack (correct per SDS §2.4.3).
+///   - Within-tab pushes use context.push(...) from child screens.
+class _AppShell extends StatelessWidget {
+  const _AppShell({required this.navigationShell});
+
+  /// Provided by [StatefulShellRoute]; drives tab index and branch navigation.
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // The individual tab screens render their own AppBar.
+      body: navigationShell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        // Use goBranch to switch tabs, preserving each tab's own back-stack
+        // per StatefulShellRoute.indexedStack semantics.
+        onDestinationSelected: (index) => navigationShell.goBranch(
+          index,
+          // initialLocation=true resets the branch stack to root on re-tap.
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(Icons.account_balance_wallet),
+            label: 'Accounts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+}
