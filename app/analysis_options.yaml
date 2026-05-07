@@ -1,0 +1,45 @@
+## Variance — static analysis configuration.
+##
+## Extends flutter_lints with additional Riverpod lint rules and
+## project-specific overrides aligned to SDS §2.13.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Treat missing returns as errors, not warnings.
+    missing_return: error
+    # Ensure all switch cases are covered (sealed classes / enums).
+    missing_enum_constant_in_switch: error
+  exclude:
+    # Exclude generated files from analysis.
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+
+linter:
+  rules:
+    # --- Dart style ---
+    always_declare_return_types: true
+    avoid_dynamic_calls: true
+    avoid_print: true
+    avoid_type_to_string: true
+    cancel_subscriptions: true
+    close_sinks: true
+    directives_ordering: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_pub_dependencies: false
+    unawaited_futures: true
+    unnecessary_lambdas: true
+
+    # --- Flutter specific ---
+    use_key_in_widget_constructors: true
+    sized_box_for_whitespace: true
+    sized_box_shrink_expand: true

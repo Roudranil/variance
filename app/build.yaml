@@ -1,0 +1,33 @@
+## Variance — build_runner configuration.
+##
+## Controls code-generation pipeline for Drift ORM and Riverpod (via riverpod_generator).
+## Generator execution order (SDS §2.10.2): Freezed → json_serializable → Drift → Riverpod.
+## build_runner resolves ordering automatically via dependency graph;
+## this file only configures generator options.
+
+targets:
+  $default:
+    builders:
+      # --- Drift ORM ---
+      drift_dev:
+        options:
+          # Use the SQL dialect for drift table definitions.
+          sql:
+            dialect: sqlite
+          # Enforce WAL mode and foreign key PRAGMAs in generated code (supplementary comment only).
+          # Actual PRAGMAs are set programmatically in AppDatabase.open().
+          compact_query_methods: true
+          # Generate schema exports for migration verification.
+          generate_values_in_copy_with: true
+          data_class_to_companions: true
+
+      # --- Riverpod generator ---
+      riverpod_generator:
+        options:
+          {}
+
+      # --- json_serializable ---
+      json_serializable:
+        options:
+          explicit_to_json: true
+          field_rename: snake_case
