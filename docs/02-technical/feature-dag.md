@@ -42,7 +42,7 @@ updated: 2026-04-22
 - [6. Reference Index](#6-reference-index)
   - [6.1 PRD → Node Map](#61-prd--node-map)
   - [6.2 TC → Node Map](#62-tc--node-map)
-  - [6.3 DM Table → Node Map](#63-dm-table--node-map)
+  - [6.3 Data Model Table → Node Map](#63-Data Model-table--node-map)
 - [7. Open Questions & Flags](#7-open-questions--flags)
 
 ---
@@ -100,12 +100,27 @@ Single source of truth for build order and feature dependencies.
 > SQLCipher (AES-256, key in Android Keystore via `flutter_secure_storage`) is non-negotiable — encryption is page-level on the `.db` file.
 > Nothing in the data layer can be implemented until this node ships.
 
-**Sources** | SDS §2.3.1–2.3.4 | SDS §1.3.3.1 | DM §2 (Migration Policy) | DM §3–§11 (all table definitions)
+**Sources**
+- `2.3.1 Drift ORM` (`docs/02-technical/sds.md`)
+- `2.3.2 WAL Mode and PRAGMA Configuration` (`docs/02-technical/sds.md`)
+- `2.3.3 Migration Strategy` (`docs/02-technical/sds.md`)
+- `2.3.4 DAO Structure` (`docs/02-technical/sds.md`)
+- `1.3.3.1 ORM Choice: Drift` (`docs/02-technical/sds.md`)
+- `2. Schema Migration Policy` (`docs/02-technical/data-model.md`)
+- `3. Core Tables` (`docs/02-technical/data-model.md`)
+- `4. Currency & Rates` (`docs/02-technical/data-model.md`)
+- `5. Attachments` (`docs/02-technical/data-model.md`)
+- `6. Budgets` (`docs/02-technical/data-model.md`)
+- `7. Recurring & Scheduled` (`docs/02-technical/data-model.md`)
+- `8. Installments` (`docs/02-technical/data-model.md`)
+- `9. App Config` (`docs/02-technical/data-model.md`)
+- `10. Search` (`docs/02-technical/data-model.md`)
+- `11. Audit & Versioning` (`docs/02-technical/data-model.md`)
 
 **Depends on:** *(none — root node)*
 **Required by:** INFRA-2, INFRA-3, INFRA-6, INFRA-7, all feature nodes
 
-- **Tables in scope (18 + 1 FTS):** `accounts`, `account_details`, `transactions`, `entries`, `categories`, `tags`, `transaction_tags`, `payees`, `currencies`, `exchange_rates`, `attachments`, `budgets`, `budget_periods`, `recurring_templates`, `scheduled_occurrences`, `installment_plans`, `installment_occurrences`, `app_settings`, `drafts` + `transactions_fts` (FTS5 virtual table). DM §3–§11.
+- **Tables in scope (18 + 1 FTS):** `accounts`, `account_details`, `transactions`, `entries`, `categories`, `tags`, `transaction_tags`, `payees`, `currencies`, `exchange_rates`, `attachments`, `budgets`, `budget_periods`, `recurring_templates`, `scheduled_occurrences`, `installment_plans`, `installment_occurrences`, `app_settings`, `drafts` + `transactions_fts` (FTS5 virtual table). Data Model §3–§11.
 - **PRAGMA set on every open:** `journal_mode=WAL`, `foreign_keys=ON`, `synchronous=NORMAL`, `busy_timeout=5000`, `cache_size=-20000`. SDS §2.3.2.
 - **Migration strategy:** versioned hand-written steps; `SchemaVerifier` in tests only; `destroyEverything` disabled; on-disk version > compiled version → `SchemaMismatchException`. SDS §2.3.3.
 - **DAO structure:** one `DatabaseAccessor` subclass per aggregate (`TransactionDao`, `AccountDao`, `CategoryDao`, `TemplateDao`, `ExchangeRateDao`, `CurrencyDao`). DAOs execute queries; no domain logic. SDS §2.3.4.
@@ -120,7 +135,15 @@ Single source of truth for build order and feature dependencies.
 > The domain layer must compile as pure Dart with zero Flutter dependency — CI enforces this.
 > Without this node, no use case or repository implementation can be written.
 
-**Sources** | SDS §1.3.2, §1.5.1, §1.5.3 | SDS §2.5.1 | SDS §2.9.1–2.9.3 | SDS §1.3.3
+**Sources**
+- `1.3.2 Domain Layer` (`docs/02-technical/sds.md`)
+- `1.5.1 Folder Structure` (`docs/02-technical/sds.md`)
+- `1.5.3 Domain Boundary Rules` (`docs/02-technical/sds.md`)
+- `2.5.1 Freezed — Domain Entities` (`docs/02-technical/sds.md`)
+- `2.9.1 Decision — TC-033: Result Type Pattern` (`docs/02-technical/sds.md`)
+- `2.9.2 Result Type Definition` (`docs/02-technical/sds.md`)
+- `2.9.3 Layer-Boundary Rules` (`docs/02-technical/sds.md`)
+- `1.3.3 Data Layer` (`docs/02-technical/sds.md`)
 
 **Depends on:** *(none — pure Dart; no Drift dependency)*
 **Required by:** INFRA-3, INFRA-7, all feature nodes
@@ -140,7 +163,12 @@ Single source of truth for build order and feature dependencies.
 > All providers use `@riverpod` annotation; raw `Provider(...)` constructor syntax is forbidden.
 > Without this node, no screen can read from or write to the data layer.
 
-**Sources** | SDS §2.2.1–2.2.4 | SDS §1.5.1 (`lib/main.dart`, `lib/app.dart`, `lib/presentation/providers/`)
+**Sources**
+- `2.2.1 Riverpod` (`docs/02-technical/sds.md`)
+- `2.2.2 Provider Patterns in Use` (`docs/02-technical/sds.md`)
+- `2.2.3 Dependency Injection Strategy` (`docs/02-technical/sds.md`)
+- `2.2.4 Provider Scoping Rules` (`docs/02-technical/sds.md`)
+- `1.5.1 Folder Structure` (`docs/02-technical/sds.md`)
 
 **Depends on:** INFRA-1 (database), INFRA-2 (entities + interfaces)
 **Required by:** INFRA-4, all feature nodes
@@ -158,7 +186,12 @@ Single source of truth for build order and feature dependencies.
 > Route parameters are typed and validated at the builder; invalid parameters navigate to an error screen rather than crashing.
 > Without this node, no screen can be navigated to from another.
 
-**Sources** | SDS §2.4.1–2.4.3 | SDS §1.3.1.1 | SDS §1.5.1 (`lib/presentation/navigation/app_router.dart`)
+**Sources**
+- `2.4.1 GoRouter` (`docs/02-technical/sds.md`)
+- `2.4.2 Route Structure` (`docs/02-technical/sds.md`)
+- `2.4.3 Navigation Rules` (`docs/02-technical/sds.md`)
+- `1.3.1.1 Navigation` (`docs/02-technical/sds.md`)
+- `1.5.1 Folder Structure` (`docs/02-technical/sds.md`)
 
 **Depends on:** INFRA-3 (providers needed for the onboarding redirect guard)
 **Required by:** all feature nodes that define screen routes
@@ -178,7 +211,10 @@ Single source of truth for build order and feature dependencies.
 > Semantic tokens (`incomeAmount`, `expenseAmount`, `warningAmount`, `accentPastel`) are named compile-time constants — no string-keyed color lookups anywhere.
 > Without this node, no screen can use the correct financial color semantics.
 
-**Sources** | SDS §2.18.1 | PRD §5.4.1 | TC-048
+**Sources**
+- `2.18.1 Decision: Type-Safe ThemeExtension` (`docs/02-technical/sds.md`)
+- `5.4.1 Appearance` (`docs/01-product/prd.md`)
+- `TC-048: Minimum API level inconsistency with dynamic color` (`docs/01-product/technical-clarifications.md`)
 
 **Depends on:** *(none — pure Flutter theming; no data dependency)*
 **Required by:** all presentation-layer feature nodes
@@ -197,7 +233,10 @@ Single source of truth for build order and feature dependencies.
 > `CurrencyRepository` loads the asset once on app startup into a `keepAlive` Riverpod provider — no runtime network fetch ever.
 > Without this node, account creation and transaction entry cannot present a currency picker.
 
-**Sources** | SDS §2.16.1 | DM §4.1 (`currencies` table) | TC-044
+**Sources**
+- `2.16.1 Decision — TC-044: Bundled ISO 4217 Static Asset` (`docs/02-technical/sds.md`)
+- `4.1 currencies` (`docs/02-technical/data-model.md`)
+- `TC-044: Currency list — bundling and maintenance` (`docs/01-product/technical-clarifications.md`)
 
 **Depends on:** INFRA-1 (currencies table must exist), INFRA-3 (provider)
 **Required by:** ACC-01, and all feature nodes that reference currency
@@ -217,7 +256,23 @@ Single source of truth for build order and feature dependencies.
 > All ledger writes (user-initiated, background, adjustment) pass through these services; no use case may skip them.
 > Without this node, no financial write operation can be implemented correctly.
 
-**Sources** | SDS §1.3.2.1 | SDS §1.4.1 (transaction creation data flow) | SDS §1.4.3 (recurring auto-post) | SDS §1.4.4 (balance read) | SDS §1.6.2 (ACID atomicity) | SDS §1.6.7 (transaction immutability) | PRD §4.4–§4.11 | DM §3.3–§3.4 (`transactions`, `entries`)
+**Sources**
+- `1.3.2.1 Domain Services` (`docs/02-technical/sds.md`)
+- `1.4.1 User-Initiated Write — Transaction Creation` (`docs/02-technical/sds.md`)
+- `1.4.3 Background Write — Recurring Auto-Post` (`docs/02-technical/sds.md`)
+- `1.4.4 Account Balance Read` (`docs/02-technical/sds.md`)
+- `1.6.2 ACID Atomicity for All Ledger Operations` (`docs/02-technical/sds.md`)
+- `1.6.7 Transaction Immutability and Correction Model` (`docs/02-technical/sds.md`)
+- `4.4 Constraints` (`docs/01-product/prd.md`)
+- `4.5 Transaction Rules by Type` (`docs/01-product/prd.md`)
+- `4.6 Balance Calculation` (`docs/01-product/prd.md`)
+- `4.7 Transaction Validity` (`docs/01-product/prd.md`)
+- `4.8 Immutability \& Correction Model` (`docs/01-product/prd.md`)
+- `4.9 Initial Balance \& Equity Account` (`docs/01-product/prd.md`)
+- `4.10 Journal Adjustments` (`docs/01-product/prd.md`)
+- `4.11 Ledger Posting Cases (Reference)` (`docs/01-product/prd.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INFRA-2 (domain entities and `Result<T>` type)
 **Required by:** ACC-01, ACC-05, ACC-06, ACC-07, ACC-08, and all TXN, RECUR, INSTALL nodes
@@ -554,9 +609,21 @@ Full path (12 hops):
 
 > User can create, view, edit, and soft-delete financial accounts.
 > Account currency is immutable after creation; account name must be unique across all accounts including soft-deleted ones (PRD §5.1.1.3); EQ account is lazily created per-currency inside the same atomic write as the opening balance entry (TC-045).
-> Consumes: `accounts` table (DM §3.1), `account_details` table (DM §3.2), `INFRA-7` for opening balance entry.
+> Consumes: `accounts` table (Data Model §3.1), `account_details` table (Data Model §3.2), `INFRA-7` for opening balance entry.
 
-**Sources** | PRD §5.1.1, §5.1.1.1–§5.1.1.4 | TC-012, TC-020, TC-027, TC-035 | SDS §1.5.1 | DM `accounts`, `account_details`
+**Sources**
+- `5.1.1 Account CRUD` (`docs/01-product/prd.md`)
+- `5.1.1.1 Create Account — Fields` (`docs/01-product/prd.md`)
+- `5.1.1.2 Currency Immutability` (`docs/01-product/prd.md`)
+- `5.1.1.3 Account Name Uniqueness Constraint` (`docs/01-product/prd.md`)
+- `5.1.1.4 Edit` (`docs/01-product/prd.md`)
+- `TC-012: Account deletion balance transfer — "same type" constraint on template migration` (`docs/01-product/technical-clarifications.md`)
+- `TC-020: Account deletion balance transfer — transaction editability conflict` (`docs/01-product/technical-clarifications.md`)
+- `TC-027: Account entity — missing system fields` (`docs/01-product/technical-clarifications.md`)
+- `TC-035: Soft-deleted entity reinstatement — what fields are restored?` (`docs/01-product/technical-clarifications.md`)
+- `1.5.1 Folder Structure` (`docs/02-technical/sds.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `3.2 account_details` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INFRA-1, INFRA-2, INFRA-3, INFRA-7
 **Required by:** ACC-02, ACC-03, ACC-04, ACC-05, ACC-06, ACC-07, ACC-08, ACC-09, ACC-10, ACC-11, ACC-12
@@ -568,8 +635,8 @@ Full path (12 hops):
 - **Opening balance posting:** if `initial_balance ≠ 0`, atomically post via `INFRA-7` (Cases 2.2a or 2.2b from `ledger-entry.md`); EQ account for this currency created in same transaction if it does not exist. TC-045.
 - **Edit:** name, notes, include_in_net_worth, and all category-specific fields are editable. Account category is NOT editable after creation. PRD §5.1.1.4.
 - **Soft-delete:** sets `is_deleted = true`, `deleted_at`; account is excluded from all pickers and account lists; name remains reserved; historical transactions still visible. PRD §5.1.1.4, §5.1.1.5.
-- **System fields present on entity:** `id` (UUID v4), `created_at`, `updated_at`, `is_deleted`, `deleted_at`, `is_protected`, `is_system`, `display_order`. TC-027, DM §3.1.
-- **EQ and system accounts:** `is_system = 1` accounts are hidden from all user-facing views. `is_protected = 1` blocks user deletion. DM §3.1.
+- **System fields present on entity:** `id` (UUID v4), `created_at`, `updated_at`, `is_deleted`, `deleted_at`, `is_protected`, `is_system`, `display_order`. TC-027, Data Model §3.1.
+- **EQ and system accounts:** `is_system = 1` accounts are hidden from all user-facing views. `is_protected = 1` blocks user deletion. Data Model §3.1.
 - **Last-account guard:** when exactly one account exists, delete action is disabled with tooltip: *"You cannot delete your only account."* PRD §5.1.1.5.
 - **System-generated transfer editability:** system-generated transactions (e.g., deletion balance transfer) expose Delete-with-warning in contextual menu; Edit action is absent. TC-020.
 - **Edge case — reinstatement field state:** all fields restored exactly as they were at soft-delete time; user may edit via normal edit flow immediately after reinstatement. TC-035.
@@ -583,13 +650,17 @@ Full path (12 hops):
 > Sensitive fields (`card_number`, `account_number`) are encrypted at rest using AES via `flutter_secure_storage`; reveal requires authentication.
 > Loan account post-save installment suggestion fires when applicable.
 
-**Sources** | PRD §5.1.2, §5.1.2.1 | TC-013 | DM `account_details`
+**Sources**
+- `5.1.2 Account Categories (Fixed Set — No Custom Categories)` (`docs/01-product/prd.md`)
+- `5.1.2.1 Linked bank account — behaviour by account category` (`docs/01-product/prd.md`)
+- `TC-013: Notification reschedule triggers on credit card field edits` (`docs/01-product/technical-clarifications.md`)
+- `3.2 account_details` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01
 **Required by:** ACC-03 (credit limit warning needs `credit_limit_minor`), ACC-09, ACC-10
 
-- **Storage:** all category-specific fields stored in `account_details` key-value rows; encrypted fields use `detail_value_encrypted` column; plain fields use `detail_value`. DM §3.2.
-- **Valid `detail_key` values and which account categories they apply to:** see DM §3.2 (23 defined keys). All are in-place editable after creation.
+- **Storage:** all category-specific fields stored in `account_details` key-value rows; encrypted fields use `detail_value_encrypted` column; plain fields use `detail_value`. Data Model §3.2.
+- **Valid `detail_key` values and which account categories they apply to:** see Data Model §3.2 (23 defined keys). All are in-place editable after creation.
 - **Encrypted keys:** `card_number` (credit_card, debit_card), `account_number` (bank_account). Reveal requires biometric or PIN authentication. PRD §5.1.2.
 - **CVV is never stored.** PRD §5.1.2.
 - **Linked bank account (credit card):** triggers credit card payment reminders (§5.1.7). Does NOT trigger notification reschedule — form reads linked account at tap time. TC-013.
@@ -605,7 +676,16 @@ Full path (12 hops):
 > Balance is always computed from `entries` (never a stored column); net worth sums only `include_in_net_worth = 1` and `is_deleted = 0` accounts.
 > Multi-currency balances are converted to home currency via `exchange_rate_to_home` for net worth aggregation.
 
-**Sources** | PRD §5.1.4, §5.1.4.1–§5.1.4.3 | TC-045, TC-046 | SDS §1.4.4 | DM `accounts`, `entries`
+**Sources**
+- `5.1.4 Account Balance View` (`docs/01-product/prd.md`)
+- `5.1.4.1 Negative balance visual treatment` (`docs/01-product/prd.md`)
+- `5.1.4.2 Overdraft warning` (`docs/01-product/prd.md`)
+- `5.1.4.3 Credit card limit warning (FG-C18)` (`docs/01-product/prd.md`)
+- `TC-045: EQ (Opening Balance equity account) — balance and auditability` (`docs/01-product/technical-clarifications.md`)
+- `TC-046: BAI and BAE (Balance Adjustment categories) — per-currency or global?` (`docs/01-product/technical-clarifications.md`)
+- `1.4.4 Account Balance Read` (`docs/02-technical/sds.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01, ACC-02, CURR-01 *(exchange rate provider — for home-currency conversion)*
 **Required by:** ACC-04, ACC-12
@@ -617,7 +697,7 @@ Full path (12 hops):
 - **Negative balance display:** distinct warning color token (`VarianceColors.expenseAmount` or a dedicated token — exact token deferred to UX Flows); no minus sign in primary display; accessibility label must convey liability state. PRD §5.1.4.1.
 - **Overdraft warning (ACC-12 dependency):** non-blocking inline warning when a transaction would push balance below zero or deepen an existing negative balance. PRD §5.1.4.2.
 - **Credit limit warning (ACC-12 dependency):** non-blocking inline warning when an expense/transfer would exceed `credit_limit_minor` on a credit card. PRD §5.1.4.3.
-- **Performance requirement:** balance aggregation query must complete within <500ms for accounts with up to 10,000 entries. Index on `entries(account_id, side)` required. DM §3.4, §13.
+- **Performance requirement:** balance aggregation query must complete within <500ms for accounts with up to 10,000 entries. Index on `entries(account_id, side)` required. Data Model §3.4, §13.
 - **Done signal:** unit test verifies balance formula; stream emits updated value within 1 second after a new entry insert; net worth correctly excludes soft-deleted and excluded-flag accounts; negative balance renders in warning color in widget test.
 
 ---
@@ -628,7 +708,10 @@ Full path (12 hops):
 > Per-account transaction list uses the same cursor-based pagination architecture as the unified list (SDS §1.4.2); NOT month-filtered.
 > Credit card accounts show both outstanding and statement balances, plus the Pay FAB.
 
-**Sources** | PRD §5.1.4a | TC-032 | SDS §2.4.2 (route `/accounts/:id`)
+**Sources**
+- `5.1.4a Account Detail Screen` (`docs/01-product/prd.md`)
+- `TC-032: Account detail screen — specification missing` (`docs/01-product/technical-clarifications.md`)
+- `2.4.2 Route Structure` (`docs/02-technical/sds.md`)
 
 **Depends on:** ACC-03 (balance), TXN-01 *(transaction list component)*
 **Required by:** *(consumed by end-users; no downstream feature deps)*
@@ -652,7 +735,14 @@ Full path (12 hops):
 > Both adjustment paths route through `INFRA-7` (`PostingCaseSelector` Cases 2.3a/b for visible, 2.4a/b for invisible) inside a single atomic DB transaction.
 > This is the underlying engine shared by direct balance edit (PRD §5.1.3) and reconciliation (ACC-06).
 
-**Sources** | PRD §5.1.3, §4.10 | TC-045, TC-046 | SDS §1.4.1 | DM `transactions`, `entries`
+**Sources**
+- `5.1.3 Account Balance Model` (`docs/01-product/prd.md`)
+- `4.10 Journal Adjustments` (`docs/01-product/prd.md`)
+- `TC-045: EQ (Opening Balance equity account) — balance and auditability` (`docs/01-product/technical-clarifications.md`)
+- `TC-046: BAI and BAE (Balance Adjustment categories) — per-currency or global?` (`docs/01-product/technical-clarifications.md`)
+- `1.4.1 User-Initiated Write — Transaction Creation` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01, TXN-01 *(transaction write path)*, INFRA-7
 **Required by:** ACC-06 (reconciliation wraps this), ACC-09 (credit card balance edit)
@@ -675,7 +765,9 @@ Full path (12 hops):
 > Functionally identical to ACC-05 (direct balance edit) but optimized UX — user inputs the target balance, not the delta.
 > Available from account contextual menu and account detail screen.
 
-**Sources** | PRD §5.1.3a, §5.1.3.1
+**Sources**
+- `5.1.3a Balance Reconciliation (FG-C6)` (`docs/01-product/prd.md`)
+- `5.1.3.1 Reconciliation flow` (`docs/01-product/prd.md`)
 
 **Depends on:** ACC-05
 **Required by:** *(no downstream feature deps)*
@@ -694,7 +786,12 @@ Full path (12 hops):
 > Both entry sides post together or neither does (ACID — SDS §1.6.2); cross-currency transfers are blocked in v1 (PRD §7).
 > Destination picker shows only same-currency active accounts, source-first selection (TC-036).
 
-**Sources** | PRD §5.1.5 | TC-036 | SDS §1.4.1 | DM `transactions`, `entries`
+**Sources**
+- `5.1.5 Internal Transfer` (`docs/01-product/prd.md`)
+- `TC-036: Transfer destination account currency validation — enforcement mechanism` (`docs/01-product/technical-clarifications.md`)
+- `1.4.1 User-Initiated Write — Transaction Creation` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01, TXN-01, INFRA-7
 **Required by:** ACC-08 (transfer with fee), ACC-11 (deletion balance transfer)
@@ -716,7 +813,11 @@ Full path (12 hops):
 > Fee and transfer are grouped by `compound_group_id`; the fee component is not independently editable or deletable from the list.
 > Recurring transfer templates can include fee fields (TC-052).
 
-**Sources** | PRD §5.1.5b | TC-052 | DM `transactions`, `entries`
+**Sources**
+- `5.1.5b Transfer Fee (Optional)` (`docs/01-product/prd.md`)
+- `TC-052: Recurring transfer templates with fees` (`docs/01-product/technical-clarifications.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-07, CAT-01 *(Financial > Fees & Charges category must exist)*
 **Required by:** *(no downstream feature deps in v1)*
@@ -738,7 +839,13 @@ Full path (12 hops):
 > Statement balance is derived on demand from `entries` filtered by billing period half-open interval; not stored.
 > Balance edit screen presents two distinct adjustment actions (statement vs. outstanding).
 
-**Sources** | PRD §5.1.6, §5.1.6.1–§5.1.6.2 | TC-004 | DM `accounts`, `entries`
+**Sources**
+- `5.1.6 Credit Card Balance Model` (`docs/01-product/prd.md`)
+- `5.1.6.1 Billing period boundary semantics` (`docs/01-product/prd.md`)
+- `5.1.6.2 Balance edit screen for credit cards` (`docs/01-product/prd.md`)
+- `TC-004: Statement balance derivation for credit cards — billing period boundaries` (`docs/01-product/technical-clarifications.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01, ACC-02 (billing date and payment due date from `account_details`)
 **Required by:** ACC-10 (payment reminder uses statement balance), ACC-12 (credit limit warning)
@@ -761,7 +868,13 @@ Full path (12 hops):
 > Notifications are suppressed when statement balance is zero (TC-053).
 > Rescheduling triggers: billing date change or payment due date change only — linked bank account change does NOT trigger reschedule (TC-013).
 
-**Sources** | PRD §5.1.7, §5.1.7.1–§5.1.7.2 | TC-013, TC-053 | SDS §2.6
+**Sources**
+- `5.1.7 Credit Card Payment Reminders` (`docs/01-product/prd.md`)
+- `5.1.7.1 Notification schedule (recurring each billing cycle)` (`docs/01-product/prd.md`)
+- `5.1.7.2 Credit card payment entry form` (`docs/01-product/prd.md`)
+- `TC-013: Notification reschedule triggers on credit card field edits` (`docs/01-product/technical-clarifications.md`)
+- `TC-053: Credit card payment due amount — outstanding vs. statement balance` (`docs/01-product/technical-clarifications.md`)
+- `2.6 Scheduling` (`docs/02-technical/sds.md`)
 
 **Depends on:** ACC-09 (statement balance), ACC-02 (billing date, payment due date from `account_details`), SCHED-02 *(notification scheduler)*, TXN-01 *(payment entry form)*
 **Required by:** *(no downstream feature deps)*
@@ -785,7 +898,13 @@ Full path (12 hops):
 > Template migration replacement picker filtered to same account category AND same currency (TC-012).
 > Pending (future-dated) transactions referencing the deleted account are auto-voided by the scheduler (TC-039).
 
-**Sources** | PRD §5.1.1.5, §5.1.1.6 | TC-012, TC-020, TC-039 | SDS §1.6.6
+**Sources**
+- `5.1.1.5 Soft-deleted account behaviour (FG-B9)` (`docs/01-product/prd.md`)
+- `5.1.1.6 Recurring and installment template handling on account deletion` (`docs/01-product/prd.md`)
+- `TC-012: Account deletion balance transfer — "same type" constraint on template migration` (`docs/01-product/technical-clarifications.md`)
+- `TC-020: Account deletion balance transfer — transaction editability conflict` (`docs/01-product/technical-clarifications.md`)
+- `TC-039: What happens to pending (future-dated) transactions when the referenced account is soft-deleted?` (`docs/01-product/technical-clarifications.md`)
+- `1.6.6 Universal Soft-Delete` (`docs/02-technical/sds.md`)
 
 **Depends on:** ACC-07 (balance transfer uses transfer posting), RECUR-01 *(recurring template read — to check for future-scheduled occurrences)*
 **Required by:** *(terminal node — no downstream deps)*
@@ -813,7 +932,10 @@ Full path (12 hops):
 > Warnings are computed in the use case layer before the DB write; user can dismiss and proceed.
 > No hard block — user decision is final.
 
-**Sources** | PRD §5.1.4.1, §5.1.4.2, §5.1.4.3
+**Sources**
+- `5.1.4.1 Negative balance visual treatment` (`docs/01-product/prd.md`)
+- `5.1.4.2 Overdraft warning` (`docs/01-product/prd.md`)
+- `5.1.4.3 Credit card limit warning (FG-C18)` (`docs/01-product/prd.md`)
 
 **Depends on:** ACC-03 (current balance), TXN-01 *(transaction form — warning displayed inline)*
 **Required by:** *(no downstream feature deps — terminal warning node)*
@@ -840,7 +962,16 @@ Full path (12 hops):
 > Submitted form triggers ledger engine posting: `LedgerEngine.buildEntries` → `TransactionRepository.save` in a single ACID database transaction.
 > Writes to `transactions` + `entries`; invalidates `transactionsProvider` and `accountBalanceProvider`.
 
-**Sources** | PRD §5.2.1, §4.5, §4.7 | TC-001, TC-024, TC-025 | SDS §1.4.1 | DM: `transactions`, `entries`
+**Sources**
+- `5.2.1 Transaction Entry` (`docs/01-product/prd.md`)
+- `4.5 Transaction Rules by Type` (`docs/01-product/prd.md`)
+- `4.7 Transaction Validity` (`docs/01-product/prd.md`)
+- `TC-001: Transaction \`status\` field -- complete enumeration of states` (`docs/01-product/technical-clarifications.md`)
+- `TC-024: Transaction entity — complete field enumeration and data types` (`docs/01-product/technical-clarifications.md`)
+- `TC-025: Ledger entry entity — missing timestamps and metadata` (`docs/01-product/technical-clarifications.md`)
+- `1.4.1 User-Initiated Write — Transaction Creation` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01, CAT-01, INFRA-7, CURR-01
 - INFRA-1..7 are all implicit HARD prereqs via INFRA-7 (ledger engine requires schema, entities, DI, and currency bundle)
@@ -872,7 +1003,16 @@ Full path (12 hops):
 > In-place edits (title, description, photos, date/time) bypass the correction model entirely.
 > All correction chain links stored via `corrects_transaction_id` on `transactions`.
 
-**Sources** | PRD §5.2.2, §4.8 | TC-017, TC-018 | SDS §1.6.7 | DM: `transactions`, `entries`, §3.3.1, §11.3
+**Sources**
+- `5.2.2 Transaction Immutability \& Editing` (`docs/01-product/prd.md`)
+- `4.8 Immutability \& Correction Model` (`docs/01-product/prd.md`)
+- `TC-017: PRD SS4.5 expense entry sides vs. ledger-entry.md Case 1.1` (`docs/01-product/technical-clarifications.md`)
+- `TC-018: PRD SS4.8 "in-place edits" list inconsistent with input-fields.md` (`docs/01-product/technical-clarifications.md`)
+- `1.6.7 Transaction Immutability and Correction Model` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.3.1 Correction Chain` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
+- `11.3 Void/Reversal Chain Policy` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01, INFRA-7
 
@@ -903,7 +1043,15 @@ Full path (12 hops):
 > Shows all fields not visible in the list row: timestamp, description, exchange rate, fee breakdown, photo carousel, contextual menu.
 > Read-only projection; no new writes except via Edit / Delete actions.
 
-**Sources** | PRD §5.2.1.5, §5.2.1.6 | TC-032 | DM: (joins across `transactions`, `entries`, `attachments`, `accounts`, `categories`)
+**Sources**
+- `5.2.1.5 Transaction Detail View` (`docs/01-product/prd.md`)
+- `5.2.1.6 v1 contents` (`docs/01-product/prd.md`)
+- `TC-032: Account detail screen — specification missing` (`docs/01-product/technical-clarifications.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
+- `5.1 attachments` (`docs/02-technical/data-model.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01
 
@@ -930,7 +1078,11 @@ Full path (12 hops):
 > Photos are compressed (JPEG, max 1920px, target < 500KB) before storage in app-private directory.
 > `attachments` row records path + metadata; file deleted when transaction is voided.
 
-**Sources** | PRD §5.2.3 | TC-007 | SDS §2.15 | DM: `attachments`
+**Sources**
+- `5.2.3 Photo Attachments` (`docs/01-product/prd.md`)
+- `TC-007: Photo compression parameters` (`docs/01-product/technical-clarifications.md`)
+- `2.15 Photo Compression` (`docs/02-technical/sds.md`)
+- `5.1 attachments` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01
 
@@ -957,7 +1109,12 @@ Full path (12 hops):
 > Two list contexts: (1) home screen — all accounts, month-filtered; (2) account detail screen — single account, all months.
 > Uses cursor-based pagination (50 rows/page), `SliverList.builder`.
 
-**Sources** | PRD §5.2.1.1, §5.2.1.3 | SDS §1.4.2 | DM: `transactions`, `entries`
+**Sources**
+- `5.2.1.1 Transaction List Display (3-Column Layout)` (`docs/01-product/prd.md`)
+- `5.2.1.3 Transaction List Architecture` (`docs/01-product/prd.md`)
+- `1.4.2 Reactive Read — Transaction List` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.4 entries` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01, ACC-04
 
@@ -970,7 +1127,7 @@ Full path (12 hops):
 **Done signal:** Home screen shows month-filtered, all-account transaction list. Account detail screen shows unfiltered per-account list. Both paginate at 50 rows. Grouped by date header.
 
 **Edge cases / constraints:**
-- Default list filter: `status = 'posted' AND purpose IN ('user','correction','system')`. Excludes voided, reversals, pending (TC-001 DM §3.3 display rule).
+- Default list filter: `status = 'posted' AND purpose IN ('user','correction','system')`. Excludes voided, reversals, pending (TC-001 Data Model §3.3 display rule).
 - Pending transactions visible only when navigating to a future month via month selector. Shown with "Pending" badge or muted style (exact treatment → UX Flows). No separate "Pending" section (TC-008, PRD §5.7.1).
 - Soft-deleted (voided) transactions excluded from default list. Visible via filter "Is voided = true" (PRD §5.2.6).
 - Cursor is the `date_time` of the last-seen transaction. Page size constant = 50. `hasNextPage` determined by fetching `pageSize + 1` rows (SDS §1.4.2).
@@ -987,7 +1144,9 @@ Full path (12 hops):
 > Non-blocking warning shown; user can confirm or cancel.
 > No auto-merge, no block, no persist-warning state.
 
-**Sources** | PRD §5.2.1.8 | DM: `transactions`
+**Sources**
+- `5.2.1.8 Duplicate Transaction Detection (FG-C2)` (`docs/01-product/prd.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01
 
@@ -1015,7 +1174,12 @@ Full path (12 hops):
 > Per-account threshold: compared in account's native currency. Per-category threshold: compared in home currency (with exchange rate conversion).
 > If both thresholds are exceeded, only one warning shown (account threshold takes precedence).
 
-**Sources** | PRD §5.4.4, §5.4.4.1, §5.4.4.2 | TC-047 | DM: `app_settings`
+**Sources**
+- `5.4.4 Warnings \& Limits` (`docs/01-product/prd.md`)
+- `5.4.4.1 Large transaction warning (FG-C18)` (`docs/01-product/prd.md`)
+- `5.4.4.2 Currency handling for thresholds` (`docs/01-product/prd.md`)
+- `TC-047: Per-account and per-category large transaction thresholds — currency handling` (`docs/01-product/technical-clarifications.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01, SET-04
 
@@ -1043,7 +1207,14 @@ Full path (12 hops):
 > FTS5 narrows candidates; Dart `SearchRanker` scores and ranks by field-weight + typo-tolerance.
 > Search is global (all transactions to date) — not month-scoped (TC-050 founder resolution).
 
-**Sources** | PRD §5.2.5 | TC-009, TC-042, TC-050 | SDS §2.8 | DM: `transactions_fts`, `transactions_search_view`
+**Sources**
+- `5.2.5 Transaction Search` (`docs/01-product/prd.md`)
+- `TC-009: Fuzzy search implementation — ranking algorithm specifics` (`docs/01-product/technical-clarifications.md`)
+- `TC-042: Search scope — home screen vs. unified transaction list` (`docs/01-product/technical-clarifications.md`)
+- `TC-050: Search interaction with month filter on home screen` (`docs/01-product/technical-clarifications.md`)
+- `2.8 Search` (`docs/02-technical/sds.md`)
+- `10.1 transactions_fts` (`docs/02-technical/data-model.md`)
+- `10.2 transactions_search_view` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-05
 
@@ -1058,8 +1229,8 @@ Full path (12 hops):
 - **Search scope (TC-050 founder resolution):** Global across all transactions to date. Month filter is NOT applied during search. Account detail screen search: scoped to that account (SDS §2.8.4).
 - Amount search: exact value match only. "500" matches ₹500, not ₹5000 (PRD §5.2.5).
 - Searchable fields: title, description, account name, category name, date. Amount (exact only). Soft-deleted account/category names remain searchable (PRD §5.2.5).
-- FTS5 content sync via triggers on `transactions` table (SDS §2.8.2 / DM §10.1). If FTS index is out of sync (e.g., trigger failure or schema migration): results may miss new/updated transactions. Mitigation: FTS rebuild available as a maintenance operation; log sync failures. FTS is a search acceleration layer — the canonical data is always in `transactions`.
-- FTS5 `transactions_search_view` filters: `status = 'posted' AND purpose IN ('user','correction','system') AND is_deleted = 0` (DM §10.2). Pending and voided transactions not searchable.
+- FTS5 content sync via triggers on `transactions` table (SDS §2.8.2 / Data Model §10.1). If FTS index is out of sync (e.g., trigger failure or schema migration): results may miss new/updated transactions. Mitigation: FTS rebuild available as a maintenance operation; log sync failures. FTS is a search acceleration layer — the canonical data is always in `transactions`.
+- FTS5 `transactions_search_view` filters: `status = 'posted' AND purpose IN ('user','correction','system') AND is_deleted = 0` (Data Model §10.2). Pending and voided transactions not searchable.
 - Stage 1 cap: 500 candidates returned from FTS5 before Dart scoring (SDS §2.8.3). Dart scoring (including Levenshtein) is O(candidates × query_length) — bounded by the 500-row cap.
 - Tiebreaker: equal scores sorted by `date_time DESC` (TC-009).
 - Date field in searchable fields (PRD §5.2.5): implementation note — FTS5 indexes text; dates are stored as integers. Date search may require a parallel SQL `WHERE date_time BETWEEN` predicate, not FTS5 text search.
@@ -1072,7 +1243,12 @@ Full path (12 hops):
 > All criteria combined with AND logic. Filter state does NOT persist across navigation.
 > Sort controls (date desc/asc, amount desc/asc) also in filter panel.
 
-**Sources** | PRD §5.2.6, §5.2.6.1 | TC-023, TC-058 | DM: (SQL WHERE clause on `transactions`)
+**Sources**
+- `5.2.6 Transaction Filtering` (`docs/01-product/prd.md`)
+- `5.2.6.1 Category filter interaction with transaction type filter` (`docs/01-product/prd.md`)
+- `TC-023: Category filter — multi-select scope unclear across transaction types` (`docs/01-product/technical-clarifications.md`)
+- `TC-058: "Is recurring" filter criterion — scope and semantics` (`docs/01-product/technical-clarifications.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-05
 
@@ -1101,7 +1277,13 @@ Full path (12 hops):
 > An info popup is shown at save time.
 > Pending transactions are auto-posted by the scheduler on the target date (or on next app launch after the date passes).
 
-**Sources** | PRD §5.7, §5.7.1 | TC-008, TC-039 | SDS §1.6.8 | DM: `transactions`
+**Sources**
+- `5.7 Timezone \& Date Policy` (`docs/01-product/prd.md`)
+- `5.7.1 Pending transaction visibility and interaction` (`docs/01-product/prd.md`)
+- `TC-008: Pending future-dated transaction visibility and interaction` (`docs/01-product/technical-clarifications.md`)
+- `TC-039: What happens to pending (future-dated) transactions when the referenced account is soft-deleted?` (`docs/01-product/technical-clarifications.md`)
+- `1.6.8 Scheduling Architecture` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01, SCHED-01
 
@@ -1129,7 +1311,10 @@ Full path (12 hops):
 > A launch-time notification informs the user.
 > Category deletion does NOT trigger auto-void (soft-deleted categories still valid on transactions).
 
-**Sources** | PRD §5.7.1 | TC-039 | DM: `transactions`
+**Sources**
+- `5.7.1 Pending transaction visibility and interaction` (`docs/01-product/prd.md`)
+- `TC-039: What happens to pending (future-dated) transactions when the referenced account is soft-deleted?` (`docs/01-product/technical-clarifications.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-10, ACC-11
 
@@ -1156,7 +1341,9 @@ Full path (12 hops):
 > Income = green, Expense = red, Transfer = neutral.
 > Applies to all transactions including Balance Adjustment entries.
 
-**Sources** | PRD §5.2.1, §5.2.1.1 | DM: (presentation layer only)
+**Sources**
+- `5.2.1 Transaction Entry` (`docs/01-product/prd.md`)
+- `5.2.1.1 Transaction List Display (3-Column Layout)` (`docs/01-product/prd.md`)
 
 **Depends on:** TXN-05
 
@@ -1184,7 +1371,10 @@ Full path (12 hops):
 > Max 5 drafts; FIFO eviction when limit exceeded.
 > Drafts are not transactions, not part of the ledger.
 
-**Sources** | PRD §5.4.3.1 | TC-005 | DM: `drafts`
+**Sources**
+- `5.4.3.1 Draft lifecycle (for "Auto-save as draft" mode)` (`docs/01-product/prd.md`)
+- `TC-005: "Auto-save as draft" back button behaviour — draft lifecycle` (`docs/01-product/technical-clarifications.md`)
+- `9.2 drafts` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SET-03, TXN-01
 
@@ -1216,7 +1406,15 @@ Full path (12 hops):
 > No deeper than two levels; child cannot be reassigned to a different parent; parent cannot be deleted while it has children.
 > Consumes INFRA-1 (schema), INFRA-2 (use case scaffolding), INFRA-3 (DI wiring); produces `categories` table rows consumed by TXN-01, CAT-03, CAT-04.
 
-**Sources** | PRD §5.2.4, §5.2.4.1–§5.2.4.3 | TC-028, TC-040, TC-051 | SDS — | DM: `categories`
+**Sources**
+- `5.2.4 Transaction Categories (Two-Level Hierarchy)` (`docs/01-product/prd.md`)
+- `5.2.4.1 Category fields` (`docs/01-product/prd.md`)
+- `5.2.4.2 Category management UX` (`docs/01-product/prd.md`)
+- `5.2.4.3 Category name uniqueness constraint` (`docs/01-product/prd.md`)
+- `TC-028: Category entity — missing system fields` (`docs/01-product/technical-clarifications.md`)
+- `TC-040: Category deletion flow — ordering of template warning vs. transaction migration` (`docs/01-product/technical-clarifications.md`)
+- `TC-051: Soft-delete of the last active category in a tree` (`docs/01-product/technical-clarifications.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INFRA-1, INFRA-2, INFRA-3
 **Required by:** CAT-02, CAT-03, CAT-04, TXN-01, ACC-08, SET-09
@@ -1242,7 +1440,12 @@ Full path (12 hops):
 > Icons for default categories must be drawn from the curated ~250-icon subset (TC-014 founder resolution); icon curation is a blocking prerequisite for seeding.
 > Consumes CAT-01 (CRUD interfaces) and the curated icon bundle; produces fully populated `categories` rows at install.
 
-**Sources** | PRD §5.6.1, §5.2.4 (default tables) | TC-014, TC-016 | SDS — | DM: `categories`
+**Sources**
+- `5.6.1 Default Category Seeding` (`docs/01-product/prd.md`)
+- `5.2.4 Transaction Categories (Two-Level Hierarchy)` (`docs/01-product/prd.md`)
+- `TC-014: "Curated subset" of material\_symbols\_icons — who defines it and when` (`docs/01-product/technical-clarifications.md`)
+- `TC-016: Balance Adjustment category — icon and name` (`docs/01-product/technical-clarifications.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
 
 **Depends on:** CAT-01
 **Required by:** OB-01
@@ -1265,7 +1468,13 @@ Full path (12 hops):
 > Soft-deleted categories are hidden from pickers but remain visible in filter dropdowns and on historical transactions.
 > Depends on CAT-01 for entity access and TXN-02 for the correction-model writes that power migration.
 
-**Sources** | PRD §5.2.4.4, §5.2.4.5 | TC-034, TC-040 | SDS — | DM: `categories`, `transactions`
+**Sources**
+- `5.2.4.4 Category mutability rules (all categories — default and user-created)` (`docs/01-product/prd.md`)
+- `5.2.4.5 Recurring and installment template handling on category deletion` (`docs/01-product/prd.md`)
+- `TC-034: Batch category migration — performance and UX for large N` (`docs/01-product/technical-clarifications.md`)
+- `TC-040: Category deletion flow — ordering of template warning vs. transaction migration` (`docs/01-product/technical-clarifications.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
 
 **Depends on:** CAT-01, TXN-02
 **Required by:** SET-09
@@ -1292,7 +1501,11 @@ Full path (12 hops):
 > Cannot be selected by the user, renamed, icon-changed, or soft-deleted; completely hidden from the category management screen.
 > Seeded at install by CAT-02; `is_protected = 1` guards all mutation paths.
 
-**Sources** | PRD §5.2.4.6 | TC-016, TC-046 | SDS — | DM: `categories`
+**Sources**
+- `5.2.4.6 Protected system category — "Balance Adjustment"` (`docs/01-product/prd.md`)
+- `TC-016: Balance Adjustment category — icon and name` (`docs/01-product/technical-clarifications.md`)
+- `TC-046: BAI and BAE (Balance Adjustment categories) — per-currency or global?` (`docs/01-product/technical-clarifications.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
 
 **Depends on:** CAT-01
 **Required by:** ACC-05, CAT-02
@@ -1302,7 +1515,7 @@ Full path (12 hops):
 
 **Edge cases and constraints:**
 
-- **Two instances:** One parent row per tree (`tree_type = 'income'`, `tree_type = 'expense'`), each with `is_protected = 1`. Each has a child subcategory (BAI / BAE) also with `is_protected = 1` (DM §3.5).
+- **Two instances:** One parent row per tree (`tree_type = 'income'`, `tree_type = 'expense'`), each with `is_protected = 1`. Each has a child subcategory (BAI / BAE) also with `is_protected = 1` (Data Model §3.5).
 - **Picker exclusion:** Application layer must filter `is_protected = 1` categories from transaction entry picker. Not a DB constraint.
 - **Management screen exclusion:** Category management screen must filter `is_protected = 1` rows — they are invisible to the user.
 - **TC-046 (BAI/BAE are global, not per-currency):** Single category instance shared across all currencies. Exchange rate disambiguation is handled at the transaction/entry level, not the category level.
@@ -1318,7 +1531,16 @@ Full path (12 hops):
 > Exchange rate fetch is opportunistic (daily max, scoped to currencies the user has accounts in, silent failure); 14-day staleness threshold shows a disclaimer.
 > Consumes INFRA-6 (bundled ISO 4217 currency asset) and INFRA-1 (schema); produces `currencies` and `exchange_rates` tables consumed by CURR-02, CURR-03, ACC-03, TXN-01.
 
-**Sources** | PRD §7, §7.1 | TC-006, TC-029, TC-044 | SDS §2.7, §2.16 | DM: `currencies`, `exchange_rates`
+**Sources**
+- `7. Multi-Currency Model (v1)` (`docs/01-product/prd.md`)
+- `7.1 Transaction-Level Exchange Rate Capture` (`docs/01-product/prd.md`)
+- `TC-006: Exchange rate fetching model — trigger, frequency, API, and error handling` (`docs/01-product/technical-clarifications.md`)
+- `TC-029: How does the app handle home currency changes after transactions exist?` (`docs/01-product/technical-clarifications.md`)
+- `TC-044: Currency list — bundling and maintenance` (`docs/01-product/technical-clarifications.md`)
+- `2.7 Exchange Rate` (`docs/02-technical/sds.md`)
+- `2.16 Currency Bundle` (`docs/02-technical/sds.md`)
+- `4.1 currencies` (`docs/02-technical/data-model.md`)
+- `4.2 exchange_rates` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INFRA-6, INFRA-1
 **Required by:** CURR-02, CURR-03, ACC-03, SET-02, OB-01
@@ -1345,7 +1567,8 @@ Full path (12 hops):
 > Disambiguation is automatic — no user action; applies to account list, net worth view, transaction list, and transaction detail.
 > Consumes CURR-01 (live currency data from accounts).
 
-**Sources** | PRD §7.0.1 | TC-013 | SDS — | DM: —
+**Sources**
+- `7.0.1 Currency symbol disambiguation (FG-C13)` (`docs/01-product/prd.md`)
 
 **Depends on:** CURR-01
 **Required by:** TXN-01, ACC-03, TXN-05
@@ -1369,7 +1592,11 @@ Full path (12 hops):
 > If the cached rate is stale (> 14 days), a warning icon is shown alongside the estimate; if no rate exists, the estimate is omitted with a note.
 > Consumes CURR-01 (cached rates) and TXN-01 (entry form context).
 
-**Sources** | PRD §7.1.3 | TC-006 | SDS §2.7.4 | DM: `exchange_rates`
+**Sources**
+- `7.1.3 Exchange rate estimate during transaction entry (FG-C12)` (`docs/01-product/prd.md`)
+- `TC-006: Exchange rate fetching model — trigger, frequency, API, and error handling` (`docs/01-product/technical-clarifications.md`)
+- `2.7.4 Staleness and Offline Fallback` (`docs/02-technical/sds.md`)
+- `4.2 exchange_rates` (`docs/02-technical/data-model.md`)
 
 **Depends on:** CURR-01, TXN-01
 **Required by:** —
@@ -1397,7 +1624,13 @@ Full path (12 hops):
 > Two mechanisms: synchronous app-launch sweep (primary catch-up) and WorkManager periodic task (background between launches).
 > Consumes INFRA-1 (schema for `scheduled_occurrences`); produces the execution substrate required by RECUR-01, SCHED-02, and TXN-10.
 
-**Sources** | PRD §5.2.7 (missed transactions), §5.7 | TC-041 | SDS §2.6 | DM: `recurring_templates`, `scheduled_occurrences`
+**Sources**
+- `5.2.7 Recurring Transactions` (`docs/01-product/prd.md`)
+- `5.7 Timezone \& Date Policy` (`docs/01-product/prd.md`)
+- `TC-041: Recurring transaction auto-post scheduling mechanism` (`docs/01-product/technical-clarifications.md`)
+- `2.6 Scheduling` (`docs/02-technical/sds.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
+- `7.2 scheduled_occurrences` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INFRA-1
 **Required by:** RECUR-01, SCHED-02, TXN-10
@@ -1414,7 +1647,7 @@ Full path (12 hops):
 - **WorkManager task (`PostingSweeperWorker`, SDS §2.6.1):** Registered once at install with a 6-hour minimum period. Executes the same sweep in background. Constraints: `NetworkType.not_required`, `requiresCharging: false`, `requiresDeviceIdle: false`.
 - **Pause resume (TC-026 LE note):** On each app launch and WorkManager tick, templates with `pause_until <= now` must be auto-resumed (status set back to `active`). This is an eager check, not lazy.
 - **`RECEIVE_BOOT_COMPLETED` permission:** WorkManager requires this to re-register after device restart.
-- **Occurrence generation lookahead (DM §7.2):** Recurring `scheduled_occurrences` rows are materialized up to 90 days ahead. The sweep generates new rows as the window advances on each launch.
+- **Occurrence generation lookahead (Data Model §7.2):** Recurring `scheduled_occurrences` rows are materialized up to 90 days ahead. The sweep generates new rows as the window advances on each launch.
 - **Occurrence ownership:** SCHED-01 owns the sweep and posting logic. RECUR-01 owns template creation and the recurrence computation that feeds into SCHED-01. The boundary: SCHED-01 reads `scheduled_occurrences` and calls the ledger engine; RECUR-01 writes templates and the initial occurrence batch.
 - **Done signal:** App-launch sweep runs and posts overdue items; WorkManager task registered; `RECEIVE_BOOT_COMPLETED` registered; pause auto-resume on launch confirmed.
 
@@ -1426,7 +1659,15 @@ Full path (12 hops):
 > Template generates materialized `scheduled_occurrences` rows up to 90 days ahead; the scheduler (SCHED-01) drives posting.
 > Consumes TXN-01 (the posting primitive) and SCHED-01 (the sweep infrastructure).
 
-**Sources** | PRD §5.2.7 | TC-003, TC-026, TC-030, TC-041 | SDS §2.6 | DM: `recurring_templates`, `scheduled_occurrences`
+**Sources**
+- `5.2.7 Recurring Transactions` (`docs/01-product/prd.md`)
+- `TC-003: "Manually handled" marking on recurring template occurrences` (`docs/01-product/technical-clarifications.md`)
+- `TC-026: Recurring/installment template entity — complete schema` (`docs/01-product/technical-clarifications.md`)
+- `TC-030: Recurring "remind and confirm" — what happens when multiple occurrences stack up?` (`docs/01-product/technical-clarifications.md`)
+- `TC-041: Recurring transaction auto-post scheduling mechanism` (`docs/01-product/technical-clarifications.md`)
+- `2.6 Scheduling` (`docs/02-technical/sds.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
+- `7.2 scheduled_occurrences` (`docs/02-technical/data-model.md`)
 
 **Depends on:** TXN-01, SCHED-01
 **Required by:** RECUR-02, RECUR-03, INST-01, ACC-10, ACC-11, SET-10
@@ -1437,13 +1678,13 @@ Full path (12 hops):
 
 **Edge cases and constraints:**
 
-- **Occurrence record architecture (TC-003):** Materialized `scheduled_occurrences` rows (not a computed exception list). Both recurring and installment schedules use materialized records for consistency (DM §7.2). Recurring rows generated lazily up to 90-day lookahead window on each launch.
+- **Occurrence record architecture (TC-003):** Materialized `scheduled_occurrences` rows (not a computed exception list). Both recurring and installment schedules use materialized records for consistency (Data Model §7.2). Recurring rows generated lazily up to 90-day lookahead window on each launch.
 - **"Manually handled" flag (TC-003):** Occurrence `status = 'skipped'` when a child transaction is edited or soft-deleted. Scheduler skips rows with `status != 'pending'`.
 - **Stacked missed occurrences (TC-030):** On launch, missed `remind_and_confirm` occurrences past their 24-hour window are auto-approved and posted in chronological order with original scheduled dates. Duplicate detection and overdraft warnings suppressed for auto-approved occurrences. One-time summary notification shown at launch: *"[N] recurring transactions were auto-posted while you were away."*
 - **End-of-month day handling (PRD §5.2.7):** For month/year recurrences, if the target day does not exist in that month, post on the last valid day (e.g., Feb 28 for a 31st-day template).
 - **Archived templates (PRD §5.2.7):** Auto-archived when end date passes or all occurrences exhausted. Archived templates cannot be reactivated.
 - **Pause period — no backfill (PRD §5.2.7):** Occurrences skipped during a pause remain skipped (status = `skipped`). Not retroactively posted on resume.
-- **Template lifecycle states (DM §7.1):** `active → paused → active` (resumable); `active/paused → archived` (terminal); `active/paused → deleted` (soft-delete, terminal).
+- **Template lifecycle states (Data Model §7.1):** `active → paused → active` (resumable); `active/paused → archived` (terminal); `active/paused → deleted` (soft-delete, terminal).
 - **Done signal:** Template creation writes `recurring_templates` row + initial `scheduled_occurrences` batch; sweep posts pending past-due occurrences; manually-handled occurrences are skipped; missed occurrences auto-approved with summary notification.
 
 ---
@@ -1454,7 +1695,11 @@ Full path (12 hops):
 > When a child transaction generated by the template is edited or soft-deleted, the occurrence is marked "manually handled" (skipped) on the template schedule.
 > Immutable fields (transaction type, recurrence definition, start/end date) cannot be changed; user must archive and recreate.
 
-**Sources** | PRD §5.2.7.1, §5.2.7.2 | TC-056 | SDS — | DM: `recurring_templates`
+**Sources**
+- `5.2.7.1 Template editability` (`docs/01-product/prd.md`)
+- `5.2.7.2 Child transaction editing and deletion` (`docs/01-product/prd.md`)
+- `TC-056: Recurring template deletion vs. archival — child transaction handling` (`docs/01-product/technical-clarifications.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
 
 **Depends on:** RECUR-01, TXN-02
 **Required by:** SET-10
@@ -1466,7 +1711,7 @@ Full path (12 hops):
 **Edge cases and constraints:**
 
 - **Editable fields (PRD §5.2.7.1):** Amount, account(s), category, subcategory, title, description, posting behaviour. Already-posted child transactions are unaffected.
-- **Immutable fields (PRD §5.2.7.1):** `transaction_type`, `recurrence_n`, `recurrence_unit`, `recurrence_constraints`, `start_date`, `end_date`. Application layer enforces; no DB-level constraint (DM §7.1).
+- **Immutable fields (PRD §5.2.7.1):** `transaction_type`, `recurrence_n`, `recurrence_unit`, `recurrence_constraints`, `start_date`, `end_date`. Application layer enforces; no DB-level constraint (Data Model §7.1).
 - **"Delete template" semantics (TC-056):** Cancels all future `scheduled_occurrences` (status = `cancelled`) + sets `is_deleted = 1` on `recurring_templates`. Already-posted child transactions retained and fully visible. Template hidden from management list.
 - **Child transaction edit (PRD §5.2.7.2):** Marks corresponding `scheduled_occurrences` row `status = 'skipped'`. Parent template configuration unchanged.
 - **Child transaction soft-delete (PRD §5.2.7.2):** Same "manually handled" marking; template's remaining future occurrences continue normally.
@@ -1480,7 +1725,9 @@ Full path (12 hops):
 > During the pause, no transactions are posted; skipped occurrences are not retroactively posted on resume.
 > A template cannot be paused indefinitely (no open-ended pause; that is equivalent to disable, deferred to v2).
 
-**Sources** | PRD §5.2.7 (Pause/Unpause section) | SDS — | DM: `recurring_templates`
+**Sources**
+- `5.2.7 Recurring Transactions` (`docs/01-product/prd.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
 
 **Depends on:** RECUR-01
 **Required by:** SET-10
@@ -1491,7 +1738,7 @@ Full path (12 hops):
 **Edge cases and constraints:**
 
 - **Pause duration required (PRD §5.2.7):** Either M units of the template's recurrence unit, or a custom date/time. Open-ended pause not allowed.
-- **Pause state stored as (DM §7.1):** `status = 'paused'`, `pause_until = epoch`. SCHED-01 sweep skips templates with `status = 'paused'` and `pause_until > now`; auto-resumes when `pause_until <= now`.
+- **Pause state stored as (Data Model §7.1):** `status = 'paused'`, `pause_until = epoch`. SCHED-01 sweep skips templates with `status = 'paused'` and `pause_until > now`; auto-resumes when `pause_until <= now`.
 - **Skipped occurrences during pause (PRD §5.2.7):** Occurrence rows with `scheduled_date` inside the pause window are set to `status = 'skipped'`. They are NOT posted on resume.
 - **Unpause at any time (PRD §5.2.7):** Sets `status = 'active'`, clears `pause_until`. Resumes from next scheduled occurrence after current date.
 - **Done signal:** Pause sets status + `pause_until`; sweep skips paused templates; auto-resume fires on launch when `pause_until` has passed; skipped occurrences are not backfilled.
@@ -1504,7 +1751,11 @@ Full path (12 hops):
 > Requires `SCHEDULE_EXACT_ALARM` (Android 12+) and `POST_NOTIFICATIONS` (Android 13+) runtime permissions; degrades gracefully if denied.
 > Consumes SCHED-01 (scheduling infrastructure); produces the pending confirmation events consumed by SCHED-03.
 
-**Sources** | PRD §5.2.7 (posting behaviour, remind and confirm) | TC-041 | SDS §2.6 | DM: `recurring_templates`
+**Sources**
+- `5.2.7 Recurring Transactions` (`docs/01-product/prd.md`)
+- `TC-041: Recurring transaction auto-post scheduling mechanism` (`docs/01-product/technical-clarifications.md`)
+- `2.6 Scheduling` (`docs/02-technical/sds.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SCHED-01
 **Required by:** SCHED-03, ACC-10
@@ -1530,7 +1781,12 @@ Full path (12 hops):
 > Each item supports Confirm (post), Edit before confirming, and Dismiss (permanently skip with confirmation dialog).
 > Consumes SCHED-02 (occurrence events) and HOME-01 (home screen shell).
 
-**Sources** | PRD §5.8.5, §5.7a | TC-003, TC-030, TC-049 | SDS — | DM: —
+**Sources**
+- `5.8.5 Alerts` (`docs/01-product/prd.md`)
+- `5.7a App Navigation Model` (`docs/01-product/prd.md`)
+- `TC-003: "Manually handled" marking on recurring template occurrences` (`docs/01-product/technical-clarifications.md`)
+- `TC-030: Recurring "remind and confirm" — what happens when multiple occurrences stack up?` (`docs/01-product/technical-clarifications.md`)
+- `TC-049: Pending Confirmations — dismiss action semantics` (`docs/01-product/technical-clarifications.md`)
 
 **Depends on:** SCHED-02, HOME-01
 **Required by:** HOME-04
@@ -1559,7 +1815,16 @@ Full path (12 hops):
 > All occurrence records are created eagerly at template creation time; end date is derived from start date + (N occurrences × recurrence period), never user-settable.
 > Consumes RECUR-01 (template infrastructure) for the shared recurring template base; produces `installment_plans` and `installment_occurrences` rows.
 
-**Sources** | PRD §5.2.8, §5.2.8.2 | TC-010, TC-011, TC-021, TC-022, TC-038 | SDS — | DM: `installment_plans`, `installment_occurrences`
+**Sources**
+- `5.2.8 Installments` (`docs/01-product/prd.md`)
+- `5.2.8.2 Installment editability` (`docs/01-product/prd.md`)
+- `TC-010: Installment template — relationship between "Number of installments" and recurrence rule` (`docs/01-product/technical-clarifications.md`)
+- `TC-011: Installment template — "add new future installments" mechanics` (`docs/01-product/technical-clarifications.md`)
+- `TC-021: Installment early close — "Total configured" immutability exception` (`docs/01-product/technical-clarifications.md`)
+- `TC-022: Loan account installment suggestion — transaction type inconsistency` (`docs/01-product/technical-clarifications.md`)
+- `TC-038: Installment template — can transfers be installments?` (`docs/01-product/technical-clarifications.md`)
+- `8.1 installment_plans` (`docs/02-technical/data-model.md`)
+- `8.2 installment_occurrences` (`docs/02-technical/data-model.md`)
 
 **Depends on:** RECUR-01
 **Required by:** INST-02, INST-03, ACC-09, SET-10
@@ -1586,7 +1851,10 @@ Full path (12 hops):
 > All four are computed from `installment_occurrences` at query time — none are stored columns (TC-026 resolution).
 > Consumes INST-01 (materialized occurrence rows).
 
-**Sources** | PRD §5.2.8.1 | TC-026 | SDS — | DM: `installment_occurrences`
+**Sources**
+- `5.2.8.1 Installment running total tracking (Q48)` (`docs/01-product/prd.md`)
+- `TC-026: Recurring/installment template entity — complete schema` (`docs/01-product/technical-clarifications.md`)
+- `8.2 installment_occurrences` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INST-01
 **Required by:** INST-03, SET-10
@@ -1596,7 +1864,7 @@ Full path (12 hops):
 
 **Edge cases and constraints:**
 
-- **Computed, not stored (TC-026, DM §8.1):**
+- **Computed, not stored (TC-026, Data Model §8.1):**
   - `running_total` = `SUM(amount_minor) WHERE status='posted' AND is_voided=false` on `installment_occurrences`
   - `total_remaining` = `SUM(amount_minor) WHERE status='pending'`
   - `projected_final_total` = `running_total + total_remaining`
@@ -1614,7 +1882,12 @@ Full path (12 hops):
 > Flow: optional final payment → cancel remaining occurrences → archive template → mismatch check with option to update `total_configured`.
 > Consumes INST-01 + INST-02 (template + tracking) and TXN-01 (final payment posting).
 
-**Sources** | PRD §5.2.8.3 | TC-021, TC-055 | SDS — | DM: `installment_plans`, `installment_occurrences`
+**Sources**
+- `5.2.8.3 Installment early close (FG-B7)` (`docs/01-product/prd.md`)
+- `TC-021: Installment early close — "Total configured" immutability exception` (`docs/01-product/technical-clarifications.md`)
+- `TC-055: Installment early close — "final payment" transaction type` (`docs/01-product/technical-clarifications.md`)
+- `8.1 installment_plans` (`docs/02-technical/data-model.md`)
+- `8.2 installment_occurrences` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INST-01, INST-02, TXN-01
 **Required by:** —
@@ -1645,7 +1918,18 @@ Full path (12 hops):
 > Net worth is always current (ignores month selector); income/expense/net figures and the transaction list shift when the month selector changes.
 > Depends on ACC-03 (balance aggregation), TXN-05 (transaction list), and SET-01 (display name, theme, locale keys from `app_settings`).
 
-**Sources** | PRD §5.8, §5.8.1, §5.8.2, §5.8.3, §5.8.4 | SDS §1.4.2, §1.4.4, §2.4.2 | DM: `transactions`, `accounts`, `app_settings`
+**Sources**
+- `5.8 Home Screen \& Dashboard` (`docs/01-product/prd.md`)
+- `5.8.1 Greeting` (`docs/01-product/prd.md`)
+- `5.8.2 Financial Summary` (`docs/01-product/prd.md`)
+- `5.8.3 Month Selector` (`docs/01-product/prd.md`)
+- `5.8.4 Transaction List` (`docs/01-product/prd.md`)
+- `1.4.2 Reactive Read — Transaction List` (`docs/02-technical/sds.md`)
+- `1.4.4 Account Balance Read` (`docs/02-technical/sds.md`)
+- `2.4.2 Route Structure` (`docs/02-technical/sds.md`)
+- `3.3 transactions` (`docs/02-technical/data-model.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-03, TXN-05, SET-01
 
@@ -1671,7 +1955,14 @@ Full path (12 hops):
 > Search overrides the month filter — when search is active, results span all transactions to date; when cleared, the month filter re-engages.
 > Delegates to TXN-08 (FTS5 search engine) and TXN-09 (filter logic); HOME-01 must exist for the host surface.
 
-**Sources** | PRD §5.8.4 | TC-042, TC-050 | SDS §2.8, §2.8.4 | DM: `transactions_fts`, `transactions_search_view`
+**Sources**
+- `5.8.4 Transaction List` (`docs/01-product/prd.md`)
+- `TC-042: Search scope — home screen vs. unified transaction list` (`docs/01-product/technical-clarifications.md`)
+- `TC-050: Search interaction with month filter on home screen` (`docs/01-product/technical-clarifications.md`)
+- `2.8 Search` (`docs/02-technical/sds.md`)
+- `2.8.4 Search Scope` (`docs/02-technical/sds.md`)
+- `10.1 transactions_fts` (`docs/02-technical/data-model.md`)
+- `10.2 transactions_search_view` (`docs/02-technical/data-model.md`)
 
 **Depends on:** HOME-01, TXN-08, TXN-09
 
@@ -1697,7 +1988,10 @@ Full path (12 hops):
 > FAB is always visible on the Home tab root; exact design (single vs. speed dial) is deferred to UX Flows (UX-2).
 > Depends only on TXN-01 (transaction entry form exists); HOME-01 provides the host surface.
 
-**Sources** | PRD §5.8.6, §5.7a | SDS §2.4.2 | DM: _(none — navigation only)_
+**Sources**
+- `5.8.6 Quick Entry` (`docs/01-product/prd.md`)
+- `5.7a App Navigation Model` (`docs/01-product/prd.md`)
+- `2.4.2 Route Structure` (`docs/02-technical/sds.md`)
 
 **Depends on:** TXN-01
 
@@ -1719,7 +2013,13 @@ Full path (12 hops):
 > Alerts mirror OS local notifications — they persist in-app even after the user dismisses the OS notification.
 > Depends on SCHED-03 (pending confirmation cards) and ACC-10 (credit card payment due trigger).
 
-**Sources** | PRD §5.8.5, §5.8.5.1 | DM: _(no dedicated alerts table; state derived from `recurring_templates`, `scheduled_occurrences`, `accounts`, `app_settings`)_
+**Sources**
+- `5.8.5 Alerts` (`docs/01-product/prd.md`)
+- `5.8.5.1 v1 alert types` (`docs/01-product/prd.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
+- `7.2 scheduled_occurrences` (`docs/02-technical/data-model.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SCHED-03, ACC-10
 
@@ -1747,7 +2047,10 @@ Full path (12 hops):
 > Alert clears once a backup is taken or explicitly dismissed (shown only once).
 > Relies on HOME-04 (alert display surface) and SET-07 (backup action destination) and reads `app_settings` for the reminder-seen flag.
 
-**Sources** | PRD §5.8.5.1 (alert type: "Backup reminder"), §5.4.10.1 | DM: `app_settings`
+**Sources**
+- `5.8.5.1 v1 alert types` (`docs/01-product/prd.md`)
+- `5.4.10.1 Local Data Backup` (`docs/01-product/prd.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 **Depends on:** HOME-04, SET-07
 
@@ -1775,7 +2078,13 @@ Full path (12 hops):
 > `app_settings` table is the single source of truth for all preference keys; this node seeds and reads the core appearance keys.
 > Depends on INFRA-1 (DB schema), INFRA-3 (Riverpod DI), INFRA-4 (GoRouter navigation shell for the Settings tab), INFRA-5 (theme token system that reads `app_settings.theme` and `color_scheme_mode`).
 
-**Sources** | PRD §5.4.1, §5.7a | TC-048 | SDS §2.18, §2.4.2 | DM: `app_settings`
+**Sources**
+- `5.4.1 Appearance` (`docs/01-product/prd.md`)
+- `5.7a App Navigation Model` (`docs/01-product/prd.md`)
+- `TC-048: Minimum API level inconsistency with dynamic color` (`docs/01-product/technical-clarifications.md`)
+- `2.18 Theming Architecture` (`docs/02-technical/sds.md`)
+- `2.4.2 Route Structure` (`docs/02-technical/sds.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 **Depends on:** INFRA-1, INFRA-3, INFRA-4, INFRA-5
 
@@ -1788,7 +2097,7 @@ Full path (12 hops):
 - INFRA-5 → SET-01: HARD (theme system reads `app_settings` appearance keys; circular init risk — INFRA-5 must initialise with defaults before first paint)
 
 **Edge cases and constraints:**
-- **`app_settings` initialisation:** On first launch (before onboarding), `app_settings` table is empty. The settings hub must handle missing keys gracefully by falling back to defined defaults (see DM §9.1). Source: DM §9.1.
+- **`app_settings` initialisation:** On first launch (before onboarding), `app_settings` table is empty. The settings hub must handle missing keys gracefully by falling back to defined defaults (see Data Model §9.1). Source: Data Model §9.1.
 - **Dynamic color + OEM restriction (TC-048):** No API-level check needed (min API 31). The `DynamicColorBuilder` widget handles OEM restrictions at runtime — if `DynamicColorTheme` is unavailable, it returns null and the app falls back to `color_seed` from `app_settings`. Source: TC-048 PM clarification, SDS §2.18.
 - **Color scheme preview:** A "Preview color scheme" action is accessible from Settings > Appearance. Renders all Material 3 `ColorScheme` tokens. Source: PRD §5.4.1, §5.7a.
 - **Pending Confirmations screen:** Also accessible from the Settings tab (not the appearance group). Source: PRD §5.7a.
@@ -1802,7 +2111,12 @@ Full path (12 hops):
 > Changing home currency changes only the default currency for new account creation — no existing transaction data is modified; display recalculation uses `exchange_rate_to_home` + chain-conversion logic (TC-029 founder resolution).
 > Reads/writes `app_settings` locale keys; depends on CURR-01 for the ISO 4217 currency list.
 
-**Sources** | PRD §5.4.2 | TC-029, TC-044 | DM: `app_settings`, `currencies`
+**Sources**
+- `5.4.2 Locale \& Format` (`docs/01-product/prd.md`)
+- `TC-029: How does the app handle home currency changes after transactions exist?` (`docs/01-product/technical-clarifications.md`)
+- `TC-044: Currency list — bundling and maintenance` (`docs/01-product/technical-clarifications.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
+- `4.1 currencies` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SET-01, CURR-01
 
@@ -1826,7 +2140,12 @@ Full path (12 hops):
 > When `back_button_behaviour = auto_save_draft`, the draft lifecycle (5-slot FIFO, no expiry) activates; this interacts with the `drafts` table.
 > Depends on SET-01 (hub) and TXN-01 (transaction form exists for the setting to apply to).
 
-**Sources** | PRD §5.4.3, §5.4.3.1 | TC-005 | DM: `app_settings`, `drafts`
+**Sources**
+- `5.4.3 Transaction Entry` (`docs/01-product/prd.md`)
+- `5.4.3.1 Draft lifecycle (for "Auto-save as draft" mode)` (`docs/01-product/prd.md`)
+- `TC-005: "Auto-save as draft" back button behaviour — draft lifecycle` (`docs/01-product/technical-clarifications.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
+- `9.2 drafts` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SET-01, TXN-01
 
@@ -1850,7 +2169,14 @@ Full path (12 hops):
 > Per-account threshold compares in the account's native currency; per-category threshold compares in home currency using the cached exchange rate (skipped if no rate available).
 > Depends on SET-01 (hub) and TXN-07 (the warning logic that fires during entry).
 
-**Sources** | PRD §5.4.4, §5.4.4.1, §5.4.4.2 | TC-047 | DM: `app_settings`, `accounts`, `categories`
+**Sources**
+- `5.4.4 Warnings \& Limits` (`docs/01-product/prd.md`)
+- `5.4.4.1 Large transaction warning (FG-C18)` (`docs/01-product/prd.md`)
+- `5.4.4.2 Currency handling for thresholds` (`docs/01-product/prd.md`)
+- `TC-047: Per-account and per-category large transaction thresholds — currency handling` (`docs/01-product/technical-clarifications.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SET-01, TXN-07
 
@@ -1875,7 +2201,10 @@ Full path (12 hops):
 > If empty, the greeting shows *"Hi!"* with no name.
 > Single field; writes to `app_settings.display_name`.
 
-**Sources** | PRD §5.4.5, §5.8.1 | DM: `app_settings`
+**Sources**
+- `5.4.5 Profile` (`docs/01-product/prd.md`)
+- `5.8.1 Greeting` (`docs/01-product/prd.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SET-01
 
@@ -1897,7 +2226,15 @@ Full path (12 hops):
 > Lock never gates core functionality — it applies only to `account_details` sensitive columns.
 > Uses Android Keyguard (biometrics/device PIN) as primary; in-app PIN as fallback when no device security is configured.
 
-**Sources** | PRD §5.4.6, §5.4.6.1, §5.4.6.2, §5.4.6.3, §5.4.6.4 | SDS §1.6.12 | DM: `app_settings` (`lock_timeout_seconds`), `account_details`
+**Sources**
+- `5.4.6 Security` (`docs/01-product/prd.md`)
+- `5.4.6.1 Fundamental scope of the lock` (`docs/01-product/prd.md`)
+- `5.4.6.2 Lock mechanism (hierarchical)` (`docs/01-product/prd.md`)
+- `5.4.6.3 PIN recovery` (`docs/01-product/prd.md`)
+- `5.4.6.4 Failed PIN lockout` (`docs/01-product/prd.md`)
+- `1.6.12 Security Lock Scope — Sensitive Fields Only` (`docs/02-technical/sds.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
+- `3.2 account_details` (`docs/02-technical/data-model.md`)
 
 **Depends on:** SET-01
 
@@ -1922,7 +2259,12 @@ Full path (12 hops):
 > v1 is export-only; import/restore is deferred to v2. The ZIP includes a `manifest.json` (version, schema version, timestamp) + `variance_export.json` + attached photos.
 > Depends on SET-01 (hub) and INFRA-1 (all tables must exist to export).
 
-**Sources** | PRD §5.4.10, §5.4.10.1 | TC-054 | SDS §2.17, §2.17.1 | DM: all tables
+**Sources**
+- `5.4.10 Data` (`docs/01-product/prd.md`)
+- `5.4.10.1 Local Data Backup` (`docs/01-product/prd.md`)
+- `TC-054: Data backup format — versioning and forward compatibility` (`docs/01-product/technical-clarifications.md`)
+- `2.17 Backup Format` (`docs/02-technical/sds.md`)
+- `2.17.1 Decision — TC-054: Versioned ZIP Archive with Manifest` (`docs/02-technical/sds.md`)
 
 **Depends on:** SET-01, INFRA-1
 
@@ -1950,7 +2292,10 @@ Full path (12 hops):
 > This is an access surface — it does not implement account CRUD itself; that lives in ACC-01 and ACC-11.
 > Per-account fields (name, notes, include-in-net-worth, category-specific fields) are edited via the account edit form (§5.1.1 Edit), navigated to from this screen.
 
-**Sources** | PRD §5.4.7 | TC-057 | DM: `accounts`
+**Sources**
+- `5.4.7 Accounts` (`docs/01-product/prd.md`)
+- `TC-057: Multiple accounts per account category — display and disambiguation` (`docs/01-product/technical-clarifications.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
 
 **Depends on:** ACC-01, SET-01
 
@@ -1974,7 +2319,12 @@ Full path (12 hops):
 > Protected "Balance Adjustment" system categories are hidden from this screen.
 > Depends on CAT-01 (category CRUD), CAT-03 (soft-delete + migration flow), and SET-01 (hub).
 
-**Sources** | PRD §5.4.8, §5.2.4, §5.2.4.2 | TC-014 | DM: `categories`
+**Sources**
+- `5.4.8 Transaction Categories` (`docs/01-product/prd.md`)
+- `5.2.4 Transaction Categories (Two-Level Hierarchy)` (`docs/01-product/prd.md`)
+- `5.2.4.2 Category management UX` (`docs/01-product/prd.md`)
+- `TC-014: "Curated subset" of material\_symbols\_icons — who defines it and when` (`docs/01-product/technical-clarifications.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
 
 **Depends on:** CAT-01, CAT-03, SET-01
 
@@ -2000,7 +2350,12 @@ Full path (12 hops):
 > Per-template configuration (recurrence rule, posting behaviour, pause) is handled in the template edit form, navigated to from this screen.
 > Depends on RECUR-01 (recurring templates), INST-01 (installment plans), and SET-01 (hub).
 
-**Sources** | PRD §5.4.9, §5.2.7, §5.2.8 | DM: `recurring_templates`, `installment_plans`
+**Sources**
+- `5.4.9 Recurring \& Installments` (`docs/01-product/prd.md`)
+- `5.2.7 Recurring Transactions` (`docs/01-product/prd.md`)
+- `5.2.8 Installments` (`docs/01-product/prd.md`)
+- `7.1 recurring_templates` (`docs/02-technical/data-model.md`)
+- `8.1 installment_plans` (`docs/02-technical/data-model.md`)
 
 **Depends on:** RECUR-01, INST-01, SET-01
 
@@ -2027,7 +2382,14 @@ Full path (12 hops):
 > Wizard is shown once; `app_settings.onboarding_complete = 1` is set on completion or skip. GoRouter redirects all routes to `/onboarding` until this flag is set.
 > Depends on CAT-02 (default categories must be seeded before the wizard starts), CURR-01 (currency picker needs the ISO 4217 list), and SET-02 (home currency key must be writable at onboarding time).
 
-**Sources** | PRD §5.6.2 | TC-037 | SDS §2.4.3 | DM: `app_settings`, `categories`, `currencies`, `accounts`
+**Sources**
+- `5.6.2 Onboarding Wizard` (`docs/01-product/prd.md`)
+- `TC-037: Onboarding wizard — account creation form field set` (`docs/01-product/technical-clarifications.md`)
+- `2.4.3 Navigation Rules` (`docs/02-technical/sds.md`)
+- `9.1 app_settings` (`docs/02-technical/data-model.md`)
+- `3.5 categories` (`docs/02-technical/data-model.md`)
+- `4.1 currencies` (`docs/02-technical/data-model.md`)
+- `3.1 accounts` (`docs/02-technical/data-model.md`)
 
 **Depends on:** CAT-02, CURR-01, SET-02
 
@@ -2179,7 +2541,7 @@ Full path (12 hops):
 | TC-056 | RECUR-02 |
 | TC-057 | SET-08 |
 
-### 6.3 DM Table → Node Map
+### 6.3 Data Model Table → Node Map
 
 | Table | Nodes |
 |---|---|
