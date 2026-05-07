@@ -1,0 +1,21 @@
+# Memory Index
+
+- [Variance — Project Overview](project_variance_overview.md) — What Variance is, core thesis, tech stack (Flutter/Dart), version roadmap, permanent anti-goals
+- [Variance — Ideation Phase Status](project_variance_ideation_status.md) — Phases 1–3 complete (2026-05-07). All spec docs locked. 10 sprints, 208 tasks in docs/03-planning/.
+- [Product docs are locked](feedback_product_docs_locked.md) — Never edit docs/01-product/ without explicit founder change request
+- [Variance — DEB Model](project_variance_deb_model.md) — Universal balance formula, entry sides (CORRECTED), EQ per-currency, two-field transaction model
+- [Variance — Key Design Decisions](project_variance_key_decisions.md) — All resolved decisions from Q1–Q76, locked into PRD v0.3.0
+- [Variance — TC Architecture Decisions](project_variance_tc_architecture.md) — All TC decisions locked + 5 founder decisions: installments, nav, search, icons, home currency
+- [Technical Clarifications Reference](reference_technical_clarifications.md) — Points to docs/01-product/technical-clarifications.md (58-item PM/LE review)
+- [TC Review Process Learnings](feedback_tc_review_process.md) — Three-round review format, question patterns, disambiguation patterns
+- [Versioning is founder-controlled](feedback_versioning.md) — Never assign or decide version numbers; all versioning via `version` file, founder-controlled
+- [Always use dedicated lead-engineer agent](feedback_always_use_le_agent.md) — Never use generic agents for LE work; always use .claude/agents/lead-engineer.md
+- [Visual testing is first-class](project_visual_testing_strategy.md) — Golden tests, Widgetbook, design tokens, integration screenshots mandatory. Founder is the visual reviewer.
+- [Anonymize competitive research](feedback_anonymize_competitive_research.md) — Never name Cashew in official docs. Frame as broad open-source research. Raw recon stays internal.
+- [GitHub MCP — SOP](reference_github_mcp_sop.md) — Tool inventory, task recipes, response shape quirks, known limits (no branch list, projects=403), CLI fallbacks
+- [Lattice project is off-limits](feedback_lattice_project_off_limits.md) — NEVER touch GitHub project #2 (Lattice). Only variance (#3) is in scope.
+- [Technical Doc Production Order](project_doc_production_order.md) — SDS → Feature DAG → UX Flows → API Contracts → UI → Tests; what each doc contains; "if X show Y" belongs in UX Flows
+- [Always use read-md.sh for markdown files](feedback_read_md_sh_rule.md) — All agents must use read-md.sh (toc then section), never Read tool or cat, for any .md file
+- [Write concisely — no verbosity](feedback_concise_writing.md) — Docs must be miserly with characters: tables/bullets over prose, one-sentence rationale max, no restatements or summaries
+- [Never fill in TOC for markdown files](feedback_no_toc_filling.md) — Don't write TOC content; use read-md.sh toc to generate or tell founder to do it
+- [Variance — Sprint Plan & Execution Structure](project_variance_sprint_plan.md) — 10-sprint roadmap, 208 tasks, DAG-ordered. Planning artifacts in docs/03-planning/ and docs/04-implementation/roadmap.md.
