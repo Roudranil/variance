@@ -78,4 +78,6 @@ After all tasks are done:
 
 1. `git push`
 2. `gh pr create` with a short description. Mark as ready.
-3. Hand over control.
+3. create a short report for the orchestratory agent with
+
+- small one line bite sized findings about quirks, rules, different syntax, warnings, hacks that you found from working on the codebase and ask the orchestrator to commit it to devlog.md
