@@ -11,8 +11,6 @@
 //   6. SchemaMismatchException is thrown when on-disk version > compiled
 //      version (simulated via custom executor)
 
-import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:variance/data/database/app_database.dart';
@@ -65,9 +63,11 @@ void main() {
         'drafts',
       ];
 
-      final result = await db.customSelect(
-        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
-      ).get();
+      final result = await db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
+          )
+          .get();
 
       final presentTables = result.map((r) => r.read<String>('name')).toSet();
 
@@ -81,10 +81,12 @@ void main() {
     });
 
     test('transactions_fts FTS5 virtual table exists', () async {
-      final result = await db.customSelect(
-        "SELECT name FROM sqlite_master "
-        "WHERE type='table' AND name='transactions_fts'",
-      ).get();
+      final result = await db
+          .customSelect(
+            'SELECT name FROM sqlite_master '
+            "WHERE type='table' AND name='transactions_fts'",
+          )
+          .get();
 
       // FTS5 virtual tables appear as type='table' in sqlite_master.
       // The FTS5 table is created manually in the migration onCreate via
@@ -137,7 +139,7 @@ void main() {
       const compiledVersion = 1;
 
       expect(
-        () => throw SchemaMismatchException(
+        () => throw const SchemaMismatchException(
           onDiskVersion: onDiskVersion,
           compiledVersion: compiledVersion,
         ),
@@ -154,7 +156,7 @@ void main() {
     });
 
     test('SchemaMismatchException.toString contains both version numbers', () {
-      final e = const SchemaMismatchException(
+      const e = SchemaMismatchException(
         onDiskVersion: 42,
         compiledVersion: 1,
       );
@@ -174,10 +176,12 @@ void main() {
     tearDown(() => db.close());
 
     test('has at least 19 tables (18 regular + 1 FTS virtual)', () async {
-      final result = await db.customSelect(
-        "SELECT COUNT(*) AS cnt FROM sqlite_master WHERE type='table' "
-        "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'drift_%'",
-      ).get();
+      final result = await db
+          .customSelect(
+            "SELECT COUNT(*) AS cnt FROM sqlite_master WHERE type='table' "
+            "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'drift_%'",
+          )
+          .get();
 
       final count = result.single.read<int>('cnt');
       // 18 data tables + 1 FTS virtual table = 19 minimum.
