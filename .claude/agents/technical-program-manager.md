@@ -71,23 +71,68 @@ Use the `Read` tool for skill files only (they are not markdown docs managed by 
 
 ### 4.2 Step 2 — Read the Feature DAG
 
+Start with the TOC to orient yourself:
+
 ```bash
 ./scripts/read-md.sh toc docs/02-technical/feature-dag.md
 ```
 
-Then read the relevant sections with subsections:
+Then read the sections you need using targeted reads. Never use `--depth` > 1.
+
+#### What the DAG contains and how to use it
+
+**Section 2 — Infrastructure Foundations** and **Section 4 — Feature Nodes by Domain** contain all the nodes. Each node entry is a named block with the following fields — extract all of them for any node you are creating work items for:
+
+| Field              | What it means                                                                      | How to use it                                                                                                                                         |
+| ------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sources**        | Exact source doc sections (e.g. `SDS §2.3.1`, `PRD §5.1.1`) that specify this node | Every source listed here **must** appear as a reference on any work item for this node. These are not optional.                                       |
+| **Depends on**     | Nodes that must be fully complete before this node can start                       | Stories and tasks for this node must not be scheduled before their dependency nodes' work items are done. Mention blocking deps in the Notes section. |
+| **Required by**    | Nodes that are blocked until this node is complete                                 | A node with many "Required by" entries is high-priority — its epic/stories should appear earlier in planning.                                         |
+| **Detail bullets** | Scoping details, constraints, edge cases, done signals                             | Use these directly to write `### Objectives`, `### Definition of Done`, and `### Todo` checklist items. Do not invent scope that is not here.         |
+
+#### Reading node sections
+
+Read nodes one at a time using the exact heading text from the TOC. For example, you can use the read-md script as per below samples:
 
 ```bash
-./scripts/read-md.sh section docs/02-technical/feature-dag.md "Feature Nodes by Domain" --with-subsections --depth 2
-./scripts/read-md.sh section docs/02-technical/feature-dag.md "Build Order" --with-subsections
-./scripts/read-md.sh section docs/02-technical/feature-dag.md "Reference Index" --with-subsections
+# Infrastructure nodes (Section 2)
+./scripts/read-md.sh section docs/02-technical/feature-dag.md "INFRA-1 — Database Schema + Drift Setup" --with-subsections
+./scripts/read-md.sh section docs/02-technical/feature-dag.md "INFRA-7 — Ledger Engine" --with-subsections
+
+# Feature domain nodes (Section 4) — read the domain section first for context
+./scripts/read-md.sh section docs/02-technical/feature-dag.md "4.1 Accounts Domain" --with-subsections
+# Then read specific nodes within it:
+./scripts/read-md.sh section docs/02-technical/feature-dag.md "ACC-01 — Account CRUD" --with-subsections
 ```
 
-The feature DAG is authoritative for:
+#### Build order and prioritisation
 
-- Scope: what features exist
-- Ordering: which features depend on which
-- References: Section 6 (`Reference Index`) maps each DAG node to source doc sections — use this to populate work item references
+Read the build phases to understand which epics and stories should be planned earlier:
+
+```bash
+./scripts/read-md.sh section docs/02-technical/feature-dag.md "5.2 Build Phases" --with-subsections
+```
+
+**Rules derived from build order:**
+
+- Phase 0 (all INFRA nodes) blocks everything — E-1 / Infrastructure epic is always Sprint 1.
+- Phase 1 nodes (ACC-01, CAT-01, CURR-01, SCHED-01, SET-01) are the next most critical — they each unblock large subtrees and can proceed in parallel once INFRA is done.
+- A node with many entries in its **Required by** field is a critical-path blocker — its stories should be prioritised within their epic.
+- Nodes with no "Required by" entries are leaf nodes — they can slip without blocking others.
+
+#### Reference Index (Section 6)
+
+The Reference Index provides three reverse-lookup maps — use them to cross-check references and find anything you may have missed:
+
+```bash
+./scripts/read-md.sh section docs/02-technical/feature-dag.md "6. Reference Index" --with-subsections
+```
+
+| Subsection                        | Use for                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `6.1 PRD → Node Map`              | Given a PRD section, find which nodes it covers. Verify your work item references the right PRD section.                                                 |
+| `6.2 TC → Node Map`               | Given a Technical Clarification ID (TC-NNN), find which nodes it affects. If a node's Sources list a TC, include the TC's parent section as a reference. |
+| `6.3 Data Model Table → Node Map` | Given a DB table, find all nodes that touch it. Tasks involving a table must reference the correct Data Model section.                                   |
 
 ### 4.3 Step 3 — Inspect Existing Planning Files
 
