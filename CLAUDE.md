@@ -11,7 +11,6 @@ I am the sole user, product owner, and domain expert. You are my thinking partne
 - **Local-first:** Default to on-device storage and offline-friendly workflows. Treat any sync/cloud behavior as an explicit feature, not an assumption.
 - **Privacy:** Avoid sending raw user financial data to external services except where strictly necessary and explicitly requested.
 - **Quality bar:** Production-quality, testable code only. No throwaway prototypes unless I explicitly say so.
-- **GitHub-native:** All work must flow through GitHub issues and PRs. No untracked work.
 
 ## How to think about your roles
 
@@ -25,7 +24,7 @@ TBD: you will have access to more such roles as the development process matures.
 
 ## Subagent Roster
 
-You have two primary subagents. Use the appropriate agent for each phase of work.
+You have the following primary subagents. Use the appropriate agent for each phase of work.
 
 ### Technical Program Manager (`technical-program-manager`)
 
@@ -45,9 +44,9 @@ You have two primary subagents. Use the appropriate agent for each phase of work
 - No orphan tasks — all map to CAPABILITY/EPIC
 - No work outside GitHub issues
 
-### Software Engineer (`developer`)
+### Flutter Developer (`flutter-developer`)
 
-**Invoke when:** A specific TASK or BUG is ready for implementation.
+**Invoke when:** One or more specific TASK or BUG is ready for implementation.
 
 **Responsibilities:**
 - Read GitHub issue and confirm acceptance criteria
@@ -57,19 +56,27 @@ You have two primary subagents. Use the appropriate agent for each phase of work
 - Draft PR with What/Why/Changes/Tests/Checklist
 
 **Constraints:**
-- Executes exactly one TASK at a time
+- Implements only the input tasks
 - No scope creep, no unrelated refactors
 - Must follow docstring and coding guidelines
 - Cannot modify system design or API contracts — escalates conflicts to you
+
+### Lead Engineer (`lead-engineer`)
+
+**Invoke when:** Discussing overarching architectural decisions about the app or tech stack, data models, development decisions, or UI decisions.
+
+### Product Manager (`product-manager`)
+
+**Invoke when:** Discussing the product documents, PRD, product definition, and feature scoping.
+
+### UI Designer (`ui-designer`)
+
+**Invoke when:** Discussing screen-level UI specifications, component design, Material 3 guidelines, and UX flows.
 
 ### Supporting Subagents
 
 | Agent | Invoke When |
 |-------|-------------|
-| `code-reviewer` | Immediately after any code is written or modified — before committing |
-| `tdd-guide` | At the start of a new feature or bug fix — before writing any implementation code |
-| `flutter-reviewer` | A Flutter/Dart PR is ready for pre-merge review |
-| `code-simplifier` | Code works but has grown complex, repetitive, or hard to read |
 | `dart-build-resolver` | `flutter build` or `dart pub get` fails and the error is not immediately obvious |
 
 ## Behavioral Rules
@@ -161,33 +168,46 @@ Try it on your CLAUDE.md file!
 docs/
 ├── frontmatter-schema.md           # Schema reference for all doc frontmatter
 ├── 01-product/                     # Product definition artifacts
+│   ├── input-fields.md
+│   ├── ledger-entry.md
 │   ├── prd.md
 │   ├── prd-v2-draft.md
-│   ├── ledger-entry.md
-│   ├── technical-clarifications.md
-│   └── input-fields.md
+│   └── technical-clarifications.md
 ├── 02-technical/                   # Technical specifications
-│   ├── feature-dag.md
-│   ├── competitive-analysis.md
-│   ├── sds.md
-│   ├── data-model.md
 │   ├── api-contracts.md
+│   ├── competitive-analysis.md
+│   ├── data-model.md
+│   ├── feature-dag.md
+│   ├── sds.md
 │   ├── ui-spec.md
 │   └── ux-flows.md
 ├── 03-planning/                    # Execution planning
 │   ├── epics.md
 │   ├── stories.md
 │   └── tasks.md
-├── 04-implementation/              # Sprint-scoped delivery artifacts
-│   └── sprint{n}/
+├── 04-implementation/              # Delivery artifacts
+│   └── roadmap.md
 ├── 05-quality/                     # Quality and security
-│   ├── tests.md
-│   └── security.md
-└── 06-helpers/                     # Process and reference aids
-    ├── ideation-tracker.md
-    ├── ideation-diff.md            # overwritten with exact changes done in a single ideation session
-    ├── gaps-and-questions.md
-    └── ideation-folder-structure.md
+├── 06-helpers/                     # Process and reference aids
+│   ├── feature-dag-build-plan.md
+│   ├── gaps-and-questions.md
+│   ├── ideation-diff.md            # overwritten with exact changes done in a single ideation session
+│   └── ideation-tracker.md
+└── enemy-recon/                    # Competitor analysis and research
+    ├── 01-architecture-data-model.md
+    ├── 02-ui-ux-animation.md
+    ├── 03-state-management-performance.md
+    ├── 04-feature-engineering.md
+    ├── 05-security-infrastructure.md
+    ├── 06-pm-consolidation.md
+    ├── 07a-sec1-architecture-comparison.md
+    ├── 07a-sec2-problems-solved.md
+    ├── 07a-sec3-anti-patterns.md
+    ├── 07a-sec4-patterns-to-steal.md
+    ├── 07b-le-consolidation-part-b.md
+    ├── 08-emoji-icons-and-exchange-rates.md
+    ├── 09-notification-parsing.md
+    └── 10-forked-packages.md
 ```
 
 ### Folder Reference
@@ -197,9 +217,10 @@ docs/
 | `01-product/`        | Product definition               | pm        | PRD, ledger entry cases, product decisions            |
 | `02-technical/`      | Technical specifications         | architect | SDS, data model, API contracts, UX flows, feature DAG |
 | `03-planning/`       | Execution planning               | tpm       | Epics, stories, tasks                                 |
-| `04-implementation/` | Sprint-scoped delivery artifacts | tpm/dev   | Per-sprint notes, changelogs                          |
+| `04-implementation/` | Sprint-scoped delivery artifacts | tpm/dev   | Implementation roadmap                                |
 | `05-quality/`        | Quality and security             | architect | Test specs, security review docs                      |
 | `06-helpers/`        | Process and reference aids       | all       | Ideation tracker, gap analysis, diff logs             |
+| `enemy-recon/`       | Competitor application research  | all       | Architecture, UX, PM, state management analysis       |
 
 ### Document Index
 
@@ -212,9 +233,9 @@ docs/
 | Technical Clarifications | `docs/01-product/technical-clarifications.md`  | Clarifications for engineering questions                           |
 | Frontmatter Schema       | `docs/frontmatter-schema.md`                   | Schema reference for all doc frontmatter                           |
 | Competitive analysis     | `docs/02-technical/competitive-analysis.md`    | Technical analysis on competitor Open Source finance tracking apps |
-| Folder Structure         | `docs/06-helpers/ideation-folder-structure.md` | Docs folder taxonomy                                               |
 | Ideation Tracker         | `docs/06-helpers/ideation-tracker.md`          | Phase status, open questions, decisions                            |
 | Gaps & Questions         | `docs/06-helpers/gaps-and-questions.md`        | UX pre-work and feature gap analysis                               |
+| Feature DAG Build Plan   | `docs/06-helpers/feature-dag-build-plan.md`    | Build plan and sequence for feature development                    |
 | SDS                      | `docs/02-technical/sds.md`                     | How we're building it                                              |
 | Feature DAG              | `docs/02-technical/feature-dag.md`             | Feature dependency graph                                           |
 | Data Model               | `docs/02-technical/data-model.md`              | Schema and entity design                                           |
@@ -224,3 +245,5 @@ docs/
 | Epics                    | `docs/03-planning/epics.md`                    | Top-level feature domains (E-1 … E-10)                             |
 | Stories                  | `docs/03-planning/stories.md`                  | Deliverable capabilities within epics                              |
 | Tasks                    | `docs/03-planning/tasks.md`                    | Atomic implementation units within stories                         |
+| Roadmap                  | `docs/04-implementation/roadmap.md`            | Timeline and milestones for implementation                         |
+| Enemy Recon (01-10)      | `docs/enemy-recon/`                            | Detailed teardown and analysis of competitor apps                  |
