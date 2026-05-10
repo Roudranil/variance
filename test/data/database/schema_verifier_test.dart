@@ -17,6 +17,10 @@ import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/migrations/migrations.dart';
 
 void main() {
+  // Initialise the Flutter test binding so rootBundle is available for the
+  // currency seeding step executed inside AppDatabase.onCreate (T-22).
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------

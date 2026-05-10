@@ -2,8 +2,12 @@
 //
 // Concrete implementation of ICurrencyRepository backed by Drift via CurrencyDao.
 //
-// This stub implementation wires the DI graph for INFRA-3.
-// Full business logic is implemented in later feature tasks.
+// getAll() and getByCode() are backed by CurrencyDao, which reads from the
+// Drift-managed currencies table (seeded at first launch from
+// assets/data/currencies.json). All data is local; no network fetch occurs.
+//
+// The remaining write operations (setHomeCurrency, enableCurrency,
+// disableCurrency) are stubs — implemented in later feature tasks.
 
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/domain/core/result.dart';
@@ -12,27 +16,89 @@ import 'package:variance/domain/repositories/i_currency_repository.dart';
 
 /// Drift-backed implementation of [ICurrencyRepository].
 ///
-/// Delegates all data access to [CurrencyDao]. The currency table is
-/// populated from a bundled JSON asset at first launch and treated as
-/// read-only thereafter.
+/// Delegates all read operations to [CurrencyDao]. The currency table is
+/// populated from a bundled JSON asset at first launch and is treated as
+/// read-only at runtime.
 class CurrencyRepositoryImpl implements ICurrencyRepository {
   /// Creates a [CurrencyRepositoryImpl] backed by [dao].
+  ///
+  /// Parameters:
+  /// - [dao]: The [CurrencyDao] used for all currency data access.
   const CurrencyRepositoryImpl(this._dao);
 
-  // ignore: unused_field — used by full implementation in later feature tasks
   final CurrencyDao _dao;
+
+  // -------------------------------------------------------------------------
+  // Read operations (T-23)
+  // -------------------------------------------------------------------------
+
+  /// Returns all active currencies ordered by ISO 4217 code.
+  ///
+  /// Reads from the local Drift database populated on first launch from
+  /// `assets/data/currencies.json`. No network fetch is performed.
+  Future<List<Currency>> getAll() async {
+    final rows = await _dao.getAllActive();
+    return rows
+        .map(
+          (row) => Currency(
+            code: row.code,
+            name: row.name,
+            symbol: row.symbol,
+            minorUnits: row.minorUnits,
+            isActive: row.isActive,
+          ),
+        )
+        .toList();
+  }
+
+  /// Returns the [Currency] entity for [code], or null when not found.
+  ///
+  /// Parameters:
+  /// - [code]: ISO 4217 3-letter currency code (e.g. `'USD'`, `'JPY'`).
+  Future<Currency?> getByCode(String code) async {
+    final row = await _dao.getByCode(code);
+    if (row == null) return null;
+    return Currency(
+      code: row.code,
+      name: row.name,
+      symbol: row.symbol,
+      minorUnits: row.minorUnits,
+      isActive: row.isActive,
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // ICurrencyRepository interface — read streams
+  // -------------------------------------------------------------------------
 
   @override
   Stream<List<Currency>> watchAll() {
-    // TODO(dev): Map Drift Currency rows to domain Currency entities.
-    throw UnimplementedError('watchAll not yet implemented');
+    return _dao.watchAllActive().map(
+          (rows) => rows
+              .map(
+                (row) => Currency(
+                  code: row.code,
+                  name: row.name,
+                  symbol: row.symbol,
+                  minorUnits: row.minorUnits,
+                  isActive: row.isActive,
+                ),
+              )
+              .toList(),
+        );
   }
 
   @override
   Stream<List<Currency>> watchEnabled() {
-    // TODO(dev): Filter to user-enabled currencies only.
-    throw UnimplementedError('watchEnabled not yet implemented');
+    // watchEnabled and watchAll are equivalent for now — all bundled
+    // currencies are active. This will diverge when user-enable/disable is
+    // implemented in a later task.
+    return watchAll();
   }
+
+  // -------------------------------------------------------------------------
+  // ICurrencyRepository interface — write operations (stubs)
+  // -------------------------------------------------------------------------
 
   @override
   Future<Result<void>> setHomeCurrency(String code) {

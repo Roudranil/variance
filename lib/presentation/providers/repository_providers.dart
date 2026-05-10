@@ -9,6 +9,7 @@
 //   recurringTemplateRepositoryProvider ← templateDaoProvider
 //   exchangeRateRepositoryProvider ← exchangeRateDaoProvider
 //   currencyRepositoryProvider     ← currencyDaoProvider
+//   currenciesProvider             ← currencyRepositoryProvider (keepAlive list cache)
 //
 // Rules (SDS §2.2.3, §2.2.4):
 //   - All providers use @riverpod annotation; raw Provider(...) is forbidden.
@@ -28,6 +29,7 @@ import 'package:variance/data/repositories/currency_repository_impl.dart';
 import 'package:variance/data/repositories/exchange_rate_repository_impl.dart';
 import 'package:variance/data/repositories/recurring_template_repository_impl.dart';
 import 'package:variance/data/repositories/transaction_repository_impl.dart';
+import 'package:variance/domain/entities/currency.dart';
 import 'package:variance/domain/repositories/i_account_repository.dart';
 import 'package:variance/domain/repositories/i_app_settings_repository.dart';
 import 'package:variance/domain/repositories/i_category_repository.dart';
@@ -114,4 +116,25 @@ Future<ICurrencyRepository> currencyRepository(Ref ref) async {
 Future<IAppSettingsRepository> appSettingsRepository(Ref ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return AppSettingsRepositoryImpl(db);
+}
+
+// ---------------------------------------------------------------------------
+// Currency list cache (T-23)
+// ---------------------------------------------------------------------------
+
+/// Loads all active [Currency] entities from the local database once on app
+/// startup and keeps the result alive for the entire session.
+///
+/// The currency list is populated from the bundled `assets/data/currencies.json`
+/// asset during the Drift `onCreate` migration (T-22). No runtime network
+/// fetch is ever performed (SDS §2.16.1).
+///
+/// Consumers should prefer this provider over calling the repository directly
+/// to avoid repeated DAO round-trips for a static list.
+@Riverpod(keepAlive: true)
+Future<List<Currency>> currencies(Ref ref) async {
+  final repo = await ref.watch(currencyRepositoryProvider.future);
+  // watchAll() returns a Stream from the Drift DAO. We take the first
+  // emission to get the full list; keepAlive ensures this runs only once.
+  return repo.watchAll().first;
 }

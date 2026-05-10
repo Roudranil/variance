@@ -128,6 +128,8 @@ dependency_overrides:
 # ---------------------------------------------------------------------------
 flutter:
   uses-material-design: true
-  # Assets will be added here as features are built (e.g. currency bundle JSON)
-  # assets:
-  #   - assets/data/currencies.json
+  assets:
+    # Bundled ISO 4217 currency reference — seeded into the currencies table
+    # at first launch and held in a keepAlive Riverpod provider. No runtime
+    # network fetch. See SDS §2.16.1 and T-21.
+    - assets/data/currencies.json

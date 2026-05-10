@@ -20,9 +20,11 @@
 //   - v1 → v1 re-open (no-op upgrade) does not throw
 //   - on-disk version > compiled version throws SchemaMismatchException
 
+import 'dart:convert';
 import 'dart:developer' as dev;
 
 import 'package:drift/drift.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 // ---------------------------------------------------------------------------
 // Exception
@@ -111,6 +113,10 @@ MigrationStrategy buildMigrationStrategy(
         'AppDatabase onCreate: transactions_fts FTS5 virtual table created',
         name: 'AppDatabase',
       );
+
+      // Seed the currencies table from the bundled ISO 4217 JSON asset.
+      // This is the only time data is written to this read-only table.
+      await _seedCurrencies(database);
     },
 
     // ------------------------------------------------------------------
@@ -167,5 +173,61 @@ MigrationStrategy buildMigrationStrategy(
         name: 'AppDatabase',
       );
     },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Currency seeding
+// ---------------------------------------------------------------------------
+
+/// Loads `assets/data/currencies.json` and bulk-inserts all entries into the
+/// `currencies` table.
+///
+/// Called once from [buildMigrationStrategy]'s `onCreate` callback. The
+/// table is treated as read-only at runtime; this is the only write operation
+/// performed against it (SDS §2.16.1).
+///
+/// Parameters:
+/// - [database]: The Drift [GeneratedDatabase] whose raw executor is used to
+///   run the INSERT statements.
+Future<void> _seedCurrencies(GeneratedDatabase database) async {
+  // Load the bundled JSON asset. rootBundle is available because the
+  // migration is called during app startup when the Flutter engine is active.
+  final jsonString = await rootBundle.loadString(
+    'assets/data/currencies.json',
+  );
+
+  final List<dynamic> entries = json.decode(jsonString) as List<dynamic>;
+
+  dev.log(
+    'AppDatabase _seedCurrencies: inserting ${entries.length} currencies',
+    name: 'AppDatabase',
+  );
+
+  // Batch-insert for efficiency. The `OR IGNORE` conflict strategy ensures
+  // idempotency if the migration is ever re-run against a non-empty table.
+  await database.batch((batch) {
+    for (final dynamic raw in entries) {
+      final Map<String, dynamic> entry = raw as Map<String, dynamic>;
+      // Use customInsert with positional params to stay framework-agnostic.
+      // The OR IGNORE strategy silently skips rows whose PK (code) already
+      // exists, making this call safe to repeat.
+      batch.customStatement(
+        'INSERT OR IGNORE INTO currencies (code, name, symbol, minor_units, is_active) '
+        'VALUES (?, ?, ?, ?, ?)',
+        [
+          entry['code'] as String,
+          entry['name'] as String,
+          entry['symbol'] as String,
+          entry['minor_units'] as int,
+          1, // is_active = true for all bundled currencies
+        ],
+      );
+    }
+  });
+
+  dev.log(
+    'AppDatabase _seedCurrencies: seed complete',
+    name: 'AppDatabase',
   );
 }

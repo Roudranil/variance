@@ -42,6 +42,7 @@
 //   - Each tab tap navigates to the correct placeholder screen
 //   - No GoException on any defined path parameter
 
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,6 +54,7 @@ import 'package:variance/presentation/features/onboarding/onboarding_screen.dart
 import 'package:variance/presentation/features/settings/settings_screen.dart';
 import 'package:variance/presentation/features/shared/route_error_screen.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
+import 'package:variance/presentation/theme/app_theme.dart';
 
 // ---------------------------------------------------------------------------
 // Route path constants
@@ -419,22 +421,75 @@ class AppRouterWidget extends ConsumerWidget {
     // Router is created once and stored in a local variable. It is not
     // memoized here because GoRouter is already kept alive by the widget tree.
     final router = makeAppRouter(ref);
-    return MaterialApp.router(
-      title: 'Variance',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      routerConfig: router,
+
+    // Read color scheme mode preference from settings (null while loading).
+    final AppSettings? settings = ref.watch(appSettingsProvider).value;
+    final colorSchemeMode = settings?.colorSchemeMode ?? ColorSchemeMode.dynamic;
+
+    // Resolve custom seed color from settings (fallback to default purple).
+    final Color seedColor = _resolveSeedColor(settings?.colorSeed);
+
+    // DynamicColorBuilder attempts OEM wallpaper extraction (Android 12+).
+    // When the device supports it AND the user prefers dynamic mode, the OEM
+    // schemes are used. Otherwise we fall back to a seed-based scheme.
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        final ThemePair themes = _resolveThemes(
+          colorSchemeMode: colorSchemeMode,
+          lightDynamic: lightDynamic,
+          darkDynamic: darkDynamic,
+          seedColor: seedColor,
+        );
+
+        return MaterialApp.router(
+          title: 'Variance',
+          theme: themes.light,
+          darkTheme: themes.dark,
+          themeMode: _resolveThemeMode(settings?.theme),
+          routerConfig: router,
+        );
+      },
     );
+  }
+
+  /// Parses [hexColorSeed] (e.g. '#6750A4') to a [Color].
+  ///
+  /// Returns [kDefaultSeedColor] when [hexColorSeed] is null or unparseable.
+  static Color _resolveSeedColor(String? hexColorSeed) {
+    if (hexColorSeed == null) return kDefaultSeedColor;
+    final cleaned = hexColorSeed.replaceFirst('#', '');
+    final value = int.tryParse('FF$cleaned', radix: 16);
+    return value != null ? Color(value) : kDefaultSeedColor;
+  }
+
+  /// Selects between dynamic OEM schemes and seed-based schemes.
+  ///
+  /// When [colorSchemeMode] is [ColorSchemeMode.dynamic] and the OEM schemes
+  /// are non-null (Android 12+), the OEM schemes are applied. Otherwise the
+  /// seed-based fallback is used.
+  static ThemePair _resolveThemes({
+    required ColorSchemeMode colorSchemeMode,
+    required ColorScheme? lightDynamic,
+    required ColorScheme? darkDynamic,
+    required Color seedColor,
+  }) {
+    if (colorSchemeMode == ColorSchemeMode.dynamic &&
+        lightDynamic != null &&
+        darkDynamic != null) {
+      return AppThemeData.fromColorSchemes(lightDynamic, darkDynamic);
+    }
+    return AppThemeData.fromSeed(seedColor);
+  }
+
+  /// Maps [AppTheme] preference to Flutter [ThemeMode].
+  ///
+  /// Returns [ThemeMode.system] when [theme] is null (settings not yet loaded).
+  static ThemeMode _resolveThemeMode(AppTheme? theme) {
+    return switch (theme) {
+      AppTheme.light => ThemeMode.light,
+      AppTheme.dark => ThemeMode.dark,
+      AppTheme.system || null => ThemeMode.system,
+    };
   }
 }
 
