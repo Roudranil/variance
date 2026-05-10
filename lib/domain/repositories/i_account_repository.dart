@@ -9,6 +9,7 @@
 
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/entities/account_detail.dart';
 import 'package:variance/domain/entities/money.dart';
 
 /// Contract for all Account data-access operations.
@@ -34,4 +35,52 @@ abstract interface class IAccountRepository {
   ///
   /// Balance = Σ debit entries − Σ credit entries for all posted transactions.
   Stream<Money> watchBalance(String id, String currencyCode);
+
+  /// Returns true if an account with [name] and [category] exists (including
+  /// soft-deleted accounts).
+  ///
+  /// Used by [CreateAccountUseCase] to enforce unique names and detect
+  /// reinstatement candidates.
+  ///
+  /// Parameters:
+  /// - [name]: The account display name to check.
+  Future<bool> isNameTaken(String name);
+
+  /// Returns the soft-deleted account with [name] and [category], or null if
+  /// no such account exists.
+  ///
+  /// Used by [CreateAccountUseCase] to offer a reinstatement option when the
+  /// user tries to create an account with a name that was previously deleted.
+  ///
+  /// Parameters:
+  /// - [name]: The account display name.
+  /// - [category]: The [AccountCategory] to match.
+  Future<Account?> findSoftDeletedByNameAndCategory(
+    String name,
+    AccountCategory category,
+  );
+
+  /// Saves (inserts or replaces) a list of [AccountDetail] rows for the given
+  /// [accountId].
+  ///
+  /// Sensitive keys (card_number, account_number) must have their value
+  /// pre-encrypted before calling this method; the repository stores the
+  /// provided bytes without additional transformation.
+  ///
+  /// Parameters:
+  /// - [accountId]: UUID of the parent account.
+  /// - [details]: Detail rows to persist.
+  Future<Result<void>> saveAccountDetails(
+    String accountId,
+    List<AccountDetail> details,
+  );
+
+  /// Returns all [AccountDetail] rows for [accountId].
+  ///
+  /// Encrypted values are returned as raw ciphertext; call
+  /// [revealEncryptedDetail] to obtain plaintext.
+  ///
+  /// Parameters:
+  /// - [accountId]: UUID of the parent account.
+  Future<List<AccountDetail>> getAccountDetails(String accountId);
 }

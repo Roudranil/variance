@@ -52,3 +52,26 @@ final class NotFoundFailure extends Failure {
 final class BusinessRuleFailure extends Failure {
   const BusinessRuleFailure(super.message);
 }
+
+/// Returned by [CreateAccountUseCase] when a soft-deleted account with the same
+/// name and category exists.
+///
+/// The UI should offer the user the option to reinstate the existing account
+/// (TC-035) instead of creating a new one.
+final class ReinstateOfferFailure extends Failure {
+  /// Creates a [ReinstateOfferFailure] carrying the soft-deleted account id.
+  ///
+  /// Parameters:
+  /// - [message]: Human-readable description.
+  /// - [softDeletedId]: UUID of the soft-deleted account to reinstate.
+  const ReinstateOfferFailure(super.message, {required this.softDeletedId});
+
+  /// UUID of the soft-deleted account that can be reinstated.
+  final String softDeletedId;
+}
+
+/// Returned by [SoftDeleteAccountUseCase] when the user tries to delete the
+/// last remaining account (at least one account must always exist).
+final class LastAccountFailure extends Failure {
+  const LastAccountFailure(super.message);
+}

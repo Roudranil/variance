@@ -58,6 +58,18 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Inserts a single entry row.
+  ///
+  /// Used by [DriftLedgerRepository] when building ledger entry sets outside
+  /// of a full transaction-with-header write (e.g. opening balance for account
+  /// creation).
+  ///
+  /// Parameters:
+  /// - [entry]: The entry companion to insert.
+  Future<int> insertEntry(EntriesCompanion entry) {
+    return into(entries).insert(entry);
+  }
+
   /// Inserts a transaction header and its entry rows atomically.
   ///
   /// Both inserts are wrapped in a database [transaction()] to ensure that
