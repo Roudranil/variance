@@ -7,10 +7,11 @@ plugins {
 
 android {
     namespace = "dev.variance.app"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -23,8 +24,8 @@ android {
         applicationId = "dev.variance.app"
         // SDS §2.1.3: minSdk 31 (Android 12) — Material You dynamic color requirement.
         minSdk = 31
-        // SDS §2.1.3: targetSdk 35 (Android 15)
-        targetSdk = 35
+        // SDS §2.1.3: targetSdk 36 (Android 16)
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -44,6 +45,10 @@ android {
             isMinifyEnabled = false
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {
