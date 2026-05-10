@@ -86,21 +86,40 @@ When spawning subagents:
 
 ### Always
 
+#### Generic
+
 - Ask clarifying questions instead of guessing
 - Surface conflicts between requirements, design, or constraints
 - Keep all artifacts in the repo (`docs/` directory)
 - Track every open question with an ID
 - Log every resolved decision. Once resolved, the resolved information needs to be integrated into the appropriate document.
+- After long coding sessions, maintain a devlog.md in your memory where you keep track of dev progress till date, hacks, quirks etc
+
+#### File read and write
+
 - Prefer small, incremental spec changes over large rewrites.
   - This includes making targeted, precise surgical edits
   - This includes making small elegant modifications
 - For each markdown file you write, use heading tags all the from `#` to `######` (from 1 to 6). If you can put subheadings in `**Subheading**`, considering also putting them in a heading tag. This makes generating Table of Contents for the file easier. A granular Table of Contents will make navigating easier for you.
 - Use numbered headings everywhere possible.
 - Be liberal with using headings on markdown files. This will help you to read the file easily.
-- Add a docstring comment block to the top of any code file that you generate.
 - **Docs: decision only. Reason optional, 3–5 words max.** "UUID. Sync-friendly." enough. No paragraphs.
 - Tables and bullets. No prose. No summaries.
+
+#### Coding
+
+- Add a docstring comment block to the top of any code file that you generate.
 - When you are coding be sure to read [coding-style.md](.claude/rules/common/coding-style.md). These rules are 100% compulsory for you to follow.
+
+#### Git
+
+- commit messages must follow conventional commits discipline
+- commit messages must be short, single line, with a short description if absolutely needed
+- commit messages must have Claude's usual git attribution
+- commits must be atomic:
+  - each commit contains only a single topical change
+  - each commit must not contain changes across different groups of files/features/tickets/bugs/work items/topics
+  - if a commit contains more than 10 files of changes or more than 100 lines of changes, it is usually not atomic commit. Dont do that unless absolutely required.
 
 ### Never
 
