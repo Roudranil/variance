@@ -15,6 +15,8 @@
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:variance/data/repositories/drift_ledger_repository.dart';
+import 'package:variance/domain/services/ledger_engine.dart';
 import 'package:variance/domain/usecases/account/create_account_use_case.dart';
 import 'package:variance/domain/usecases/account/delete_account_use_case.dart';
 import 'package:variance/domain/usecases/account/get_account_balance_use_case.dart';
@@ -28,6 +30,7 @@ import 'package:variance/domain/usecases/currency/refresh_exchange_rates_use_cas
 import 'package:variance/domain/usecases/transaction/create_transaction_use_case.dart';
 import 'package:variance/domain/usecases/transaction/search_transactions_use_case.dart';
 import 'package:variance/domain/usecases/transaction/watch_monthly_transactions_use_case.dart';
+import 'package:variance/presentation/providers/database_providers.dart';
 import 'package:variance/presentation/providers/repository_providers.dart';
 
 part 'use_case_providers.g.dart';
@@ -71,11 +74,30 @@ Future<WatchAccountsUseCase> watchAccountsUseCase(Ref ref) async {
   return WatchAccountsUseCase(repo);
 }
 
-/// Provides a [CreateAccountUseCase] bound to the account repository.
+/// Provides a [LedgerEngine] wired to the Drift-backed ledger repository.
+///
+/// The ledger repository requires both [AccountDao] and [TransactionDao]
+/// to handle EQ account creation and entry inserts.
+@riverpod
+Future<LedgerEngine> ledgerEngine(Ref ref) async {
+  final accountDao = await ref.watch(accountDaoProvider.future);
+  final txDao = await ref.watch(transactionDaoProvider.future);
+  final db = await ref.watch(appDatabaseProvider.future);
+  final ledgerRepo = DriftLedgerRepository(
+    accountDao: accountDao,
+    transactionDao: txDao,
+    database: db,
+  );
+  return LedgerEngine(ledgerRepo);
+}
+
+/// Provides a [CreateAccountUseCase] bound to the account repository and
+/// [LedgerEngine].
 @riverpod
 Future<CreateAccountUseCase> createAccountUseCase(Ref ref) async {
   final repo = await ref.watch(accountRepositoryProvider.future);
-  return CreateAccountUseCase(repo);
+  final engine = await ref.watch(ledgerEngineProvider.future);
+  return CreateAccountUseCase(repo, engine);
 }
 
 /// Provides an [UpdateAccountUseCase] bound to the account repository.

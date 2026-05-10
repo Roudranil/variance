@@ -1,0 +1,193 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'account_providers.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Reactive stream of all non-system, non-deleted accounts.
+///
+/// Emits a new list whenever the underlying accounts table changes.
+/// Consumers should prefer this provider over calling the repository directly.
+
+@ProviderFor(accounts)
+final accountsProvider = AccountsProvider._();
+
+/// Reactive stream of all non-system, non-deleted accounts.
+///
+/// Emits a new list whenever the underlying accounts table changes.
+/// Consumers should prefer this provider over calling the repository directly.
+
+final class AccountsProvider extends $FunctionalProvider<
+        AsyncValue<List<Account>>, List<Account>, Stream<List<Account>>>
+    with $FutureModifier<List<Account>>, $StreamProvider<List<Account>> {
+  /// Reactive stream of all non-system, non-deleted accounts.
+  ///
+  /// Emits a new list whenever the underlying accounts table changes.
+  /// Consumers should prefer this provider over calling the repository directly.
+  AccountsProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'accountsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$accountsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Account>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Account>> create(Ref ref) {
+    return accounts(ref);
+  }
+}
+
+String _$accountsHash() => r'311475de79c6beac4fe9e6f5ceed5cf527cd5eda';
+
+/// Reactive stream of the computed balance for account [accountId].
+///
+/// The balance is expressed in the account's own currency (minor units).
+/// Emits a new value whenever the underlying entries change.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+/// - [currencyCode]: ISO 4217 code used to denominate the balance stream.
+
+@ProviderFor(accountBalance)
+final accountBalanceProvider = AccountBalanceFamily._();
+
+/// Reactive stream of the computed balance for account [accountId].
+///
+/// The balance is expressed in the account's own currency (minor units).
+/// Emits a new value whenever the underlying entries change.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+/// - [currencyCode]: ISO 4217 code used to denominate the balance stream.
+
+final class AccountBalanceProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// Reactive stream of the computed balance for account [accountId].
+  ///
+  /// The balance is expressed in the account's own currency (minor units).
+  /// Emits a new value whenever the underlying entries change.
+  ///
+  /// Parameters:
+  /// - [accountId]: UUID of the account to watch.
+  /// - [currencyCode]: ISO 4217 code used to denominate the balance stream.
+  AccountBalanceProvider._(
+      {required AccountBalanceFamily super.from,
+      required (
+        String,
+        String,
+      )
+          super.argument})
+      : super(
+          retry: null,
+          name: r'accountBalanceProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$accountBalanceHash();
+
+  @override
+  String toString() {
+    return r'accountBalanceProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    final argument = this.argument as (
+      String,
+      String,
+    );
+    return accountBalance(
+      ref,
+      argument.$1,
+      argument.$2,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AccountBalanceProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$accountBalanceHash() => r'905f757d74c53484273a6a214920fb9d8331e23a';
+
+/// Reactive stream of the computed balance for account [accountId].
+///
+/// The balance is expressed in the account's own currency (minor units).
+/// Emits a new value whenever the underlying entries change.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+/// - [currencyCode]: ISO 4217 code used to denominate the balance stream.
+
+final class AccountBalanceFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+            Stream<int>,
+            (
+              String,
+              String,
+            )> {
+  AccountBalanceFamily._()
+      : super(
+          retry: null,
+          name: r'accountBalanceProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  /// Reactive stream of the computed balance for account [accountId].
+  ///
+  /// The balance is expressed in the account's own currency (minor units).
+  /// Emits a new value whenever the underlying entries change.
+  ///
+  /// Parameters:
+  /// - [accountId]: UUID of the account to watch.
+  /// - [currencyCode]: ISO 4217 code used to denominate the balance stream.
+
+  AccountBalanceProvider call(
+    String accountId,
+    String currencyCode,
+  ) =>
+      AccountBalanceProvider._(argument: (
+        accountId,
+        currencyCode,
+      ), from: this);
+
+  @override
+  String toString() => r'accountBalanceProvider';
+}

@@ -188,12 +188,62 @@ final class WatchAccountsUseCaseProvider extends $FunctionalProvider<
 String _$watchAccountsUseCaseHash() =>
     r'329f26421282b1da8a0bae22c41a998ead1aea08';
 
-/// Provides a [CreateAccountUseCase] bound to the account repository.
+/// Provides a [LedgerEngine] wired to the Drift-backed ledger repository.
+///
+/// The ledger repository requires both [AccountDao] and [TransactionDao]
+/// to handle EQ account creation and entry inserts.
+
+@ProviderFor(ledgerEngine)
+final ledgerEngineProvider = LedgerEngineProvider._();
+
+/// Provides a [LedgerEngine] wired to the Drift-backed ledger repository.
+///
+/// The ledger repository requires both [AccountDao] and [TransactionDao]
+/// to handle EQ account creation and entry inserts.
+
+final class LedgerEngineProvider extends $FunctionalProvider<
+        AsyncValue<LedgerEngine>, LedgerEngine, FutureOr<LedgerEngine>>
+    with $FutureModifier<LedgerEngine>, $FutureProvider<LedgerEngine> {
+  /// Provides a [LedgerEngine] wired to the Drift-backed ledger repository.
+  ///
+  /// The ledger repository requires both [AccountDao] and [TransactionDao]
+  /// to handle EQ account creation and entry inserts.
+  LedgerEngineProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'ledgerEngineProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$ledgerEngineHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<LedgerEngine> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<LedgerEngine> create(Ref ref) {
+    return ledgerEngine(ref);
+  }
+}
+
+String _$ledgerEngineHash() => r'267ca0acb6f86693c72e2b10f854dc44b9fe9787';
+
+/// Provides a [CreateAccountUseCase] bound to the account repository and
+/// [LedgerEngine].
 
 @ProviderFor(createAccountUseCase)
 final createAccountUseCaseProvider = CreateAccountUseCaseProvider._();
 
-/// Provides a [CreateAccountUseCase] bound to the account repository.
+/// Provides a [CreateAccountUseCase] bound to the account repository and
+/// [LedgerEngine].
 
 final class CreateAccountUseCaseProvider extends $FunctionalProvider<
         AsyncValue<CreateAccountUseCase>,
@@ -202,7 +252,8 @@ final class CreateAccountUseCaseProvider extends $FunctionalProvider<
     with
         $FutureModifier<CreateAccountUseCase>,
         $FutureProvider<CreateAccountUseCase> {
-  /// Provides a [CreateAccountUseCase] bound to the account repository.
+  /// Provides a [CreateAccountUseCase] bound to the account repository and
+  /// [LedgerEngine].
   CreateAccountUseCaseProvider._()
       : super(
           from: null,
@@ -230,7 +281,7 @@ final class CreateAccountUseCaseProvider extends $FunctionalProvider<
 }
 
 String _$createAccountUseCaseHash() =>
-    r'b0c8804e520783b9f66d31627652bbb3a0ef32a6';
+    r'88cc63ce358204e7d2a503e424349d3d5de2ec68';
 
 /// Provides an [UpdateAccountUseCase] bound to the account repository.
 
