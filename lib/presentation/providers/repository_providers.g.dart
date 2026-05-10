@@ -381,3 +381,66 @@ final class AppSettingsRepositoryProvider extends $FunctionalProvider<
 
 String _$appSettingsRepositoryHash() =>
     r'4124c57fdc28b88d9ac5d6f29c7cbe23cde5e8ab';
+
+/// Loads all active [Currency] entities from the local database once on app
+/// startup and keeps the result alive for the entire session.
+///
+/// The currency list is populated from the bundled `assets/data/currencies.json`
+/// asset during the Drift `onCreate` migration (T-22). No runtime network
+/// fetch is ever performed (SDS §2.16.1).
+///
+/// Consumers should prefer this provider over calling the repository directly
+/// to avoid repeated DAO round-trips for a static list.
+
+@ProviderFor(currencies)
+final currenciesProvider = CurrenciesProvider._();
+
+/// Loads all active [Currency] entities from the local database once on app
+/// startup and keeps the result alive for the entire session.
+///
+/// The currency list is populated from the bundled `assets/data/currencies.json`
+/// asset during the Drift `onCreate` migration (T-22). No runtime network
+/// fetch is ever performed (SDS §2.16.1).
+///
+/// Consumers should prefer this provider over calling the repository directly
+/// to avoid repeated DAO round-trips for a static list.
+
+final class CurrenciesProvider extends $FunctionalProvider<
+        AsyncValue<List<Currency>>, List<Currency>, FutureOr<List<Currency>>>
+    with $FutureModifier<List<Currency>>, $FutureProvider<List<Currency>> {
+  /// Loads all active [Currency] entities from the local database once on app
+  /// startup and keeps the result alive for the entire session.
+  ///
+  /// The currency list is populated from the bundled `assets/data/currencies.json`
+  /// asset during the Drift `onCreate` migration (T-22). No runtime network
+  /// fetch is ever performed (SDS §2.16.1).
+  ///
+  /// Consumers should prefer this provider over calling the repository directly
+  /// to avoid repeated DAO round-trips for a static list.
+  CurrenciesProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'currenciesProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$currenciesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Currency>> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Currency>> create(Ref ref) {
+    return currencies(ref);
+  }
+}
+
+String _$currenciesHash() => r'e5741b5bfddfa51a425cddfa74aa4f0fb3fbf164';

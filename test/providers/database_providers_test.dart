@@ -56,6 +56,10 @@ ProviderContainer _makeContainer() {
 }
 
 void main() {
+  // Initialise the Flutter test binding so rootBundle is available for the
+  // currency seeding step executed inside AppDatabase.onCreate (T-22).
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('AppDatabase provider', () {
     test('appDatabaseProvider resolves to AppDatabase', () async {
       final container = _makeContainer();
