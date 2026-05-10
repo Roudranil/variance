@@ -27,6 +27,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/entities/account_detail.dart';
 import 'package:variance/domain/entities/app_settings.dart';
 import 'package:variance/domain/entities/budget.dart';
 import 'package:variance/domain/entities/budget_period.dart';
@@ -290,6 +291,52 @@ void main() {
       const a = Money(amountMinor: 50000, currencyCode: 'USD');
       const b = Money(amountMinor: 50000, currencyCode: 'USD');
       expect(a, equals(b));
+    });
+  });
+
+  group('AccountDetail', () {
+    test('21. constructs with required fields', () {
+      const detail = AccountDetail(
+        id: 'det-1',
+        accountId: 'acc-1',
+        detailKey: 'bank_name',
+        detailValue: 'HDFC',
+        updatedAt: now,
+      );
+      expect(detail.detailKey, equals('bank_name'));
+      expect(detail.detailValueEncrypted, isNull);
+    });
+
+    test('22. copyWith produces updated instance', () {
+      const detail = AccountDetail(
+        id: 'det-1',
+        accountId: 'acc-1',
+        detailKey: 'bank_name',
+        detailValue: 'HDFC',
+        updatedAt: now,
+      );
+      final updated = detail.copyWith(detailValue: 'SBI');
+      expect(updated.detailValue, equals('SBI'));
+      expect(detail.detailValue, equals('HDFC'));
+    });
+
+    test('23. AccountDetailKey.fromString resolves known key', () {
+      final key = AccountDetailKey.fromString('card_number');
+      expect(key, equals(AccountDetailKey.cardNumber));
+      expect(key?.encrypted, isTrue);
+    });
+
+    test('24. AccountDetailKey.fromString returns null for unknown key', () {
+      final key = AccountDetailKey.fromString('non_existent_key');
+      expect(key, isNull);
+    });
+
+    test('25. non-sensitive key has encrypted = false', () {
+      expect(AccountDetailKey.bankName.encrypted, isFalse);
+    });
+
+    test('26. sensitive key has encrypted = true', () {
+      expect(AccountDetailKey.accountNumber.encrypted, isTrue);
     });
   });
 }
