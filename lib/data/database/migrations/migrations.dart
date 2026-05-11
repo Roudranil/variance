@@ -26,6 +26,8 @@ import 'dart:developer' as dev;
 import 'package:drift/drift.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'package:variance/data/database/migrations/seed_default_categories.dart';
+
 // ---------------------------------------------------------------------------
 // Exception
 // ---------------------------------------------------------------------------
@@ -117,6 +119,15 @@ MigrationStrategy buildMigrationStrategy(
       // Seed the currencies table from the bundled ISO 4217 JSON asset.
       // This is the only time data is written to this read-only table.
       await _seedCurrencies(database);
+
+      // Seed default category taxonomy (PRD §5.6.1, §5.2.4).
+      // Uses INSERT OR IGNORE so re-running is safe (idempotent).
+      await seedDefaultCategories(database);
+
+      dev.log(
+        'AppDatabase onCreate: default categories seeded',
+        name: 'AppDatabase',
+      );
     },
 
     // ------------------------------------------------------------------
