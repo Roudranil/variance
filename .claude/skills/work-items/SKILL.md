@@ -1,19 +1,20 @@
 ---
 name: work-items
-description: Defines the three-level work-item hierarchy (Epic → Story → Task) used in docs/03-planning/. Covers ID conventions, heading format, body templates, and reference URL rules enforced by read-work-item.sh and read-references.sh. Load this skill whenever creating, reading, or referencing planning work items.
+description: Defines the four-level work-item hierarchy (Epic → Story → Task, plus Bug) used in docs/03-planning/. Covers ID conventions, heading format, body templates, and reference URL rules enforced by read-work-item.sh and read-references.sh. Load this skill whenever creating, reading, or referencing planning work items.
 ---
 
 # Work Items Skill
 
 ## 1. Hierarchy Overview
 
-Three levels only. No other levels exist.
+Three planning levels plus one defect tracking level.
 
 | Level | File                          | ID Format | Heading Pattern      | Definition                                                                                                                                  |
 | ----- | ----------------------------- | --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Epic  | `docs/03-planning/epics.md`   | `E-{N}`   | `## E-{N} — {Title}` | A broad, shippable vertical slice of the product. Corresponds to one or more feature-dag nodes or a full domain. Contains multiple Stories. |
 | Story | `docs/03-planning/stories.md` | `S-{N}`   | `## S-{N} — {Title}` | One deliverable capability within an Epic. Framed as a user story ("as a … I want … so that …"). Maps to one PR.                            |
 | Task  | `docs/03-planning/tasks.md`   | `T-{N}`   | `## T-{N} — {Title}` | An atomic unit of work (≤ 4 hours). Independently testable. Maps to one commit-level unit within a Story.                                   |
+| Bug   | `docs/03-planning/bugs.md`    | `B-{N}`   | `## B-{N} — {Title}` | An observed defect against a shipped or in-progress feature. Standalone — not required to have a parent Story or Epic.                      |
 
 - IDs are sequential integers starting at 1 (`E-1`, `E-2`, …)
 - IDs are globally unique within each file
@@ -24,6 +25,7 @@ Three levels only. No other levels exist.
 - Every Story must have exactly one parent Epic
 - Every Task must have exactly one parent Epic and exactly one parent Story
 - Orphan Stories and Tasks are not allowed
+- Bugs are standalone; they MAY reference an Affected Epic or Affected Story but are not required to
 
 ---
 
@@ -59,6 +61,10 @@ Each planning file opens with exactly one H1:
 
 ```markdown
 # Tasks
+```
+
+```markdown
+# Bugs
 ```
 
 No other H1 headings appear in these files.
@@ -142,6 +148,48 @@ No other H1 headings appear in these files.
 ```
 
 **Task scope:** atomic (≤ 4 hours). Independently testable. Maps to one commit-level unit.
+
+### 3.4 Bug Template
+
+```markdown
+## B-N — Short symptom description
+
+**Affected Epic:** E-N *(optional — omit if cross-cutting or unknown)*
+**Affected Story:** S-N *(optional — omit if unknown)*
+**Severity:** critical | high | medium | low
+
+**Symptom:** One sentence — what the user or system observes going wrong.
+
+**Expected:** One sentence — what should happen instead.
+
+### Repro Steps
+
+1. Step one
+2. Step two
+3. Observe: …
+
+### Root Cause
+
+TBD *(fill in once diagnosed)*
+
+### Todo
+
+- [ ] Write a failing test that reproduces the bug
+- [ ] Identify root cause
+- [ ] Implement fix
+- [ ] Confirm test passes
+- [ ] Regression-check adjacent behaviour
+
+### Notes
+
+*(optional)*
+
+### References
+
+- `Exact Heading Text As It Appears In TOC` (`docs/path/to/file.md`)
+```
+
+**Bug scope:** one observed defect. Fix maps to one `fix(<scope>):` commit. Severity and Repro Steps are mandatory. Root Cause may be `TBD` at creation time.
 
 ---
 
@@ -241,7 +289,7 @@ Each file must follow this exact structure:
 
 When adding new work items to an existing file:
 
-1. Run `./scripts/read-md.sh toc docs/03-planning/{epics|stories|tasks}.md`
+1. Run `./scripts/read-md.sh toc docs/03-planning/{epics|stories|tasks|bugs}.md`
 2. Find the highest existing ID number in the file
 3. Assign the next sequential integer
 
@@ -259,17 +307,19 @@ Reads a single work item by ID from the appropriate planning file.
 ./scripts/read-work-item.sh --epic  E-1
 ./scripts/read-work-item.sh --story S-3
 ./scripts/read-work-item.sh --task  T-7
+./scripts/read-work-item.sh --bug   B-1
 ```
 
 Exit codes: `0` success, `1` invalid args, `2` file not found, `4` ID not found.
 
 ### 6.2 `read-references.sh`
 
-Reads a Story or Task work item, extracts its `### References` list, and returns the full text of each referenced section concatenated with annotations. No character or line limit is applied.
+Reads a Story, Task, or Bug work item, extracts its `### References` list, and returns the full text of each referenced section concatenated with annotations. No character or line limit is applied.
 
 ```bash
 ./scripts/read-references.sh --story S-3
 ./scripts/read-references.sh --task  T-7
+./scripts/read-references.sh --bug   B-1
 ```
 
 **Epics are not supported** by this script. Use `read-work-item.sh` to read an epic body directly.
