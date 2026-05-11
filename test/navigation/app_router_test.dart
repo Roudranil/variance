@@ -20,12 +20,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:variance/domain/entities/account.dart';
 import 'package:variance/domain/entities/app_settings.dart';
+import 'package:variance/domain/services/net_worth_calculator.dart';
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:variance/presentation/features/settings/settings_screen.dart';
 import 'package:variance/presentation/navigation/app_router.dart';
+import 'package:variance/presentation/providers/account_providers.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
 
 // ---------------------------------------------------------------------------
@@ -49,11 +52,28 @@ class _FakeAppSettingsNotifier extends AppSettingsNotifier {
 
 /// Builds a [ProviderScope] + [_TestRouterApp] with the given [settings]
 /// injected via a notifier override.
+///
+/// Also overrides [accountsProvider] and [netWorthProvider] with empty/zero
+/// streams so that [AccountListScreen] does not wait for a real database when
+/// navigation tests tap the Accounts tab.
 Widget _buildApp(AppSettings settings) {
+  const emptyNetWorth = NetWorthResult(
+    totalMinor: 0,
+    homeCurrency: 'INR',
+    hasStaleRates: false,
+  );
+
   return ProviderScope(
     overrides: [
       appSettingsProvider
           .overrideWith(() => _FakeAppSettingsNotifier(settings)),
+      // Provide empty streams so AccountListScreen resolves immediately.
+      accountsProvider.overrideWith(
+        (_) => Stream<List<Account>>.value([]),
+      ),
+      netWorthProvider.overrideWith(
+        (_) => Stream<NetWorthResult>.value(emptyNetWorth),
+      ),
     ],
     child: const _TestRouterApp(),
   );
