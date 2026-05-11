@@ -55,7 +55,6 @@ import 'package:variance/domain/entities/entry.dart';
 import 'package:variance/domain/repositories/i_account_repository.dart';
 import 'package:variance/domain/services/ledger_engine.dart';
 import 'package:variance/domain/usecases/account/create_account_use_case.dart';
-import 'package:variance/domain/usecases/account/update_account_use_case.dart';
 import 'package:variance/presentation/providers/use_case_providers.dart';
 
 // ignore: prefer_const_constructors — required for Uuid
@@ -83,7 +82,7 @@ class AccountFormScreen extends ConsumerStatefulWidget {
   /// Parameters:
   /// - [repo]: The fake [IAccountRepository] to back the use case.
   static CreateAccountUseCase makeCreateUseCase(IAccountRepository repo) {
-    return CreateAccountUseCase(repo, LedgerEngine(_NoOpLedgerRepository()));
+    return CreateAccountUseCase(repo, const LedgerEngine(_NoOpLedgerRepository()));
   }
 
   @override
@@ -320,7 +319,6 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final title = _isEditMode ? 'Edit Account' : 'New Account';
 
     return Scaffold(
