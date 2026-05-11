@@ -28,62 +28,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/category.dart';
+import 'package:variance/presentation/features/settings/categories/category_icons.dart';
 import 'package:variance/presentation/navigation/app_router.dart';
 import 'package:variance/presentation/providers/category_providers.dart';
 import 'package:variance/presentation/providers/use_case_providers.dart';
-
-// ---------------------------------------------------------------------------
-// Icon set for the picker
-// ---------------------------------------------------------------------------
-
-/// Curated ~250 Material Symbols icons for category selection.
-const _kIconSet = <String, IconData>{
-  'shopping_cart': Symbols.shopping_cart,
-  'restaurant': Symbols.restaurant,
-  'directions_car': Symbols.directions_car,
-  'home': Symbols.home,
-  'local_hospital': Symbols.local_hospital,
-  'school': Symbols.school,
-  'sports_esports': Symbols.sports_esports,
-  'flight': Symbols.flight,
-  'work': Symbols.work,
-  'coffee': Symbols.coffee,
-  'local_grocery_store': Symbols.local_grocery_store,
-  'fitness_center': Symbols.fitness_center,
-  'movie': Symbols.movie,
-  'music_note': Symbols.music_note,
-  'pets': Symbols.pets,
-  'phone': Symbols.phone,
-  'laptop': Symbols.laptop,
-  'local_pharmacy': Symbols.local_pharmacy,
-  'savings': Symbols.savings,
-  'payments': Symbols.payments,
-  'credit_card': Symbols.credit_card,
-  'attach_money': Symbols.attach_money,
-  'trending_up': Symbols.trending_up,
-  'business': Symbols.business,
-  'category': Symbols.category,
-  'label': Symbols.label,
-  'receipt': Symbols.receipt,
-  'local_taxi': Symbols.local_taxi,
-  'two_wheeler': Symbols.two_wheeler,
-  'electric_bolt': Symbols.electric_bolt,
-  'water_drop': Symbols.water_drop,
-  'wifi': Symbols.wifi,
-  'tv': Symbols.tv,
-  'book': Symbols.book,
-  'sports': Symbols.sports,
-  'beach_access': Symbols.beach_access,
-  'park': Symbols.park,
-  'child_care': Symbols.child_care,
-  'cake': Symbols.cake,
-  'nightlife': Symbols.nightlife,
-};
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -122,7 +74,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
   final _nameController = TextEditingController();
   final _nameFocusNode = FocusNode();
 
-  /// Selected icon ref key (maps to IconData in _kIconSet).
+  /// Selected icon ref key (maps to IconData in kCategoryIcons).
   String _iconRef = 'shopping_cart';
 
   /// Selected tree type.
@@ -288,7 +240,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
           // Icon picker row
           ListTile(
             leading: Icon(
-              _kIconSet[_iconRef] ?? Icons.label_outline,
+              kCategoryIcons[_iconRef] ?? Icons.label_outline,
               size: 32,
             ),
             title: const Text('Icon'),
@@ -511,7 +463,7 @@ class _SubcategorySection extends ConsumerWidget {
           ...children.map(
             (child) => ListTile(
               leading: Icon(
-                _kIconSet[child.iconRef] ?? Icons.label_outline,
+                kCategoryIcons[child.iconRef] ?? Icons.label_outline,
                 size: 24,
               ),
               title: Text(child.name),
@@ -598,7 +550,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
   @override
   void initState() {
     super.initState();
-    _filtered = _kIconSet.entries.toList();
+    _filtered = kCategoryIcons.entries.toList();
     _searchController.addListener(_onSearch);
   }
 
@@ -612,7 +564,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
   void _onSearch() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filtered = _kIconSet.entries
+      _filtered = kCategoryIcons.entries
           .where((e) => e.key.contains(query))
           .toList();
     });
