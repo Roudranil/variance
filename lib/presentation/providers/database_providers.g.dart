@@ -348,3 +348,48 @@ final class CurrencyDaoProvider extends $FunctionalProvider<
 }
 
 String _$currencyDaoHash() => r'b2a85ce77065410021d8e6a9b884a04f19814ee7';
+
+/// Provides the [AppSettingsDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+@ProviderFor(appSettingsDao)
+final appSettingsDaoProvider = AppSettingsDaoProvider._();
+
+/// Provides the [AppSettingsDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+final class AppSettingsDaoProvider extends $FunctionalProvider<
+        AsyncValue<AppSettingsDao>, AppSettingsDao, FutureOr<AppSettingsDao>>
+    with $FutureModifier<AppSettingsDao>, $FutureProvider<AppSettingsDao> {
+  /// Provides the [AppSettingsDao] for the open [AppDatabase].
+  ///
+  /// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+  AppSettingsDaoProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'appSettingsDaoProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$appSettingsDaoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<AppSettingsDao> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AppSettingsDao> create(Ref ref) {
+    return appSettingsDao(ref);
+  }
+}
+
+String _$appSettingsDaoHash() => r'73d5063a45bad708bcf496b636715c8d6d4d3f8c';

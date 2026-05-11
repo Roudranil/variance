@@ -26,6 +26,7 @@ import 'dart:developer' as dev;
 import 'package:drift/drift.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'package:variance/data/database/migrations/seed_default_app_settings.dart';
 import 'package:variance/data/database/migrations/seed_default_categories.dart';
 
 // ---------------------------------------------------------------------------
@@ -126,6 +127,17 @@ MigrationStrategy buildMigrationStrategy(
 
       dev.log(
         'AppDatabase onCreate: default categories seeded',
+        name: 'AppDatabase',
+      );
+
+      // Seed default app_settings rows (data model §9.1).
+      // Uses INSERT OR IGNORE so onboarding writes that happen before this
+      // point (unlikely on a fresh install but possible in test fixtures) are
+      // preserved.
+      await seedDefaultAppSettings(database);
+
+      dev.log(
+        'AppDatabase onCreate: default app_settings seeded',
         name: 'AppDatabase',
       );
     },

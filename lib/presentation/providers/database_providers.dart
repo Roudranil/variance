@@ -9,7 +9,8 @@
 //     ├── categoryDaoProvider
 //     ├── templateDaoProvider
 //     ├── exchangeRateDaoProvider
-//     └── currencyDaoProvider
+//     ├── currencyDaoProvider
+//     └── appSettingsDaoProvider
 //
 // Production: appDatabaseProvider calls AppDatabase.open() and stores the
 // encryption key in FlutterSecureStorage (Android Keystore backed).
@@ -28,6 +29,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/daos/account_dao.dart';
+import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/daos/category_dao.dart';
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
@@ -114,4 +116,13 @@ Future<ExchangeRateDao> exchangeRateDao(Ref ref) async {
 Future<CurrencyDao> currencyDao(Ref ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return db.currencyDao;
+}
+
+/// Provides the [AppSettingsDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+@Riverpod(keepAlive: true)
+Future<AppSettingsDao> appSettingsDao(Ref ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return db.appSettingsDao;
 }

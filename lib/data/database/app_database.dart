@@ -9,7 +9,7 @@
 //   - Version-guard: throws SchemaMismatchException if on-disk version >
 //     compiled version
 //   - Registers all 19 tables (18 regular + 1 FTS virtual)
-//   - Exposes all 6 DAOs
+//   - Exposes all 7 DAOs
 //
 // Database file: getApplicationDocumentsDirectory()/variance.db
 // Encryption key: 32 random bytes stored in flutter_secure_storage under
@@ -35,6 +35,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'package:variance/data/database/daos/account_dao.dart';
+import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/daos/category_dao.dart';
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
@@ -124,6 +125,7 @@ const _kEncryptionKeyBytes = 32;
     TemplateDao,
     ExchangeRateDao,
     CurrencyDao,
+    AppSettingsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

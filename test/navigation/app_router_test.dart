@@ -12,8 +12,8 @@
 //   - No GoException on /accounts/:id with a valid id
 //   - /transaction/new renders RouteErrorScreen (not yet implemented)
 //
-// All tests use ProviderScope with overrides for appDatabaseProvider and
-// appSettingsProvider so no file system access occurs.
+// All tests use ProviderScope with overrides for appSettingsProvider so no
+// file system access or real database is required.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,34 +29,39 @@ import 'package:variance/presentation/navigation/app_router.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
 
 // ---------------------------------------------------------------------------
+// Fake notifier
+// ---------------------------------------------------------------------------
+
+/// A minimal [AppSettingsNotifier] that returns a predetermined [AppSettings]
+/// value so no database or repository is required in route tests.
+class _FakeAppSettingsNotifier extends AppSettingsNotifier {
+  _FakeAppSettingsNotifier(this._settings);
+
+  final AppSettings _settings;
+
+  @override
+  Future<AppSettings> build() async => _settings;
+}
+
+// ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
 
-/// Builds a [MaterialApp.router] with [makeAppRouter] and the given
-/// [AppSettings] value, so redirect guard behaviour can be tested.
-///
-/// [appSettingsOverride] is the static [AppSettings] the guard will read.
-Widget _buildApp(
-  WidgetRef ref, {
-  AppSettings appSettingsOverride = const AppSettings(),
-}) {
+/// Builds a [ProviderScope] + [_TestRouterApp] with the given [settings]
+/// injected via a notifier override.
+Widget _buildApp(AppSettings settings) {
   return ProviderScope(
     overrides: [
-      // Provide a static stream of the given settings so the redirect guard
-      // always sees a deterministic state.
-      appSettingsProvider.overrideWith(
-        (_) => Stream.value(appSettingsOverride),
-      ),
+      appSettingsProvider
+          .overrideWith(() => _FakeAppSettingsNotifier(settings)),
     ],
-    child: _TestRouterApp(settingsOverride: appSettingsOverride),
+    child: const _TestRouterApp(),
   );
 }
 
 /// A [ConsumerWidget] that calls [makeAppRouter] and wraps it in [MaterialApp.router].
 class _TestRouterApp extends ConsumerWidget {
-  const _TestRouterApp({required this.settingsOverride});
-
-  final AppSettings settingsOverride;
+  const _TestRouterApp();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,18 +80,7 @@ void main() {
       'redirects to /onboarding when onboardingComplete is false',
       (tester) async {
         await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              appSettingsProvider.overrideWith(
-                (_) => Stream.value(
-                  const AppSettings(onboardingComplete: false),
-                ),
-              ),
-            ],
-            child: const _TestRouterApp(
-              settingsOverride: AppSettings(onboardingComplete: false),
-            ),
-          ),
+          _buildApp(const AppSettings(onboardingComplete: false)),
         );
 
         // Pump until all async work completes.
@@ -102,18 +96,7 @@ void main() {
       'shows home shell when onboardingComplete is true',
       (tester) async {
         await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              appSettingsProvider.overrideWith(
-                (_) => Stream.value(
-                  const AppSettings(onboardingComplete: true),
-                ),
-              ),
-            ],
-            child: const _TestRouterApp(
-              settingsOverride: AppSettings(onboardingComplete: true),
-            ),
-          ),
+          _buildApp(const AppSettings(onboardingComplete: true)),
         );
 
         await tester.pumpAndSettle();
@@ -126,21 +109,9 @@ void main() {
   });
 
   group('Shell navigation tabs', () {
-    // Build the app without a redirect guard (using the global appRouter)
-    // to test tab navigation in isolation.
-
     testWidgets('initial tab shows HomeScreen', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appSettingsProvider.overrideWith(
-              (_) => Stream.value(const AppSettings(onboardingComplete: true)),
-            ),
-          ],
-          child: const _TestRouterApp(
-            settingsOverride: AppSettings(onboardingComplete: true),
-          ),
-        ),
+        _buildApp(const AppSettings(onboardingComplete: true)),
       );
       await tester.pumpAndSettle();
 
@@ -149,16 +120,7 @@ void main() {
 
     testWidgets('tapping Accounts tab shows AccountListScreen', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appSettingsProvider.overrideWith(
-              (_) => Stream.value(const AppSettings(onboardingComplete: true)),
-            ),
-          ],
-          child: const _TestRouterApp(
-            settingsOverride: AppSettings(onboardingComplete: true),
-          ),
-        ),
+        _buildApp(const AppSettings(onboardingComplete: true)),
       );
       await tester.pumpAndSettle();
 
@@ -171,16 +133,7 @@ void main() {
 
     testWidgets('tapping Settings tab shows SettingsScreen', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appSettingsProvider.overrideWith(
-              (_) => Stream.value(const AppSettings(onboardingComplete: true)),
-            ),
-          ],
-          child: const _TestRouterApp(
-            settingsOverride: AppSettings(onboardingComplete: true),
-          ),
-        ),
+        _buildApp(const AppSettings(onboardingComplete: true)),
       );
       await tester.pumpAndSettle();
 
@@ -194,18 +147,8 @@ void main() {
   group('Named route paths', () {
     testWidgets('/onboarding renders OnboardingScreen', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            // Set onboardingComplete=false so the guard redirects to /onboarding,
-            // ensuring the route resolves correctly.
-            appSettingsProvider.overrideWith(
-              (_) => Stream.value(const AppSettings(onboardingComplete: false)),
-            ),
-          ],
-          child: const _TestRouterApp(
-            settingsOverride: AppSettings(onboardingComplete: false),
-          ),
-        ),
+        // Set onboardingComplete=false so the guard redirects to /onboarding.
+        _buildApp(const AppSettings(onboardingComplete: false)),
       );
       await tester.pumpAndSettle();
 
@@ -216,17 +159,7 @@ void main() {
       'navigating to /accounts/:id with a valid id does not throw GoException',
       (tester) async {
         await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              appSettingsProvider.overrideWith(
-                (_) =>
-                    Stream.value(const AppSettings(onboardingComplete: true)),
-              ),
-            ],
-            child: const _TestRouterApp(
-              settingsOverride: AppSettings(onboardingComplete: true),
-            ),
-          ),
+          _buildApp(const AppSettings(onboardingComplete: true)),
         );
         await tester.pumpAndSettle();
 

@@ -9744,6 +9744,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final ExchangeRateDao exchangeRateDao =
       ExchangeRateDao(this as AppDatabase);
   late final CurrencyDao currencyDao = CurrencyDao(this as AppDatabase);
+  late final AppSettingsDao appSettingsDao =
+      AppSettingsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
