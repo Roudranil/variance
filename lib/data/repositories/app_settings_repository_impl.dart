@@ -1,15 +1,18 @@
 // lib/data/repositories/app_settings_repository_impl.dart
 //
-// Concrete implementation of IAppSettingsRepository backed by Drift.
+// Concrete implementation of IAppSettingsRepository backed by AppSettingsDao.
 //
-// Reads from and writes to the app_settings key-value table directly via
-// the AppDatabase (no dedicated DAO — the table is queried inline).
+// Reads from and writes to the app_settings key-value table via the dedicated
+// AppSettingsDao. Partial updates are applied by writing only the changed keys.
 //
-// This implementation provides only the onboarding flag lookup required for
-// the GoRouter redirect guard (T-16). Full settings management is implemented
-// in later feature tasks (S-9).
+// Test cases (see test/data/repositories/app_settings_repository_impl_test.dart):
+//   1. watch — emits defaults after seedDefaults
+//   2. watch — emits updated value after update(patch)
+//   3. update — patch with single field only writes that key
+//   4. update — upsert idempotency: calling update twice yields last value
+//   5. update — returns Err(DatabaseFailure) on DAO exception
 
-import 'package:drift/drift.dart';
+import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/app_database.dart';
 import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
@@ -65,16 +68,17 @@ const _kLastExchangeRateFetch = 'last_exchange_rate_fetch';
 // Implementation
 // ---------------------------------------------------------------------------
 
-/// Drift-backed implementation of [IAppSettingsRepository].
+/// Drift DAO-backed implementation of [IAppSettingsRepository].
 ///
-/// Reads the full key-value set from [AppSettings] rows and maps them to
-/// the typed [AppSettings] domain entity. Partial updates are applied by
-/// writing only the changed keys.
+/// Delegates all table access to [AppSettingsDao]. Partial updates are applied
+/// by writing only the non-null fields from [AppSettingsPatch]; null fields are
+/// left unchanged. The typed [AppSettings] entity is assembled from all current
+/// KV rows on every stream emission.
 class AppSettingsRepositoryImpl implements IAppSettingsRepository {
-  /// Creates an [AppSettingsRepositoryImpl] that reads from and writes to [db].
-  const AppSettingsRepositoryImpl(this._db);
+  /// Creates an [AppSettingsRepositoryImpl] backed by [dao].
+  const AppSettingsRepositoryImpl(this._dao);
 
-  final AppDatabase _db;
+  final AppSettingsDao _dao;
 
   // -----------------------------------------------------------------------
   // IAppSettingsRepository
@@ -82,66 +86,81 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
 
   @override
   Stream<AppSettings> watch() {
-    // Watch all rows in the app_settings table; rebuild the entity on each
-    // emission. The KV store is small enough that a full-table re-read on
-    // every change is acceptable.
-    return (_db.select(_db.appSettings)).watch().map(_rowsToEntity);
+    // Watch all rows in app_settings; rebuild the typed entity on each
+    // emission. The KV table is small so a full-table re-read on every
+    // change is acceptable.
+    return _dao.watch().map(_rowsToEntity);
   }
 
   @override
   Future<Result<void>> update(AppSettingsPatch patch) async {
     try {
-      await _db.transaction(() async {
-        await _maybeWrite(_kHomeCurrency, patch.homeCurrency);
-        await _maybeWrite(
-          _kTheme,
-          patch.theme?.name,
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+      // Write only the non-null patch fields; each is an independent upsert.
+      await _maybeUpsert(_kHomeCurrency, patch.homeCurrency, now);
+      await _maybeUpsert(_kTheme, patch.theme?.name, now);
+      await _maybeUpsert(_kColorSchemeMode, patch.colorSchemeMode?.name, now);
+      await _maybeUpsert(_kColorSeed, patch.colorSeed, now);
+
+      if (patch.animationsEnabled != null) {
+        await _dao.upsert(
+          _kAnimationsEnabled,
+          patch.animationsEnabled! ? '1' : '0',
+          now,
         );
-        await _maybeWrite(_kColorSchemeMode, patch.colorSchemeMode?.name);
-        await _maybeWrite(_kColorSeed, patch.colorSeed);
-        if (patch.animationsEnabled != null) {
-          await _maybeWrite(
-            _kAnimationsEnabled,
-            patch.animationsEnabled! ? '1' : '0',
-          );
-        }
-        await _maybeWrite(_kWeekStart, patch.weekStart?.name);
-        if (patch.percentagePrecision != null) {
-          await _maybeWrite(
-            _kPercentagePrecision,
-            patch.percentagePrecision!.toString(),
-          );
-        }
-        if (patch.descriptionMaxLength != null) {
-          await _maybeWrite(
-            _kDescriptionMaxLength,
-            patch.descriptionMaxLength!.toString(),
-          );
-        }
-        await _maybeWrite(
-          _kBackButtonBehaviour,
-          patch.backButtonBehaviour?.name,
+      }
+
+      await _maybeUpsert(_kWeekStart, patch.weekStart?.name, now);
+
+      if (patch.percentagePrecision != null) {
+        await _dao.upsert(
+          _kPercentagePrecision,
+          patch.percentagePrecision!.toString(),
+          now,
         );
-        if (patch.lockTimeoutSeconds != null) {
-          await _maybeWrite(
-            _kLockTimeoutSeconds,
-            patch.lockTimeoutSeconds!.toString(),
-          );
-        }
-        await _maybeWrite(_kDisplayName, patch.displayName);
-        if (patch.onboardingComplete != null) {
-          await _maybeWrite(
-            _kOnboardingComplete,
-            patch.onboardingComplete! ? '1' : '0',
-          );
-        }
-        if (patch.lastExchangeRateFetch != null) {
-          await _maybeWrite(
-            _kLastExchangeRateFetch,
-            patch.lastExchangeRateFetch!.toString(),
-          );
-        }
-      });
+      }
+
+      if (patch.descriptionMaxLength != null) {
+        await _dao.upsert(
+          _kDescriptionMaxLength,
+          patch.descriptionMaxLength!.toString(),
+          now,
+        );
+      }
+
+      await _maybeUpsert(
+        _kBackButtonBehaviour,
+        patch.backButtonBehaviour?.name,
+        now,
+      );
+
+      if (patch.lockTimeoutSeconds != null) {
+        await _dao.upsert(
+          _kLockTimeoutSeconds,
+          patch.lockTimeoutSeconds!.toString(),
+          now,
+        );
+      }
+
+      await _maybeUpsert(_kDisplayName, patch.displayName, now);
+
+      if (patch.onboardingComplete != null) {
+        await _dao.upsert(
+          _kOnboardingComplete,
+          patch.onboardingComplete! ? '1' : '0',
+          now,
+        );
+      }
+
+      if (patch.lastExchangeRateFetch != null) {
+        await _dao.upsert(
+          _kLastExchangeRateFetch,
+          patch.lastExchangeRateFetch!.toString(),
+          now,
+        );
+      }
+
       return const Ok(null);
     } on Exception catch (e) {
       return Err(DatabaseFailure(e.toString()));
@@ -152,24 +171,17 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
   // Private helpers
   // -----------------------------------------------------------------------
 
-  /// Writes [value] for [key] only when [value] is non-null.
-  ///
-  /// Uses upsert semantics (INSERT OR REPLACE) so the call is idempotent.
-  Future<void> _maybeWrite(String key, String? value) async {
+  /// Upserts [key] → [value] only when [value] is non-null.
+  Future<void> _maybeUpsert(String key, String? value, int nowEpoch) async {
     if (value == null) return;
-    await _db.into(_db.appSettings).insertOnConflictUpdate(
-          AppSettingsCompanion.insert(
-            key: key,
-            value: Value(value),
-            updatedAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          ),
-        );
+    await _dao.upsert(key, value, nowEpoch);
   }
 
   /// Maps a list of [AppSetting] Drift rows into the typed [AppSettings]
   /// domain entity.
   ///
-  /// Unknown keys are ignored silently. Missing keys use the entity defaults.
+  /// Unknown keys are ignored silently. Missing keys fall back to the entity
+  /// defaults declared on the [AppSettings] Freezed factory.
   AppSettings _rowsToEntity(List<AppSetting> rows) {
     // Build a key → value lookup map.
     final kv = {for (final row in rows) row.key: row.value};
@@ -203,5 +215,3 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
     return values.where((v) => v.name == name).firstOrNull;
   }
 }
-
-// DatabaseFailure is defined in domain/core/failure.dart.

@@ -110,12 +110,12 @@ Future<ICurrencyRepository> currencyRepository(Ref ref) async {
 /// Provides the [IAppSettingsRepository] implementation for the lifetime of
 /// the app.
 ///
-/// This provider reads from the AppDatabase directly (no dedicated DAO).
-/// Used by the GoRouter redirect guard to check onboarding completion.
+/// Backed by [AppSettingsDao]. Used by the GoRouter redirect guard, the
+/// AppSettingsNotifier, and the theme provider.
 @Riverpod(keepAlive: true)
 Future<IAppSettingsRepository> appSettingsRepository(Ref ref) async {
-  final db = await ref.watch(appDatabaseProvider.future);
-  return AppSettingsRepositoryImpl(db);
+  final dao = await ref.watch(appSettingsDaoProvider.future);
+  return AppSettingsRepositoryImpl(dao);
 }
 
 // ---------------------------------------------------------------------------

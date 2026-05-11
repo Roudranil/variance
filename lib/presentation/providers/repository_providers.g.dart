@@ -329,8 +329,8 @@ String _$currencyRepositoryHash() =>
 /// Provides the [IAppSettingsRepository] implementation for the lifetime of
 /// the app.
 ///
-/// This provider reads from the AppDatabase directly (no dedicated DAO).
-/// Used by the GoRouter redirect guard to check onboarding completion.
+/// Backed by [AppSettingsDao]. Used by the GoRouter redirect guard, the
+/// AppSettingsNotifier, and the theme provider.
 
 @ProviderFor(appSettingsRepository)
 final appSettingsRepositoryProvider = AppSettingsRepositoryProvider._();
@@ -338,8 +338,8 @@ final appSettingsRepositoryProvider = AppSettingsRepositoryProvider._();
 /// Provides the [IAppSettingsRepository] implementation for the lifetime of
 /// the app.
 ///
-/// This provider reads from the AppDatabase directly (no dedicated DAO).
-/// Used by the GoRouter redirect guard to check onboarding completion.
+/// Backed by [AppSettingsDao]. Used by the GoRouter redirect guard, the
+/// AppSettingsNotifier, and the theme provider.
 
 final class AppSettingsRepositoryProvider extends $FunctionalProvider<
         AsyncValue<IAppSettingsRepository>,
@@ -351,8 +351,8 @@ final class AppSettingsRepositoryProvider extends $FunctionalProvider<
   /// Provides the [IAppSettingsRepository] implementation for the lifetime of
   /// the app.
   ///
-  /// This provider reads from the AppDatabase directly (no dedicated DAO).
-  /// Used by the GoRouter redirect guard to check onboarding completion.
+  /// Backed by [AppSettingsDao]. Used by the GoRouter redirect guard, the
+  /// AppSettingsNotifier, and the theme provider.
   AppSettingsRepositoryProvider._()
       : super(
           from: null,
@@ -380,7 +380,7 @@ final class AppSettingsRepositoryProvider extends $FunctionalProvider<
 }
 
 String _$appSettingsRepositoryHash() =>
-    r'4124c57fdc28b88d9ac5d6f29c7cbe23cde5e8ab';
+    r'98bbfb8d69b31d2b885a3dcdc27e6cb978b94332';
 
 /// Loads all active [Currency] entities from the local database once on app
 /// startup and keeps the result alive for the entire session.
