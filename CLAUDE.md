@@ -121,6 +121,57 @@ When spawning subagents:
   - each commit must not contain changes across different groups of files/features/tickets/bugs/work items/topics
   - if a commit contains more than 10 files of changes or more than 100 lines of changes, it is usually not atomic commit. Dont do that unless absolutely required.
 
+#### Versioning and releases
+
+- `./version` (repo root) is the **single source of truth** for the app version. Never edit `pubspec.yaml`'s `version:` field directly.
+- Use `scripts/version.sh` to bump. It writes `version`, syncs `pubspec.yaml`, and commits `chore(release): bump to vX.Y.Z` automatically.
+- Use `scripts/release.sh` to cut a release. Never create git tags or push manually.
+
+##### Version bump workflow
+
+```bash
+# bump patch: 0.23.0 → 0.23.1
+./scripts/version.sh --patch
+
+# bump minor: 0.23.0 → 0.24.0
+./scripts/version.sh --minor
+
+# bump major: 0.23.0 → 1.0.0
+./scripts/version.sh --major
+
+# add pre-release tag: 0.23.0 → 0.23.0-beta
+./scripts/version.sh --tag beta
+
+# bump + tag in one step: 0.23.0 → 0.24.0-rc1
+./scripts/version.sh --minor --tag rc1
+```
+
+##### Release workflow
+
+```bash
+# 1. Bump the version (creates the commit automatically)
+./scripts/version.sh --patch   # or --minor / --major
+
+# 2. Cut the release
+./scripts/release.sh
+```
+
+`release.sh` will:
+1. Verify the working tree is clean and HEAD is the version-bump commit
+2. Run the full local test suite: format check → analyze → domain purity → unit/widget tests → integration tests (if `integration_test/` exists)
+3. On **any** failure: write `release-failure.md` at the repo root with the failing stage and full output, then abort. No tag is created.
+4. On **all passing**: create annotated tag `vX.Y.Z`, push branch + tag → triggers the CD pipeline in `.github/workflows/release.yml`
+
+`release-failure.md` is gitignored — it is a local diagnosis file only.
+
+##### CI / CD pipeline
+
+| Workflow | Trigger | What runs |
+| -------- | ------- | --------- |
+| `ci.yml` | Push / PR to `main` | Format, analyze, domain-check, unit + widget tests |
+| `release.yml` | Push of `v*` tag (from `release.sh`) | All CI checks + obfuscated APK build + GitHub release |
+| `integration.yml` | Manual `workflow_dispatch` | Placeholder — integration tests run locally for now |
+
 ### Never
 
 - Start implementation before specifications are complete
