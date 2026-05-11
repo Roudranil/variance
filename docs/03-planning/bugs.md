@@ -37,6 +37,7 @@ Two defects identified from the failing INSERT:
 ### Notes
 
 - Raw `SqliteException` was surfaced directly to the user — error translation is missing at the repository or use-case boundary.
+- **Probable cause (founder, 2026-05-11):** Categories domain (E-4) is not yet implemented. The `categories` table is likely empty or not seeded, so any FK reference to `category_id` from `entries` will fail. This may mean the FK violation is a symptom of missing category data rather than a code bug in the use case itself. The atomicity defect (root cause #2) is still independently valid and must be fixed regardless. Revisit root cause #1 once E-4 is underway — it may resolve itself if a reserved system category is seeded, or may still require a schema change.
 
 ### References
 
