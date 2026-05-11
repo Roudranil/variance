@@ -8,27 +8,52 @@ part of 'app_settings_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Watches the live [AppSettings] entity from the database.
+/// Reactive notifier for the live [AppSettings] entity with write support.
 ///
-/// Emits the full settings object on every change to any setting key.
-/// Emits defaults when the database is empty (first launch).
-
-@ProviderFor(appSettings)
-final appSettingsProvider = AppSettingsProvider._();
-
-/// Watches the live [AppSettings] entity from the database.
+/// Bridges the repository [Stream] into Riverpod's [AsyncNotifier] lifecycle
+/// using the Completer pattern (same approach as [CategoryList]):
+/// - Subscribes once in [build] and forwards stream events to [state].
+/// - Cancels the subscription via [ref.onDispose].
+/// - Returns a [Completer] future so [build] resolves after the first event.
 ///
-/// Emits the full settings object on every change to any setting key.
-/// Emits defaults when the database is empty (first launch).
+/// Exposes [save] to apply partial patches. On repository error the method
+/// throws an [Exception] so that the calling widget can display the failure.
+///
+/// NOTE: The write method is named [save] (not `update`) to avoid a name clash
+/// with the built-in `AsyncNotifier.update` provided by Riverpod 3.x.
 
-final class AppSettingsProvider extends $FunctionalProvider<
-        AsyncValue<AppSettings>, AppSettings, Stream<AppSettings>>
-    with $FutureModifier<AppSettings>, $StreamProvider<AppSettings> {
-  /// Watches the live [AppSettings] entity from the database.
+@ProviderFor(AppSettingsNotifier)
+final appSettingsProvider = AppSettingsNotifierProvider._();
+
+/// Reactive notifier for the live [AppSettings] entity with write support.
+///
+/// Bridges the repository [Stream] into Riverpod's [AsyncNotifier] lifecycle
+/// using the Completer pattern (same approach as [CategoryList]):
+/// - Subscribes once in [build] and forwards stream events to [state].
+/// - Cancels the subscription via [ref.onDispose].
+/// - Returns a [Completer] future so [build] resolves after the first event.
+///
+/// Exposes [save] to apply partial patches. On repository error the method
+/// throws an [Exception] so that the calling widget can display the failure.
+///
+/// NOTE: The write method is named [save] (not `update`) to avoid a name clash
+/// with the built-in `AsyncNotifier.update` provided by Riverpod 3.x.
+final class AppSettingsNotifierProvider
+    extends $AsyncNotifierProvider<AppSettingsNotifier, AppSettings> {
+  /// Reactive notifier for the live [AppSettings] entity with write support.
   ///
-  /// Emits the full settings object on every change to any setting key.
-  /// Emits defaults when the database is empty (first launch).
-  AppSettingsProvider._()
+  /// Bridges the repository [Stream] into Riverpod's [AsyncNotifier] lifecycle
+  /// using the Completer pattern (same approach as [CategoryList]):
+  /// - Subscribes once in [build] and forwards stream events to [state].
+  /// - Cancels the subscription via [ref.onDispose].
+  /// - Returns a [Completer] future so [build] resolves after the first event.
+  ///
+  /// Exposes [save] to apply partial patches. On repository error the method
+  /// throws an [Exception] so that the calling widget can display the failure.
+  ///
+  /// NOTE: The write method is named [save] (not `update`) to avoid a name clash
+  /// with the built-in `AsyncNotifier.update` provided by Riverpod 3.x.
+  AppSettingsNotifierProvider._()
       : super(
           from: null,
           argument: null,
@@ -40,18 +65,41 @@ final class AppSettingsProvider extends $FunctionalProvider<
         );
 
   @override
-  String debugGetCreateSourceHash() => _$appSettingsHash();
+  String debugGetCreateSourceHash() => _$appSettingsNotifierHash();
 
   @$internal
   @override
-  $StreamProviderElement<AppSettings> $createElement(
-          $ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<AppSettings> create(Ref ref) {
-    return appSettings(ref);
-  }
+  AppSettingsNotifier create() => AppSettingsNotifier();
 }
 
-String _$appSettingsHash() => r'3a8c31f20d7e3d1b51445b4ec4b2e15ae691d981';
+String _$appSettingsNotifierHash() =>
+    r'16f77086a8eca6766a439011ea6d3d97e2506c89';
+
+/// Reactive notifier for the live [AppSettings] entity with write support.
+///
+/// Bridges the repository [Stream] into Riverpod's [AsyncNotifier] lifecycle
+/// using the Completer pattern (same approach as [CategoryList]):
+/// - Subscribes once in [build] and forwards stream events to [state].
+/// - Cancels the subscription via [ref.onDispose].
+/// - Returns a [Completer] future so [build] resolves after the first event.
+///
+/// Exposes [save] to apply partial patches. On repository error the method
+/// throws an [Exception] so that the calling widget can display the failure.
+///
+/// NOTE: The write method is named [save] (not `update`) to avoid a name clash
+/// with the built-in `AsyncNotifier.update` provided by Riverpod 3.x.
+
+abstract class _$AppSettingsNotifier extends $AsyncNotifier<AppSettings> {
+  FutureOr<AppSettings> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<AppSettings>, AppSettings>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<AppSettings>, AppSettings>,
+        AsyncValue<AppSettings>,
+        Object?,
+        Object?>;
+    element.handleCreate(ref, build);
+  }
+}
