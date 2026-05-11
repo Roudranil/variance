@@ -191,3 +191,54 @@ final class AccountBalanceFamily extends $Family
   @override
   String toString() => r'accountBalanceProvider';
 }
+
+/// Reactive stream of the aggregate net worth in the home currency.
+///
+/// Emits a [NetWorthResult] whenever the account list or any account balance
+/// changes. The staleness flag in [NetWorthResult.hasStaleRates] drives the
+/// "Rate may be outdated" indicator in the UI.
+
+@ProviderFor(netWorth)
+final netWorthProvider = NetWorthProvider._();
+
+/// Reactive stream of the aggregate net worth in the home currency.
+///
+/// Emits a [NetWorthResult] whenever the account list or any account balance
+/// changes. The staleness flag in [NetWorthResult.hasStaleRates] drives the
+/// "Rate may be outdated" indicator in the UI.
+
+final class NetWorthProvider extends $FunctionalProvider<
+        AsyncValue<NetWorthResult>, NetWorthResult, Stream<NetWorthResult>>
+    with $FutureModifier<NetWorthResult>, $StreamProvider<NetWorthResult> {
+  /// Reactive stream of the aggregate net worth in the home currency.
+  ///
+  /// Emits a [NetWorthResult] whenever the account list or any account balance
+  /// changes. The staleness flag in [NetWorthResult.hasStaleRates] drives the
+  /// "Rate may be outdated" indicator in the UI.
+  NetWorthProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'netWorthProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$netWorthHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<NetWorthResult> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<NetWorthResult> create(Ref ref) {
+    return netWorth(ref);
+  }
+}
+
+String _$netWorthHash() => r'16a00f3c8b3b92f3b9c0cd713237267de99451eb';

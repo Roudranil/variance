@@ -5,6 +5,8 @@
 // Provider graph:
 //   accountsProvider          ← accountRepositoryProvider (via use case)
 //   accountBalanceProvider    ← accountRepositoryProvider
+//   netWorthProvider          ← accountRepositoryProvider, exchangeRateRepositoryProvider,
+//                               appSettingsProvider (home currency)
 //
 // Rules (SDS §2.2.3, §2.2.4):
 //   - All providers use @riverpod annotation.
@@ -12,14 +14,19 @@
 //     screens that have their own lifecycle.
 //   - accountBalanceProvider is parameterised; each (accountId) tuple is
 //     auto-disposed when no longer watched.
+//   - netWorthProvider auto-disposes with the accounts screen.
 //
 // Test cases (see test/providers/account_providers_test.dart):
 //   1. accountsProvider emits list of accounts from in-memory DB
 //   2. accountBalanceProvider emits 0 for a new account
+//   3. netWorthProvider emits zero result when no accounts exist
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/services/net_worth_calculator.dart';
+import 'package:variance/domain/usecases/home/watch_net_worth_use_case.dart';
+import 'package:variance/presentation/providers/app_settings_providers.dart';
 import 'package:variance/presentation/providers/repository_providers.dart';
 
 part 'account_providers.g.dart';
@@ -58,4 +65,34 @@ Stream<int> accountBalance(
 ) async* {
   final repo = await ref.watch(accountRepositoryProvider.future);
   yield* repo.watchBalance(accountId, currencyCode).map((m) => m.amountMinor);
+}
+
+// ---------------------------------------------------------------------------
+// netWorthProvider
+// ---------------------------------------------------------------------------
+
+/// Reactive stream of the aggregate net worth in the home currency.
+///
+/// Emits a [NetWorthResult] whenever the account list or any account balance
+/// changes. The staleness flag in [NetWorthResult.hasStaleRates] drives the
+/// "Rate may be outdated" indicator in the UI.
+@riverpod
+Stream<NetWorthResult> netWorth(Ref ref) async* {
+  final accountRepo = await ref.watch(accountRepositoryProvider.future);
+  final exchangeRateRepo = await ref.watch(exchangeRateRepositoryProvider.future);
+
+  // Read home currency from app settings; fall back to 'INR' while loading.
+  final settings = ref.watch(appSettingsProvider).value;
+  final homeCurrency = settings?.homeCurrency ?? 'INR';
+
+  const calculator = NetWorthCalculator();
+
+  final useCase = WatchNetWorthUseCase(
+    accountRepository: accountRepo,
+    exchangeRateRepository: exchangeRateRepo,
+    calculator: calculator,
+    homeCurrency: homeCurrency,
+  );
+
+  yield* useCase.call();
 }
