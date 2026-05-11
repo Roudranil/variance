@@ -76,9 +76,27 @@ git push && git push --tags
 
 The release workflow picks up the tag, verifies it matches `version`, builds the APK, and creates a GitHub release automatically.
 
-## CI
+## CI / CD
 
 | Workflow | Trigger | Jobs |
 |---|---|---|
-| `ci.yml` | Push / PR to `main` | Format check, analyze, domain purity, tests |
-| `release.yml` | Push of `v*` tag | All CI checks + release APK build + GitHub release |
+| `ci.yml` | Push / PR to `main` | Format check, analyze, domain purity, unit + widget tests |
+| `release.yml` | Push of `v*` tag | All CI checks, obfuscated APK build, GitHub release with APK |
+| `integration.yml` | Manual (`workflow_dispatch`) | Placeholder — integration tests run locally for now |
+
+### Release workflow
+
+`release.yml` is triggered by a `v*` tag. The tag is never pushed by hand — `release.sh` does it:
+
+1. `./scripts/version.sh --patch` (or `--minor` / `--major`) — bumps `version`, syncs `pubspec.yaml`, commits `chore(release): bump to vX.Y.Z`
+2. `./scripts/release.sh` — verifies clean tree, creates annotated tag `vX.Y.Z`, pushes branch + tag → GitHub sees the tag and starts `release.yml`
+
+### Integration tests
+
+Integration tests require a running Android device or emulator and are not yet automated in CI. Run them locally:
+
+```sh
+flutter test integration_test/
+```
+
+Automation (AVD via `reactivecircus/android-emulator-runner` or Firebase Test Lab) is tracked as future work once the `integration_test/` suite is populated.

@@ -1,0 +1,51 @@
+name: Integration Tests
+
+# Integration tests require a running Android emulator (AVD) and are not
+# yet wired into automated CI. This workflow is a placeholder.
+#
+# When ready, the steps below need:
+#   - an AVD matrix (API level, arch)
+#   - reactivated `flutter test integration_test/` step
+#   - optionally: Firebase Test Lab via fastlane or gcloud CLI
+#
+# For now, integration tests are run locally:
+#   flutter test integration_test/
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are you running integration tests manually?'
+        required: false
+
+jobs:
+  integration:
+    name: Integration Tests (manual / placeholder)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # TODO: start Android emulator (AVD) here
+      # - name: Start emulator
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 31
+      #     arch: x86_64
+      #     script: flutter test integration_test/
+
+      - name: Note
+        run: |
+          echo "Integration test execution not yet automated."
+          echo "Run locally: flutter test integration_test/"
