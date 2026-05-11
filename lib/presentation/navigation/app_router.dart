@@ -47,7 +47,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:variance/domain/entities/account.dart';
 import 'package:variance/domain/entities/app_settings.dart';
+import 'package:variance/presentation/features/accounts/account_form_screen.dart';
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
@@ -252,12 +254,8 @@ GoRouter makeAppRouter(WidgetRef ref) {
                   // /accounts/new — in-tab push (context.push)
                   GoRoute(
                     path: 'new',
-                    builder: (context, state) {
-                      // TODO(dev): return CreateAccountScreen();
-                      return const RouteErrorScreen(
-                        errorMessage: 'Create account not yet implemented.',
-                      );
-                    },
+                    builder: (context, state) =>
+                        const AccountFormScreen(existingAccount: null),
                   ),
                   // /accounts/:id — in-tab push (context.push)
                   GoRoute(
@@ -274,6 +272,22 @@ GoRouter makeAppRouter(WidgetRef ref) {
                         errorMessage: 'Account detail not yet implemented.',
                       );
                     },
+                    routes: [
+                      // /accounts/:id/edit
+                      GoRoute(
+                        path: 'edit',
+                        builder: (context, state) {
+                          // Account passed via extra (set by AccountListScreen).
+                          final account = state.extra;
+                          if (account is! Account) {
+                            return const RouteErrorScreen(
+                              errorMessage: 'Account data missing for edit.',
+                            );
+                          }
+                          return AccountFormScreen(existingAccount: account);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
