@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# read-references.sh — Read a Story or Task work item and expand its
+# read-references.sh — Read a Story, Task, or Bug work item and expand its
 # ### References section: fetches the full content of every referenced
 # file section and concatenates them with source annotations.
 #
@@ -12,6 +12,7 @@
 # Usage:
 #   ./scripts/read-references.sh --story <id>    e.g. S-3
 #   ./scripts/read-references.sh --task  <id>    e.g. T-7
+#   ./scripts/read-references.sh --bug   <id>    e.g. B-1
 #
 # Exit codes:
 #   0  Success
@@ -47,7 +48,7 @@ export MAX_LINES=9999999
 # ---------------------------------------------------------------------------
 usage() {
   cat >&2 <<'EOF'
-read-references.sh — Expand the ### References section of a Story or Task
+read-references.sh — Expand the ### References section of a Story, Task, or Bug
 
 Reads the work item, extracts each URL from ### References, then fetches
 and concatenates the full content of each referenced section. Output is
@@ -56,10 +57,12 @@ annotated with the source reference. No size limit is applied.
 Usage:
   ./scripts/read-references.sh --story <id>    e.g. S-3
   ./scripts/read-references.sh --task  <id>    e.g. T-7
+  ./scripts/read-references.sh --bug   <id>    e.g. B-1
 
 Arguments:
   --story  Read a story from docs/03-planning/stories.md
   --task   Read a task from docs/03-planning/tasks.md
+  --bug    Read a bug from docs/03-planning/bugs.md
 
 Note:
   --epic is explicitly not supported. Use read-work-item.sh for epics.
@@ -74,6 +77,7 @@ Exit codes:
 Examples:
   ./scripts/read-references.sh --story S-3
   ./scripts/read-references.sh --task  T-7
+  ./scripts/read-references.sh --bug   B-1
 EOF
 }
 
@@ -94,7 +98,7 @@ case "$flag" in
     echo "       Use read-work-item.sh --epic $id to read an epic directly." >&2
     exit $ERR_INVALID_ARGS
     ;;
-  --story|--task)
+  --story|--task|--bug)
     ;;
   --help|-h)
     usage
@@ -109,8 +113,8 @@ case "$flag" in
 esac
 
 # Validate ID format
-if [[ ! "$id" =~ ^[ST]-[0-9]+$ ]]; then
-  echo "error: invalid ID format '$id' — expected S-N or T-N" >&2
+if [[ ! "$id" =~ ^[STB]-[0-9]+$ ]]; then
+  echo "error: invalid ID format '$id' — expected S-N, T-N, or B-N" >&2
   exit $ERR_INVALID_ARGS
 fi
 
@@ -121,6 +125,10 @@ if [[ "$flag" == "--story" && ! "$id" =~ ^S- ]]; then
 fi
 if [[ "$flag" == "--task" && ! "$id" =~ ^T- ]]; then
   echo "error: --task expects a T-N id, got '$id'" >&2
+  exit $ERR_INVALID_ARGS
+fi
+if [[ "$flag" == "--bug" && ! "$id" =~ ^B- ]]; then
+  echo "error: --bug expects a B-N id, got '$id'" >&2
   exit $ERR_INVALID_ARGS
 fi
 
