@@ -2772,3 +2772,49 @@
 - `4. Onboarding & First Launch` (`docs/02-technical/ux-flows.md`)
 
 ---
+
+## S-83 — Debug Error Overlay and Bug-Report Shortcut
+
+**Parent Epic:** E-1 — Infrastructure Foundations
+
+**Story:** As a developer running a debug build, I want every unhandled exception and domain `Failure` to appear in a readable, copyable on-screen overlay with a one-tap bug-report shortcut, so that I can diagnose faults quickly and feed them directly into the bug-tracking workflow without losing context.
+
+### Objectives
+
+- Implement a `DebugErrorOverlay` widget that wraps the app root exclusively in `kDebugMode` (zero-cost tree in release)
+- Capture all Flutter framework errors via `FlutterError.onError` and unhandled async errors via `PlatformDispatcher.instance.onError`; route both to the overlay
+- Capture domain `Failure` values surfaced by Riverpod notifiers (e.g. `AsyncValue.error`) via a global Riverpod observer; route to the overlay
+- Overlay displays: error type, message, abbreviated stack trace (first 10 frames), and originating context (screen route + use-case name where available)
+- Overlay is scrollable and full-text selectable
+- "Copy" button copies the full error payload (type + message + full stack trace) to the system clipboard
+- "Record Bug" button pre-fills a plain-text bug-report template (error type, message, full stack trace, current route, timestamp) and copies it to clipboard — ready to paste into the `log bug` TPM workflow
+- "Dismiss" button removes the overlay without clearing the error log; a persistent floating badge shows the count of captured errors and re-opens the overlay on tap
+- All overlay code is gated behind `kDebugMode`; no import, widget, or provider from this feature is present in a release build
+
+### Notes
+
+- Hook into the existing `dev` build flavor defined in the SDS (`2.12.4 Build Flavors`) — the overlay is active only in that flavor's debug mode
+- The `Failure` sealed hierarchy (`DatabaseFailure`, `ValidationFailure`, `NetworkFailure`, `NotFoundFailure`, `BusinessRuleFailure`) is already defined; the observer reads `.message` from each variant
+- Do not modify any production notifier or use case — the capture mechanism is a side-channel observer only
+- Stack trace formatting: use `Chain.terse` from `package:stack_trace` to strip framework frames; full raw trace still included in the clipboard payload
+
+### Definition of Done
+
+- In a debug build, triggering a `FlutterError` (e.g. overflow) causes the overlay to appear within one frame
+- In a debug build, a notifier that emits `AsyncValue.error(Err(DatabaseFailure(...)))` causes the overlay to appear
+- Overlay displays error type, message, and at least one stack frame
+- "Copy" taps copy a non-empty string containing the error message to the clipboard (verified by widget test)
+- "Record Bug" taps copy a non-empty string containing the word "Bug Report" and the error message to the clipboard
+- Dismissed overlay re-opens via the floating error-count badge
+- `flutter build apk --release` succeeds with zero references to `DebugErrorOverlay` in the compiled output (verified by `strings` grep on the APK classes.dex)
+- All overlay behaviour is covered by widget tests; no integration test required
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.9.2 Result Type Definition` (`docs/02-technical/sds.md`)
+- `2.9.3 Layer-Boundary Rules` (`docs/02-technical/sds.md`)
+- `2.12.4 Build Flavors` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
