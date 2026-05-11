@@ -4796,3 +4796,183 @@
 - `9.1 app_settings` (`docs/02-technical/data-model.md`)
 
 ---
+
+## T-209 — DebugErrorOverlay widget scaffold
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Create `lib/presentation/debug/debug_error_overlay.dart` with a `DebugErrorOverlay` stateful widget that wraps `child` only when `kDebugMode == true`; in release the widget returns `child` directly with zero overhead
+- [ ] Define an internal `_ErrorEntry` model holding: `errorType` (String), `message` (String), `tersedTrace` (String, first 10 frames via `Chain.terse`), `fullTrace` (String, raw), `route` (String?), `useCaseName` (String?), `timestamp` (DateTime)
+- [ ] Expose a `static void capture(Object error, StackTrace stack, {String? route, String? useCaseName})` method that appends an `_ErrorEntry` to an internal `ValueNotifier<List<_ErrorEntry>>`; no-op outside `kDebugMode`
+- [ ] Add `package:stack_trace` to `pubspec.yaml` dev/dependency block if not already present
+- [ ] Confirm the widget compiles and the `kDebugMode` guard eliminates the tree in a release build (run `flutter build apk --release --no-pub` and check for zero compile errors)
+
+### Notes
+
+- `Chain.terse` strips internal Flutter/Dart framework frames; the full raw trace is kept separately for the clipboard payload
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.12.4 Build Flavors` (`docs/02-technical/sds.md`)
+
+---
+
+## T-210 — Flutter framework and async error capture
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] In `main_dev.dart` (or the dev-flavor entry point), after `WidgetsFlutterBinding.ensureInitialized()`, assign `FlutterError.onError` to forward `FlutterErrorDetails` to `DebugErrorOverlay.capture`; preserve any existing handler by chaining
+- [ ] Assign `PlatformDispatcher.instance.onError` to forward unhandled async errors and their stack traces to `DebugErrorOverlay.capture`; return `true` to mark the error as handled
+- [ ] Both assignments must be conditional on `kDebugMode`; production entry points are not touched
+- [ ] Write a widget test that pumps a widget which calls `FlutterError.reportError` with a synthetic `FlutterErrorDetails` and asserts the overlay becomes visible
+
+### Notes
+
+- Do not modify `main.dart` (prod entry point) or `main_staging.dart`; changes are confined to `main_dev.dart`
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.12.4 Build Flavors` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
+
+## T-211 — Riverpod ProviderObserver for domain Failure capture
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Create `lib/presentation/debug/debug_error_observer.dart` implementing `ProviderObserver`; override `didUpdateProvider` to detect when `newValue` is an `AsyncValue.error` whose error is `Err(Failure)`; extract the `Failure.message` and call `DebugErrorOverlay.capture` with the provider name as `useCaseName`
+- [ ] Register the observer on the root `ProviderScope` in `main_dev.dart` only; guard with `kDebugMode`
+- [ ] Write a widget test: override a `FutureProvider` to emit `AsyncValue.error(Err(DatabaseFailure('test')), StackTrace.empty)`, pump, and assert the overlay shows "DatabaseFailure" and "test"
+
+### Notes
+
+- Do not modify any production notifier or use case; the observer is a pure side-channel read
+
+### References
+
+- `2.9.2 Result Type Definition` (`docs/02-technical/sds.md`)
+- `2.9.3 Layer-Boundary Rules` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
+
+## T-212 — Overlay UI: scrollable error detail panel
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Build the overlay panel as a full-screen `Material` widget layered via `Stack` at the root; panel is scrollable (`SingleChildScrollView`)
+- [ ] Display per `_ErrorEntry`: error type (bold), message, abbreviated stack trace (first 10 frames from `Chain.terse`), route (if non-null), use-case name (if non-null), and formatted timestamp
+- [ ] All text in the panel must be wrapped in `SelectableText` to allow full-text selection and copy
+- [ ] When multiple errors are captured, show a header "Error N of M" with prev/next navigation arrows to page between entries
+- [ ] Write a widget test: inject two `_ErrorEntry` instances via `DebugErrorOverlay.capture`, pump, and assert both entries are navigable and their fields render correctly
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
+
+## T-213 — Clipboard actions: Copy and Record Bug buttons
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Add a "Copy" `TextButton` to the overlay panel; on tap, call `Clipboard.setData` with a payload containing: error type, message, and the full raw stack trace (not tersed)
+- [ ] Add a "Record Bug" `TextButton`; on tap, build a plain-text template: header line "Bug Report", error type, message, full stack trace, current route, and ISO-8601 timestamp; call `Clipboard.setData` with this string
+- [ ] Write widget tests for both buttons: mock `Clipboard.setData` via the test binding, tap each button, and assert (a) Copy payload is non-empty and contains the error message, (b) Record Bug payload contains the literal string "Bug Report" and the error message
+
+### Notes
+
+- Use `flutter_test`'s `TestWidgetsFlutterBinding` clipboard mock; no real clipboard access needed in tests
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
+
+## T-214 — Dismiss action and persistent error-count badge
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Add a "Dismiss" `IconButton` (close icon) to the overlay; on tap, hide the full panel but do not clear the `_ErrorEntry` list
+- [ ] When the panel is dismissed and the error list is non-empty, render a persistent floating `FloatingActionButton`-style badge in the bottom-right corner showing the error count
+- [ ] Tapping the badge re-opens the full overlay panel at the last-viewed entry
+- [ ] Write widget tests: (a) dismiss the overlay and assert the panel is not in the tree but the badge is visible with correct count, (b) tap the badge and assert the panel re-appears
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
+
+## T-215 — Widget test suite: full overlay behaviour coverage
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Write a test: trigger a `FlutterError` overflow (pump a widget wider than constraints), assert the overlay panel appears within one frame (after `pump()`)
+- [ ] Write a test: inject a `DatabaseFailure` via the Riverpod observer path, assert overlay panel shows `DatabaseFailure` type and its message
+- [ ] Write a test: inject a `ValidationFailure` via the Riverpod observer path, assert overlay panel shows `ValidationFailure` type
+- [ ] Write a test: overlay is not present in the widget tree when `kDebugMode` is false (build a release-mode widget with the overlay wrapper and assert no overlay-specific widget key exists)
+- [ ] Ensure all tests pass with `flutter test --coverage`; confirm overlay-related files appear in coverage report
+
+### Notes
+
+- The `kDebugMode` release test can be achieved by wrapping the app root with a test double that forces `kDebugMode = false` via a parameter flag on `DebugErrorOverlay`
+
+### References
+
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+- `2.9.2 Result Type Definition` (`docs/02-technical/sds.md`)
+- `2.11.3 Widget Testing` (`docs/02-technical/sds.md`)
+
+---
+
+## T-216 — Release build verification: zero debug overlay code in APK
+
+**Parent Epic:** E-1
+**Parent Story:** S-83
+
+### Todo
+
+- [ ] Run `flutter build apk --release --flavor prod` and confirm the build succeeds with zero compile errors
+- [ ] Run `strings build/app/outputs/flutter-apk/app-prod-release.apk | grep -i DebugErrorOverlay` and assert zero matches
+- [ ] Document the verification command and expected output in a comment block inside `main_dev.dart` as a reminder for future maintainers
+- [ ] Add the `strings` grep command as a step in a local CI check script (`scripts/verify-release-clean.sh`) so it can be re-run on demand
+
+### Notes
+
+- This task is verification-only; no production code changes are expected. If the `kDebugMode` guard is correctly placed in T-209, this should pass without further changes.
+
+### References
+
+- `2.12.4 Build Flavors` (`docs/02-technical/sds.md`)
+- `2.9 Error Handling Patterns` (`docs/02-technical/sds.md`)
+
+---
