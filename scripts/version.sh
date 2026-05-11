@@ -227,3 +227,22 @@ fi
 
 printf '%s' "$new_version" > "$VERSION_FILE"
 echo "$current -> $new_version"
+
+# ---------------------------------------------------------------------------
+# Sync pubspec.yaml and commit
+# ---------------------------------------------------------------------------
+SYNC_SCRIPT="$SCRIPT_DIR/sync-version.sh"
+if [[ ! -x "$SYNC_SCRIPT" ]]; then
+  echo "warning: sync-version.sh not found or not executable — pubspec.yaml not updated" >&2
+else
+  "$SYNC_SCRIPT"
+fi
+
+git add "$VERSION_FILE" "$SCRIPT_DIR/../pubspec.yaml"
+git commit -m "$(cat <<EOF
+chore(release): bump to v${new_version}
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+EOF
+)"
+echo "committed: chore(release): bump to v${new_version}"
