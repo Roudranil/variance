@@ -21,19 +21,19 @@ Every commit **must** conform to this structure. No exceptions.
 
 ## 2. Types
 
-| Type       | When to use                                                    |
-|------------|----------------------------------------------------------------|
-| `feat`     | New feature or behavior visible to the user or system         |
-| `fix`      | Bug fix — corrects incorrect behavior                         |
-| `refactor` | Code restructure with no behavior change                      |
-| `test`     | Add or modify tests only                                      |
-| `docs`     | Documentation only                                            |
-| `chore`    | Tooling, deps, config — no production code change             |
-| `style`    | Formatting, whitespace — no logic change                      |
-| `perf`     | Performance improvement                                       |
-| `ci`       | CI pipeline changes                                           |
-| `build`    | Build system or external dependency changes                   |
-| `revert`   | Revert a prior commit — reference it in the body              |
+| Type       | When to use                                           |
+| ---------- | ----------------------------------------------------- |
+| `feat`     | New feature or behavior visible to the user or system |
+| `fix`      | Bug fix — corrects incorrect behavior                 |
+| `refactor` | Code restructure with no behavior change              |
+| `test`     | Add or modify tests only                              |
+| `docs`     | Documentation only                                    |
+| `chore`    | Tooling, deps, config — no production code change     |
+| `style`    | Formatting, whitespace — no logic change              |
+| `perf`     | Performance improvement                               |
+| `ci`       | CI pipeline changes                                   |
+| `build`    | Build system or external dependency changes           |
+| `revert`   | Revert a prior commit — reference it in the body      |
 
 **Never invent types.** If none fit, use the closest and note it in the body.
 
@@ -59,6 +59,7 @@ These are **hard rules**, not suggestions:
 - Describe **what changes**, not why (why goes in body)
 
 **Good:**
+
 ```
 feat(ledger): add multi-currency posting support
 fix(router): redirect unauthenticated users to login
@@ -66,6 +67,7 @@ test(settings): cover AppSettingsNotifier update path
 ```
 
 **Bad:**
+
 ```
 Fixed some stuff
 feat: Added new feature for the ledger thing.
@@ -100,28 +102,29 @@ An atomic commit is a single, complete, self-contained unit of change.
 
 ### Rules
 
-- **One logical change per commit.** One fix, one feature slice, one refactor.
+- **One work item per commit. Hard stop.** A commit may reference exactly one task ID (T-N). If files from two different tasks are staged together, unstage and split — no exceptions, no "they're related."
+- **One logical change per commit.** One fix, one feature slice, one refactor — scoped entirely within that work item.
 - **All files in a commit must belong to the same topic.** No mixing UI, DB, and tests from different features in one commit.
-- **Never bundle unrelated fixes.** If you notice a separate bug while working, fix it in a separate commit.
+- **Never bundle unrelated fixes.** If you notice a separate bug while working, fix it in a separate commit under its own task.
 - **Tests for a change travel with the change.** Don't commit a feature without its tests, or tests without the code they cover.
 - **Do not commit broken states.** Every commit must leave the codebase compilable and tests passing.
 
 ### Size Heuristics (treat as warnings, not limits)
 
-| Signal | Action |
-|---|---|
-| > 10 files changed | Ask: is this truly one topic? |
-| > 100 lines changed | Ask: can this be split? |
-| Commit message needs "and" | Split it |
+| Signal                     | Action                        |
+| -------------------------- | ----------------------------- |
+| > 10 files changed         | Ask: is this truly one topic? |
+| > 100 lines changed        | Ask: can this be split?       |
+| Commit message needs "and" | Split it                      |
 
 ### Splitting a large change
 
 If a task requires 300+ lines across multiple concerns, break it into a stack:
 
 ```
-feat(db): add expense_tags schema migration        ← schema only
-feat(ledger): wire tag selection to posting flow   ← business logic
-test(ledger): cover tag posting edge cases         ← tests
+feat(db): add expense_tags schema migration        <- schema only
+feat(ledger): wire tag selection to posting flow   <- business logic
+test(ledger): cover tag posting edge cases         <- tests
 ```
 
 ---
@@ -136,11 +139,11 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 ### Model-to-footer mapping
 
-| Model in use          | Footer value                                             |
-|-----------------------|----------------------------------------------------------|
-| Claude Sonnet 4.6     | `Claude Sonnet 4.6 <noreply@anthropic.com>`              |
-| Claude Opus 4.7       | `Claude Opus 4.7 <noreply@anthropic.com>`                |
-| Claude Haiku 4.5      | `Claude Haiku 4.5 <noreply@anthropic.com>`               |
+| Model in use      | Footer value                                |
+| ----------------- | ------------------------------------------- |
+| Claude Sonnet 4.6 | `Claude Sonnet 4.6 <noreply@anthropic.com>` |
+| Claude Opus 4.7   | `Claude Opus 4.7 <noreply@anthropic.com>`   |
+| Claude Haiku 4.5  | `Claude Haiku 4.5 <noreply@anthropic.com>`  |
 
 Always use the model that **authored the code**, not whichever is orchestrating.
 
@@ -180,12 +183,14 @@ PR titles are the permanent record. They must be exact and scannable.
 - Keep the full title under **72 characters**
 
 **Good:**
+
 ```
 feat(settings): AppSettingsNotifier + UpdateAppSettingsUseCase [T-173]
 fix(router): redirect loop on cold start [T-88]
 ```
 
 **Bad:**
+
 ```
 T-173: settings notifier stuff
 WIP: ledger changes + router fix + some tests
@@ -209,8 +214,8 @@ A PR title alone is not sufficient. The description must include:
 Before every commit, verify:
 
 - [ ] Type and scope are correct
-- [ ] Subject is imperative, ≤50 chars, no trailing period
-- [ ] Body explains *why* (if included)
+- [ ] Subject is imperative, <=50 chars, no trailing period
+- [ ] Body explains _why_ (if included)
 - [ ] All changed files belong to the same logical topic
 - [ ] Tests travel with the change they cover
 - [ ] No debug prints, commented-out code, or TODOs snuck in
