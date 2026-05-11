@@ -9,6 +9,7 @@
 #   ./scripts/read-work-item.sh --epic  <id>    e.g. E-1
 #   ./scripts/read-work-item.sh --story <id>    e.g. S-3
 #   ./scripts/read-work-item.sh --task  <id>    e.g. T-7
+#   ./scripts/read-work-item.sh --bug   <id>    e.g. B-1
 #
 # Exit codes:
 #   0  Success
@@ -42,12 +43,14 @@ Usage:
   ./scripts/read-work-item.sh --epic  <id>    e.g. E-1
   ./scripts/read-work-item.sh --story <id>    e.g. S-3
   ./scripts/read-work-item.sh --task  <id>    e.g. T-7
+  ./scripts/read-work-item.sh --bug   <id>    e.g. B-1
 
 Arguments:
   --epic   Read from docs/03-planning/epics.md
   --story  Read from docs/03-planning/stories.md
   --task   Read from docs/03-planning/tasks.md
-  <id>     Work item ID (e.g. E-1, S-3, T-7)
+  --bug    Read from docs/03-planning/bugs.md
+  <id>     Work item ID (e.g. E-1, S-3, T-7, B-1)
 
 Exit codes:
   0  Success
@@ -59,6 +62,7 @@ Examples:
   ./scripts/read-work-item.sh --epic  E-1
   ./scripts/read-work-item.sh --story S-3
   ./scripts/read-work-item.sh --task  T-7
+  ./scripts/read-work-item.sh --bug   B-1
 EOF
 }
 
@@ -84,6 +88,9 @@ case "$flag" in
   --task)
     planning_file="docs/03-planning/tasks.md"
     ;;
+  --bug)
+    planning_file="docs/03-planning/bugs.md"
+    ;;
   --help|-h)
     usage
     exit 0
@@ -96,9 +103,9 @@ case "$flag" in
     ;;
 esac
 
-# Validate ID looks plausible (E-N, S-N, T-N where N is one or more digits)
-if [[ ! "$id" =~ ^[EST]-[0-9]+$ ]]; then
-  echo "error: invalid ID format '$id' — expected E-N, S-N, or T-N" >&2
+# Validate ID looks plausible (E-N, S-N, T-N, B-N where N is one or more digits)
+if [[ ! "$id" =~ ^[ESTB]-[0-9]+$ ]]; then
+  echo "error: invalid ID format '$id' — expected E-N, S-N, T-N, or B-N" >&2
   exit $ERR_INVALID_ARGS
 fi
 
