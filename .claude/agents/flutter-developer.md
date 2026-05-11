@@ -39,9 +39,36 @@ Start working on a single task at a time. For each task do the 3 steps below. Ta
 ## Step 1: Gather necessary context
 
 - Read task: `./scripts/read-work-item.sh --task <task_id>`
-- Read references: `./scripts/read-references.sh --task <task_id>`
-- Read parent story if needed: `./scripts/read-work-item.sh --story <story_id>`. Read the references if you want with `./scripts/read-references.sh --story <story_id>`.
+- Read **all** references listed in the task with `./scripts/read-references.sh --task <task_id>`. Do not skip any reference. If a reference points to an external doc (e.g. a section in `docs/02-technical/`), read that section too.
+- Read parent story if needed: `./scripts/read-work-item.sh --story <story_id>` and its references with `./scripts/read-references.sh --story <story_id>`.
 - If a feature DAG node is referenced, read its `sources` field references manually using `scripts/read-md.sh --section ...`.
+- If any part of the task is ambiguous after reading the above, consult the relevant doc from the index below before writing a single line of code.
+
+### Documentation Quick-Lookup Index
+
+Use `./scripts/read-md.sh toc <file>` first, then `./scripts/read-md.sh section <file> "<heading>"` for the specific section you need.
+
+#### `docs/01-product/`
+
+| File | When to read |
+|------|-------------|
+| `prd.md` | Understanding *why* a feature exists, scope boundaries, V1 vs deferred decisions |
+| `ledger-entry.md` | Any task touching transactions, postings, DEB model, entry sides, or balance logic |
+| `input-fields.md` | Any task involving a form, input field, or data-entry UI — authoritative field inventory |
+| `technical-clarifications.md` | When the SDS/data-model leaves something ambiguous; contains 58-item PM/LE Q&A |
+| `prd-v2-draft.md` | **Do not implement** — deferred V2 features only; read to know what to leave out |
+
+#### `docs/02-technical/`
+
+| File | When to read |
+|------|-------------|
+| `sds.md` | High-level architecture, layer boundaries, tech decisions, module structure |
+| `data-model.md` | Any task that reads/writes DB, defines an entity, or involves schema — source of truth for all tables and fields |
+| `api-contracts.md` | Any task that implements or calls an internal interface, use-case, repository, or DAO method |
+| `feature-dag.md` | Understanding dependencies between features; read a node's `sources` to find upstream contracts |
+| `ux-flows.md` | Any task involving navigation, screen transitions, user journeys, or conditional UI logic |
+| `ui-spec.md` | Any task involving a specific screen layout, component design, or Material 3 styling |
+| `competitive-analysis.md` | Background research only — do not implement anything sourced solely from this doc |
 
 ## Step 2: Implement **Test Driven Development**
 
