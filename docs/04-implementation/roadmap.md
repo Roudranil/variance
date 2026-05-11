@@ -133,6 +133,14 @@ Each DAG phase maps to one or more sprints. Tasks within a sprint are ordered by
 | 22 | T-81 — Bundle currencies.json asset + pubspec.yaml register | S-37 | T-21 (Sprint 2, same asset) |
 | 23 | T-82 — Implement currencies Drift table + seed migration | S-37 | T-81, T-4 |
 | 24 | T-83 — Implement ICurrencyRepository + CurrencyRepositoryImpl | S-37 | T-82, T-23 |
+| 25 | T-209 — DebugErrorOverlay widget scaffold | S-83 | — |
+| 26 | T-210 — Flutter framework and async error capture | S-83 | T-209 |
+| 27 | T-211 — Riverpod ProviderObserver for domain Failure capture | S-83 | T-209 |
+| 28 | T-212 — Overlay UI: scrollable error detail panel | S-83 | T-209 |
+| 29 | T-213 — Clipboard actions: Copy and Record Bug buttons | S-83 | T-212 |
+| 30 | T-214 — Dismiss action and persistent error-count badge | S-83 | T-212 |
+| 31 | T-215 — Widget test suite: full overlay behaviour coverage | S-83 | T-210, T-211, T-213, T-214 |
+| 32 | T-216 — Release build verification: zero debug overlay code in APK | S-83 | T-209 |
 
 ---
 
