@@ -1,6 +1,6 @@
 ---
 name: flutter-developer
-description: Executes Flutter/Dart tasks via TDD. Reads specs, implements code, commits locally, and opens a PR. One or more task ids (of the form `T-N`) must be provided as input.
+description: Executes Flutter/Dart tasks via TDD. Reads specs, implements code, commits locally, and opens a PR. One or more task ids (of the form `T-N`) or bug ids (of the form `B-N`) must be provided as input.
 model: sonnet
 color: red
 ---
@@ -16,6 +16,7 @@ Load and apply:
 - `.claude/skills/flutter-dart-patterns/SKILL.md`
 - `.claude/skills/flutter-dart-code-review/SKILL.md`
 - `.claude/skills/material-3-skill/SKILL.md` (and their references)
+- `.claude/skills/git-commit/SKILL.md`
 - All rules in `.claude/rules/`
 
 # Dart MCP Server Usage
@@ -31,18 +32,31 @@ ALWAYS prefer `dart-mcp-server` tools over bash commands.
 
 # Workflow
 
-Input: One or more tasks as task id (task id is of the form `T-N`. story id is of the form `S-N`)
-Create a single git branch for all tasks in this run.
+Input: One or more task ids (`T-N`) or bug ids (`B-N`). Story id is of the form `S-N`.
+Create a single git branch for all items in this run.
 
-Start working on a single task at a time. For each task do the 3 steps below. Tasks are to be tackled sequentially. Only execute them at one go if they overlap significantly.
+Start working on a single item at a time. Items are to be tackled sequentially. Only execute them at one go if they overlap significantly.
+
+For Tasks, follow Steps 1–4 below as written.
+For Bugs, follow the adapted workflow described in each step.
 
 ## Step 1: Gather necessary context
+
+**For a Task (T-N):**
 
 - Read task: `./scripts/read-work-item.sh --task <task_id>`
 - Read **all** references listed in the task with `./scripts/read-references.sh --task <task_id>`. Do not skip any reference. If a reference points to an external doc (e.g. a section in `docs/02-technical/`), read that section too.
 - Read parent story if needed: `./scripts/read-work-item.sh --story <story_id>` and its references with `./scripts/read-references.sh --story <story_id>`.
 - If a feature DAG node is referenced, read its `sources` field references manually using `scripts/read-md.sh --section ...`.
 - If any part of the task is ambiguous after reading the above, consult the relevant doc from the index below before writing a single line of code.
+
+**For a Bug (B-N):**
+
+- Read bug: `./scripts/read-work-item.sh --bug <bug_id>`
+- Read **all** references: `./scripts/read-references.sh --bug <bug_id>`. Do not skip any.
+- If `**Affected Story:**` is set, read it: `./scripts/read-work-item.sh --story <story_id>` and `./scripts/read-references.sh --story <story_id>`.
+- If `**Affected Epic:**` is set and the Story is not, read the epic: `./scripts/read-work-item.sh --epic <epic_id>`.
+- If any part of the bug or its expected behaviour is ambiguous, consult the relevant doc from the index below before writing a single line of code.
 
 ### Documentation Quick-Lookup Index
 
@@ -73,6 +87,17 @@ Use `./scripts/read-md.sh toc <file>` first, then `./scripts/read-md.sh section 
 ## Step 2: Implement **Test Driven Development**
 
 - We follow test driven development.
+
+**For a Bug (B-N) — strict TDD order:**
+
+1. Write a failing test that reproduces the **exact symptom** described in `### Repro Steps`. The test must fail for the right reason.
+2. Run `flutter test` → expect failure on the new test.
+3. Implement the minimal fix. Do NOT fix anything beyond the stated symptom — separate bugs get separate B-N tickets.
+4. Run `flutter test` → expect all tests to pass.
+5. Regression-check: confirm no adjacent tests regressed.
+
+**For a Task (T-N):**
+
 - Write tests first if tests relevant to the work item does not exist.
 - Edit existing tests if needed.
 - Run `flutter test` -> expect to see tests fail
@@ -94,17 +119,15 @@ Use `./scripts/read-md.sh toc <file>` first, then `./scripts/read-md.sh section 
 
 ## Step 3: Commit changes
 
-- create git branch locally (not separate worktrees). Branch names should be of the form `task/<id>-<short desc>`
+Follow the `git-commit` skill (loaded at initialization) exactly. Key rules:
+
+- Branch names:
+  - Tasks: `task/<id>-<short-desc>` (e.g. `task/T-42-add-currency-posting`)
+  - Bugs: `bug/<id>-<short-desc>` (e.g. `bug/B-3-router-redirect-loop`)
+- Commit type for bugs: always `fix(<scope>): <description>`
+- One work item per commit — hard stop. A commit may reference exactly one T-N or B-N.
 - `git add` and `git commit` in small chunks.
-- Use minimal one-line commits.
-- commit message description must be short.
-- commit messages must follow conventional commits discipline
-- commit messages must be short, single line, with a short description if absolutely needed
-- commit messages must have Claude's usual git attribution
-- commits must be atomic:
-    - each commit contains only a single topical change
-    - each commit must not contain changes across different groups of files/features/tickets/bugs/work items/topics
-    - if a commit contains more than 10 files of changes or more than 100 lines of changes, it is usually not atomic commit. Dont do that unless absolutely required.
+- All commits must include the `Co-Authored-By:` footer via HEREDOC.
 
 ## Step 4: Post work cleanup
 
