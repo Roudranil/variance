@@ -53,6 +53,8 @@ import 'package:variance/presentation/features/accounts/account_form_screen.dart
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
+import 'package:variance/presentation/features/settings/categories/category_detail_screen.dart';
+import 'package:variance/presentation/features/settings/categories/category_management_screen.dart';
 import 'package:variance/presentation/features/settings/settings_screen.dart';
 import 'package:variance/presentation/features/shared/route_error_screen.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
@@ -97,6 +99,9 @@ abstract final class AppRoutes {
 
   /// Category management (in-tab push on Tab 2).
   static const settingsCategories = '/settings/categories';
+
+  /// New category form (in-tab push on Tab 2).
+  static const settingsCategoryNew = '/settings/categories/new';
 
   /// Category detail (in-tab push on Tab 2).
   static const settingsCategoryDetail = '/settings/categories/:id';
@@ -312,14 +317,25 @@ GoRouter makeAppRouter(WidgetRef ref) {
                   ),
                   GoRoute(
                     path: 'categories',
-                    builder: (context, state) {
-                      // TODO(dev): return CategoryManagementScreen();
-                      return const RouteErrorScreen(
-                        errorMessage:
-                            'Category management not yet implemented.',
-                      );
-                    },
+                    builder: (context, state) =>
+                        const CategoryManagementScreen(),
                     routes: [
+                      // /settings/categories/new — create form
+                      GoRoute(
+                        path: 'new',
+                        builder: (context, state) {
+                          // Query params: ?tree=expense|income, ?parent=:id
+                          final tree = state.uri.queryParameters['tree'];
+                          final parentId =
+                              state.uri.queryParameters['parent'];
+                          return CategoryDetailScreen(
+                            categoryId: null,
+                            initialTree: tree,
+                            initialParentId: parentId,
+                          );
+                        },
+                      ),
+                      // /settings/categories/:id — edit form
                       GoRoute(
                         path: ':id',
                         builder: (context, state) {
@@ -329,10 +345,10 @@ GoRouter makeAppRouter(WidgetRef ref) {
                               errorMessage: 'Category ID is missing.',
                             );
                           }
-                          // TODO(dev): return CategoryDetailScreen(id: id);
-                          return const RouteErrorScreen(
-                            errorMessage:
-                                'Category detail not yet implemented.',
+                          return CategoryDetailScreen(
+                            categoryId: id,
+                            initialTree: null,
+                            initialParentId: null,
                           );
                         },
                       ),
