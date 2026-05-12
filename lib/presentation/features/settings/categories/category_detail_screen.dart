@@ -134,7 +134,8 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
     final existing = ref.read(categoryListProvider).value ?? [];
     // Case-insensitive check within same tree + parent scope,
     // excluding the category being edited (self-reference).
-    final parentId = _isCreateMode ? widget.initialParentId : _loadedCategory?.parentId;
+    final parentId =
+        _isCreateMode ? widget.initialParentId : _loadedCategory?.parentId;
     final conflict = existing.any(
       (c) =>
           c.name.toLowerCase() == name.toLowerCase() &&
@@ -162,9 +163,8 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
         );
       }
       final categories = categoriesAsync.value ?? [];
-      _loadedCategory = categories
-          .where((c) => c.id == widget.categoryId)
-          .firstOrNull;
+      _loadedCategory =
+          categories.where((c) => c.id == widget.categoryId).firstOrNull;
 
       // Pre-fill fields on first load.
       if (_loadedCategory != null && !_isDirty) {
@@ -383,11 +383,7 @@ class _ParentLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final parentName = parentId == null
         ? '—'
-        : categories
-                .where((c) => c.id == parentId)
-                .firstOrNull
-                ?.name ??
-            '—';
+        : categories.where((c) => c.id == parentId).firstOrNull?.name ?? '—';
 
     return ListTile(
       title: Text(
@@ -564,9 +560,8 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
   void _onSearch() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filtered = kCategoryIcons.entries
-          .where((e) => e.key.contains(query))
-          .toList();
+      _filtered =
+          kCategoryIcons.entries.where((e) => e.key.contains(query)).toList();
     });
   }
 
@@ -609,8 +604,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
               Expanded(
                 child: GridView.builder(
                   controller: scrollController,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 5,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
@@ -619,8 +613,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
                   itemCount: _filtered.length,
                   itemBuilder: (context, index) {
                     final entry = _filtered[index];
-                    final isSelected =
-                        entry.key == widget.currentIconRef;
+                    final isSelected = entry.key == widget.currentIconRef;
                     return Tooltip(
                       message: entry.key,
                       child: InkWell(
@@ -632,9 +625,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer
+                                ? Theme.of(context).colorScheme.primaryContainer
                                 : null,
                             borderRadius: BorderRadius.circular(8),
                           ),
