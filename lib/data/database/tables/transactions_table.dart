@@ -8,9 +8,9 @@
 
 import 'package:drift/drift.dart';
 
-import 'package:variance/data/database/tables/currencies_table.dart';
 import 'package:variance/data/database/tables/accounts_table.dart';
 import 'package:variance/data/database/tables/categories_table.dart';
+import 'package:variance/data/database/tables/currencies_table.dart';
 import 'package:variance/data/database/tables/payees_table.dart';
 import 'package:variance/data/database/tables/recurring_templates_table.dart';
 

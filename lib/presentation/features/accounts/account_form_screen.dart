@@ -44,6 +44,7 @@
 import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -82,7 +83,10 @@ class AccountFormScreen extends ConsumerStatefulWidget {
   /// Parameters:
   /// - [repo]: The fake [IAccountRepository] to back the use case.
   static CreateAccountUseCase makeCreateUseCase(IAccountRepository repo) {
-    return CreateAccountUseCase(repo, const LedgerEngine(_NoOpLedgerRepository()));
+    return CreateAccountUseCase(
+      repo,
+      const LedgerEngine(_NoOpLedgerRepository()),
+    );
   }
 
   @override
@@ -203,8 +207,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   }
 
   Future<void> _saveCreate() async {
-    final useCaseAsync =
-        await ref.read(createAccountUseCaseProvider.future);
+    final useCaseAsync = await ref.read(createAccountUseCaseProvider.future);
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final initialBalance = int.tryParse(
           _initialBalanceController.text.replaceAll(',', ''),
@@ -235,8 +238,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   }
 
   Future<void> _saveEdit() async {
-    final useCaseAsync =
-        await ref.read(updateAccountUseCaseProvider.future);
+    final useCaseAsync = await ref.read(updateAccountUseCaseProvider.future);
     final existing = widget.existingAccount!;
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
@@ -275,8 +277,10 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
       case ReinstateOfferFailure():
         _showReinstatementDialog(failure);
       case _:
-        dev.log('AccountFormScreen save error: ${failure.message}',
-            name: 'AccountForm');
+        dev.log(
+          'AccountFormScreen save error: ${failure.message}',
+          name: 'AccountForm',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(failure.message)),
         );
@@ -288,7 +292,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Reinstate account?'),
-        content: Text(
+        content: const Text(
           'You previously had an account with this name. '
           'Would you like to restore it instead?',
         ),
@@ -488,8 +492,8 @@ class _CategoryField extends StatelessWidget {
           border: const OutlineInputBorder(),
           suffixIcon: Tooltip(
             message: 'Category cannot be changed after creation',
-            child: Icon(Icons.lock_outline,
-                color: colorScheme.onSurfaceVariant),
+            child:
+                Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
           ),
           fillColor: colorScheme.surfaceContainerLow,
           filled: true,
@@ -507,10 +511,10 @@ class _CategoryField extends StatelessWidget {
       key: const Key('account_category_field'),
       onTap: () => _showCategoryPicker(context),
       child: InputDecorator(
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           labelText: 'Account category',
-          border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.chevron_right),
+          border: OutlineInputBorder(),
+          suffixIcon: Icon(Icons.chevron_right),
         ),
         child: Text(
           selectedCategory != null ? _categoryLabel(selectedCategory!) : '',
@@ -586,8 +590,8 @@ class _CurrencyField extends StatelessWidget {
           decoration: InputDecoration(
             labelText: 'Currency',
             border: const OutlineInputBorder(),
-            suffixIcon: Icon(Icons.lock_outline,
-                color: colorScheme.onSurfaceVariant),
+            suffixIcon:
+                Icon(Icons.lock_outline, color: colorScheme.onSurfaceVariant),
             fillColor: colorScheme.surfaceContainerLow,
             filled: true,
           ),

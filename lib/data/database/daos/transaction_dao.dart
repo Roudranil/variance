@@ -22,8 +22,8 @@
 import 'package:drift/drift.dart';
 
 import 'package:variance/data/database/app_database.dart';
-import 'package:variance/data/database/tables/transactions_table.dart';
 import 'package:variance/data/database/tables/entries_table.dart';
+import 'package:variance/data/database/tables/transactions_table.dart';
 
 part 'transaction_dao.g.dart';
 
@@ -315,7 +315,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     final rawRows = await customSelect(
       'SELECT t.id FROM transactions t '
       'JOIN transactions_fts fts ON fts.rowid = t.rowid '
-      "WHERE transactions_fts MATCH ? "
+      'WHERE transactions_fts MATCH ? '
       "AND t.status = 'posted' "
       "AND t.purpose IN ('user', 'correction', 'system') "
       'ORDER BY rank',

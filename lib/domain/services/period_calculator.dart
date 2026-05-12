@@ -120,7 +120,8 @@ class PeriodCalculator {
       RecurrenceUnit.day => n * 86400,
       RecurrenceUnit.week => n * 7 * 86400,
       RecurrenceUnit.month || RecurrenceUnit.year => throw StateError(
-          'Variable-length units do not have a fixed second count'),
+          'Variable-length units do not have a fixed second count',
+        ),
     };
   }
 

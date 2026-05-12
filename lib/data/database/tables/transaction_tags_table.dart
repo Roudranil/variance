@@ -7,8 +7,8 @@
 
 import 'package:drift/drift.dart';
 
-import 'package:variance/data/database/tables/transactions_table.dart';
 import 'package:variance/data/database/tables/tags_table.dart';
+import 'package:variance/data/database/tables/transactions_table.dart';
 
 /// Drift table for the many-to-many join between transactions and tags.
 ///

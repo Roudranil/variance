@@ -12,8 +12,8 @@
 //   4. update — upsert idempotency: calling update twice yields last value
 //   5. update — returns Err(DatabaseFailure) on DAO exception
 
-import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/app_database.dart';
+import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/app_settings.dart';

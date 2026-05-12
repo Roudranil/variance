@@ -99,8 +99,11 @@ class AccountRepositoryImpl implements IAccountRepository {
       }
       return Ok(_rowToEntity(inserted));
     } on Object catch (e, st) {
-      dev.log('AccountRepositoryImpl.create error: $e',
-          name: 'AccountRepo', stackTrace: st);
+      dev.log(
+        'AccountRepositoryImpl.create error: $e',
+        name: 'AccountRepo',
+        stackTrace: st,
+      );
       return Err(DatabaseFailure('Failed to create account: $e'));
     }
   }
@@ -124,8 +127,11 @@ class AccountRepositoryImpl implements IAccountRepository {
       }
       return Ok(_rowToEntity(row));
     } on Object catch (e, st) {
-      dev.log('AccountRepositoryImpl.update error: $e',
-          name: 'AccountRepo', stackTrace: st);
+      dev.log(
+        'AccountRepositoryImpl.update error: $e',
+        name: 'AccountRepo',
+        stackTrace: st,
+      );
       return Err(DatabaseFailure('Failed to update account: $e'));
     }
   }
@@ -140,8 +146,11 @@ class AccountRepositoryImpl implements IAccountRepository {
       }
       return const Ok(null);
     } on Object catch (e, st) {
-      dev.log('AccountRepositoryImpl.softDelete error: $e',
-          name: 'AccountRepo', stackTrace: st);
+      dev.log(
+        'AccountRepositoryImpl.softDelete error: $e',
+        name: 'AccountRepo',
+        stackTrace: st,
+      );
       return Err(DatabaseFailure('Failed to soft-delete account: $e'));
     }
   }

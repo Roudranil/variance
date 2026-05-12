@@ -135,7 +135,8 @@ class TransactionRepositoryImpl implements ITransactionRepository {
         stackTrace: st,
       );
       return Err(
-          DatabaseFailure('Failed to create transaction with entries: $e'));
+        DatabaseFailure('Failed to create transaction with entries: $e'),
+      );
     }
   }
 

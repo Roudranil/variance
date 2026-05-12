@@ -9,8 +9,8 @@
 import 'package:drift/drift.dart';
 
 import 'package:variance/data/database/app_database.dart';
-import 'package:variance/data/database/tables/recurring_templates_table.dart';
 import 'package:variance/data/database/tables/installment_plans_table.dart';
+import 'package:variance/data/database/tables/recurring_templates_table.dart';
 
 part 'template_dao.g.dart';
 

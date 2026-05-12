@@ -171,7 +171,8 @@ class CreateTransactionUseCase {
     // Rule 1 — amount > 0
     if (draft.amountMinor <= 0) {
       return const ValidationFailure(
-          'Transaction amount must be greater than 0.');
+        'Transaction amount must be greater than 0.',
+      );
     }
 
     // Rule 5 — dateTime must be set

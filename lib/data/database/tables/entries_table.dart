@@ -8,10 +8,10 @@
 
 import 'package:drift/drift.dart';
 
-import 'package:variance/data/database/tables/transactions_table.dart';
 import 'package:variance/data/database/tables/accounts_table.dart';
 import 'package:variance/data/database/tables/categories_table.dart';
 import 'package:variance/data/database/tables/currencies_table.dart';
+import 'package:variance/data/database/tables/transactions_table.dart';
 
 /// Drift table for individual double-entry bookkeeping ledger lines.
 ///
