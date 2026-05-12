@@ -83,4 +83,12 @@ abstract interface class IAccountRepository {
   /// Parameters:
   /// - [accountId]: UUID of the parent account.
   Future<List<AccountDetail>> getAccountDetails(String accountId);
+
+  /// Returns the distinct ISO 4217 currency codes of all active (non-deleted)
+  /// accounts.
+  ///
+  /// Used by [RefreshExchangeRatesUseCase] to determine which currency pairs
+  /// to fetch from the remote API (SDS §2.7.2). System and equity accounts
+  /// are excluded.
+  Future<List<String>> getDistinctActiveCurrencies();
 }

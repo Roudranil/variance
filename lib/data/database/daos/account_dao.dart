@@ -26,6 +26,7 @@ import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/tables/account_details_table.dart';
 import 'package:variance/data/database/tables/accounts_table.dart';
 import 'package:variance/data/database/tables/entries_table.dart';
+import 'package:variance/data/database/tables/transactions_table.dart';
 
 part 'account_dao.g.dart';
 
@@ -33,7 +34,7 @@ part 'account_dao.g.dart';
 ///
 /// System accounts ([Account.isSystem] = true) are excluded from the default
 /// watch stream. Balance computation is derived from the `entries` table.
-@DriftAccessor(tables: [Accounts, AccountDetails, Entries])
+@DriftAccessor(tables: [Accounts, AccountDetails, Entries, Transactions])
 class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
   /// Creates a new [AccountDao] bound to [db].
   AccountDao(super.db);
@@ -180,18 +181,19 @@ class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
       '''
       SELECT
         COALESCE(
-          SUM(CASE WHEN side = 'debit'  THEN amount_minor ELSE 0 END), 0
+          SUM(CASE WHEN entries.side = 'debit'  THEN entries.amount_minor ELSE 0 END), 0
         ) -
         COALESCE(
-          SUM(CASE WHEN side = 'credit' THEN amount_minor ELSE 0 END), 0
+          SUM(CASE WHEN entries.side = 'credit' THEN entries.amount_minor ELSE 0 END), 0
         ) AS balance
       FROM entries
-      WHERE account_id = ?
+      INNER JOIN transactions ON transactions.id = entries.transaction_id
+      WHERE entries.account_id = ?
+        AND transactions.status != 'pending'
       ''',
       variables: [Variable.withString(accountId)],
-      // entries is provided by _$AccountDaoMixin (generated) since Entries
-      // is listed in @DriftAccessor tables.
-      readsFrom: {entries},
+      // Both entries and transactions are listed in @DriftAccessor tables.
+      readsFrom: {entries, transactions},
     );
 
     return query.watchSingle().map(
@@ -235,5 +237,19 @@ class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
             (d) => d.accountId.equals(accountId) & d.detailKey.isIn(keys),
           ))
         .go();
+  }
+
+  /// Returns the distinct ISO 4217 currency codes of all non-deleted,
+  /// non-system accounts.
+  ///
+  /// Used by [RefreshExchangeRatesUseCase] to determine which foreign
+  /// currency pairs to fetch (SDS §2.7.2).
+  Future<List<String>> getDistinctActiveCurrencies() async {
+    final results = await customSelect(
+      'SELECT DISTINCT currency_code FROM accounts '
+      'WHERE is_deleted = 0 AND is_system = 0',
+      readsFrom: {accounts},
+    ).get();
+    return results.map((r) => r.read<String>('currency_code')).toList();
   }
 }

@@ -122,6 +122,14 @@ class FakeAccountRepository implements IAccountRepository {
 
   @override
   Future<List<AccountDetail>> getAccountDetails(String accountId) async => [];
+
+  @override
+  Future<List<String>> getDistinctActiveCurrencies() async =>
+      _accounts.values
+          .where((a) => !a.isDeleted && !a.isSystem)
+          .map((a) => a.currencyCode)
+          .toSet()
+          .toList();
 }
 
 /// Stub [LedgerRepository] that records calls to [insertEntries].
