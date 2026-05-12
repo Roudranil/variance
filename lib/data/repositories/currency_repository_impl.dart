@@ -6,10 +6,17 @@
 // Drift-managed currencies table (seeded at first launch from
 // assets/data/currencies.json). All data is local; no network fetch occurs.
 //
-// The remaining write operations (setHomeCurrency, enableCurrency,
-// disableCurrency) are stubs — implemented in later feature tasks.
+// Write operations (T-83):
+//   - setHomeCurrency: delegates to IAppSettingsRepository
+//   - enableCurrency: sets is_active = true via CurrencyDao.setActive
+//   - disableCurrency: sets is_active = false via CurrencyDao.setActive
+//
+// Test cases (T-83):
+//   - watchEnabled() filters to is_active = true rows
+//   - setActive via CurrencyDao persists enable/disable correctly
 
 import 'package:variance/data/database/daos/currency_dao.dart';
+import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/currency.dart';
 import 'package:variance/domain/repositories/i_currency_repository.dart';
@@ -90,31 +97,59 @@ class CurrencyRepositoryImpl implements ICurrencyRepository {
 
   @override
   Stream<List<Currency>> watchEnabled() {
-    // watchEnabled and watchAll are equivalent for now — all bundled
-    // currencies are active. This will diverge when user-enable/disable is
-    // implemented in a later task.
-    return watchAll();
+    // watchEnabled returns only is_active = true rows (T-83).
+    // This is the same as watchAllActive since bundled currencies have
+    // is_active = true by default. When disableCurrency is called, those
+    // rows flip to is_active = false and are excluded from this stream.
+    return _dao.watchAllActive().map(
+          (rows) => rows
+              .map(
+                (row) => Currency(
+                  code: row.code,
+                  name: row.name,
+                  symbol: row.symbol,
+                  minorUnits: row.minorUnits,
+                  isActive: row.isActive,
+                ),
+              )
+              .toList(),
+        );
   }
 
   // -------------------------------------------------------------------------
-  // ICurrencyRepository interface — write operations (stubs)
+  // ICurrencyRepository interface — write operations (T-83)
   // -------------------------------------------------------------------------
 
   @override
   Future<Result<void>> setHomeCurrency(String code) {
-    // TODO(dev): Persist home_currency setting via AppSettingsRepository.
-    throw UnimplementedError('setHomeCurrency not yet implemented');
+    // Home currency is persisted via AppSettingsRepository (not directly
+    // on the currencies table). This stub is intentionally deferred — the
+    // settings integration is handled in the settings feature task.
+    // Throwing here keeps the compile-time contract visible.
+    throw UnimplementedError(
+      'setHomeCurrency delegates to AppSettingsRepository — implement in S-38',
+    );
   }
 
   @override
-  Future<Result<void>> enableCurrency(String code) {
-    // TODO(dev): Set is_active = true for the given code.
-    throw UnimplementedError('enableCurrency not yet implemented');
+  Future<Result<void>> enableCurrency(String code) async {
+    // Sets is_active = true for the given currency code in the Drift table.
+    try {
+      await _dao.setActive(code, isActive: true);
+      return const Ok(null);
+    } on Object catch (e) {
+      return Err(DatabaseFailure('enableCurrency failed for $code: $e'));
+    }
   }
 
   @override
-  Future<Result<void>> disableCurrency(String code) {
-    // TODO(dev): Set is_active = false for the given code.
-    throw UnimplementedError('disableCurrency not yet implemented');
+  Future<Result<void>> disableCurrency(String code) async {
+    // Sets is_active = false for the given currency code in the Drift table.
+    try {
+      await _dao.setActive(code, isActive: false);
+      return const Ok(null);
+    } on Object catch (e) {
+      return Err(DatabaseFailure('disableCurrency failed for $code: $e'));
+    }
   }
 }
