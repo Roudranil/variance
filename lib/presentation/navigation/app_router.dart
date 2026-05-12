@@ -53,9 +53,11 @@ import 'package:variance/presentation/features/accounts/account_form_screen.dart
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
+import 'package:variance/presentation/features/settings/appearance/appearance_settings_screen.dart';
+import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_detail_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_management_screen.dart';
-import 'package:variance/presentation/features/settings/settings_screen.dart';
+import 'package:variance/presentation/features/settings/hub/settings_hub_screen.dart';
 import 'package:variance/presentation/features/shared/route_error_screen.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
 import 'package:variance/presentation/theme/app_theme.dart';
@@ -105,6 +107,39 @@ abstract final class AppRoutes {
 
   /// Category detail (in-tab push on Tab 2).
   static const settingsCategoryDetail = '/settings/categories/:id';
+
+  /// Appearance settings (in-tab push on Tab 2).
+  static const settingsAppearance = '/settings/appearance';
+
+  /// Color scheme preview (in-tab push on Tab 2).
+  static const settingsAppearancePreview = '/settings/appearance/preview';
+
+  /// Locale & format settings (in-tab push on Tab 2).
+  static const settingsLocale = '/settings/locale';
+
+  /// Transaction entry settings (in-tab push on Tab 2).
+  static const settingsTransactionEntry = '/settings/transaction-entry';
+
+  /// Warnings & limits settings (in-tab push on Tab 2).
+  static const settingsWarnings = '/settings/warnings';
+
+  /// Profile settings (in-tab push on Tab 2).
+  static const settingsProfile = '/settings/profile';
+
+  /// Security settings (in-tab push on Tab 2).
+  static const settingsSecurity = '/settings/security';
+
+  /// Tags settings (in-tab push on Tab 2).
+  static const settingsTags = '/settings/tags';
+
+  /// Payees settings (in-tab push on Tab 2).
+  static const settingsPayees = '/settings/payees';
+
+  /// Recurring & installments settings (in-tab push on Tab 2).
+  static const settingsRecurring = '/settings/recurring';
+
+  /// Drafts settings (in-tab push on Tab 2).
+  static const settingsDrafts = '/settings/drafts';
 
   /// Backup & restore (in-tab push on Tab 2).
   static const settingsBackup = '/settings/backup';
@@ -304,8 +339,60 @@ GoRouter makeAppRouter(WidgetRef ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.settings,
-                builder: (context, state) => const SettingsScreen(),
+                builder: (context, state) => const SettingsHubScreen(),
                 routes: [
+                  // /settings/appearance — Appearance settings (T-175)
+                  GoRoute(
+                    path: 'appearance',
+                    builder: (context, state) =>
+                        const AppearanceSettingsScreen(),
+                    routes: [
+                      // /settings/appearance/preview — Color preview (T-176)
+                      GoRoute(
+                        path: 'preview',
+                        builder: (context, state) =>
+                            const ColorSchemePreviewScreen(),
+                      ),
+                    ],
+                  ),
+                  // /settings/locale — placeholder
+                  GoRoute(
+                    path: 'locale',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage: 'Locale settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/transaction-entry — placeholder
+                  GoRoute(
+                    path: 'transaction-entry',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage:
+                          'Transaction entry settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/warnings — placeholder
+                  GoRoute(
+                    path: 'warnings',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage:
+                          'Warnings & limits settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/profile — placeholder
+                  GoRoute(
+                    path: 'profile',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage: 'Profile settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/security — placeholder
+                  GoRoute(
+                    path: 'security',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage: 'Security settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/currency — placeholder
                   GoRoute(
                     path: 'currency',
                     builder: (context, state) {
@@ -315,6 +402,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       );
                     },
                   ),
+                  // /settings/categories — category management
                   GoRoute(
                     path: 'categories',
                     builder: (context, state) =>
@@ -326,8 +414,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                         builder: (context, state) {
                           // Query params: ?tree=expense|income, ?parent=:id
                           final tree = state.uri.queryParameters['tree'];
-                          final parentId =
-                              state.uri.queryParameters['parent'];
+                          final parentId = state.uri.queryParameters['parent'];
                           return CategoryDetailScreen(
                             categoryId: null,
                             initialTree: tree,
@@ -354,6 +441,36 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       ),
                     ],
                   ),
+                  // /settings/tags — placeholder
+                  GoRoute(
+                    path: 'tags',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage: 'Tags settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/payees — placeholder
+                  GoRoute(
+                    path: 'payees',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage: 'Payees settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/recurring — placeholder
+                  GoRoute(
+                    path: 'recurring',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage:
+                          'Recurring & installments settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/drafts — placeholder
+                  GoRoute(
+                    path: 'drafts',
+                    builder: (context, state) => const RouteErrorScreen(
+                      errorMessage: 'Drafts settings not yet implemented.',
+                    ),
+                  ),
+                  // /settings/backup — placeholder
                   GoRoute(
                     path: 'backup',
                     builder: (context, state) {
@@ -363,6 +480,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       );
                     },
                   ),
+                  // /settings/about — placeholder
                   GoRoute(
                     path: 'about',
                     builder: (context, state) {
@@ -454,14 +572,16 @@ class AppRouterWidget extends ConsumerWidget {
 
     // Read color scheme mode preference from settings (null while loading).
     final AppSettings? settings = ref.watch(appSettingsProvider).value;
-    final colorSchemeMode = settings?.colorSchemeMode ?? ColorSchemeMode.dynamic;
+    final colorSchemeMode =
+        settings?.colorSchemeMode ?? ColorSchemeMode.dynamic;
 
     // Resolve custom seed color from settings (fallback to default purple).
     final Color seedColor = _resolveSeedColor(settings?.colorSeed);
 
     // DynamicColorBuilder attempts OEM wallpaper extraction (Android 12+).
     // When the device supports it AND the user prefers dynamic mode, the OEM
-    // schemes are used. Otherwise we fall back to a seed-based scheme.
+    // schemes are used. Otherwise we fall back to a seed-based or catppuccin
+    // scheme.
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         final ThemePair themes = _resolveThemes(
@@ -471,12 +591,20 @@ class AppRouterWidget extends ConsumerWidget {
           seedColor: seedColor,
         );
 
-        return MaterialApp.router(
-          title: 'Variance',
-          theme: themes.light,
-          darkTheme: themes.dark,
-          themeMode: _resolveThemeMode(settings?.theme),
-          routerConfig: router,
+        // dynamicAvailable: OEM extraction succeeded (non-null schemes) when
+        // the user prefers dynamic mode. Passed down via DynamicColorAvailability
+        // so AppearanceSettingsScreen can show the "unavailable" note.
+        final dynamicAvailable = lightDynamic != null && darkDynamic != null;
+
+        return DynamicColorAvailability(
+          available: dynamicAvailable,
+          child: MaterialApp.router(
+            title: 'Variance',
+            theme: themes.light,
+            darkTheme: themes.dark,
+            themeMode: _resolveThemeMode(settings?.theme),
+            routerConfig: router,
+          ),
         );
       },
     );
@@ -492,11 +620,12 @@ class AppRouterWidget extends ConsumerWidget {
     return value != null ? Color(value) : kDefaultSeedColor;
   }
 
-  /// Selects between dynamic OEM schemes and seed-based schemes.
+  /// Selects between dynamic OEM, catppuccin, and seed-based schemes.
   ///
   /// When [colorSchemeMode] is [ColorSchemeMode.dynamic] and the OEM schemes
-  /// are non-null (Android 12+), the OEM schemes are applied. Otherwise the
-  /// seed-based fallback is used.
+  /// are non-null (Android 12+), the OEM schemes are applied. When
+  /// [colorSchemeMode] is [ColorSchemeMode.catppuccin], the Catppuccin palette
+  /// is applied. Otherwise the seed-based fallback is used.
   static ThemePair _resolveThemes({
     required ColorSchemeMode colorSchemeMode,
     required ColorScheme? lightDynamic,
@@ -507,6 +636,9 @@ class AppRouterWidget extends ConsumerWidget {
         lightDynamic != null &&
         darkDynamic != null) {
       return AppThemeData.fromColorSchemes(lightDynamic, darkDynamic);
+    }
+    if (colorSchemeMode == ColorSchemeMode.catppuccin) {
+      return AppThemeData.fromCatppuccin();
     }
     return AppThemeData.fromSeed(seedColor);
   }
@@ -559,7 +691,7 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.settings,
-              builder: (context, state) => const SettingsScreen(),
+              builder: (context, state) => const SettingsHubScreen(),
             ),
           ],
         ),

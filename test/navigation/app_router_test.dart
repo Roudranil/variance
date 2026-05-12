@@ -7,7 +7,7 @@
 //   - Returning user (onboardingComplete=true): home shell is shown at /
 //   - Tapping Home tab renders HomeScreen placeholder
 //   - Tapping Accounts tab renders AccountListScreen placeholder
-//   - Tapping Settings tab renders SettingsScreen placeholder
+//   - Tapping Settings tab renders SettingsHubScreen
 //   - /onboarding route renders OnboardingScreen
 //   - No GoException on /accounts/:id with a valid id
 //   - /transaction/new renders RouteErrorScreen (not yet implemented)
@@ -26,7 +26,7 @@ import 'package:variance/domain/services/net_worth_calculator.dart';
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
-import 'package:variance/presentation/features/settings/settings_screen.dart';
+import 'package:variance/presentation/features/settings/hub/settings_hub_screen.dart';
 import 'package:variance/presentation/navigation/app_router.dart';
 import 'package:variance/presentation/providers/account_providers.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
@@ -151,7 +151,7 @@ void main() {
       expect(find.byType(AccountListScreen), findsOneWidget);
     });
 
-    testWidgets('tapping Settings tab shows SettingsScreen', (tester) async {
+    testWidgets('tapping Settings tab shows SettingsHubScreen', (tester) async {
       await tester.pumpWidget(
         _buildApp(const AppSettings(onboardingComplete: true)),
       );
@@ -160,7 +160,7 @@ void main() {
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(find.byType(SettingsHubScreen), findsOneWidget);
     });
   });
 
