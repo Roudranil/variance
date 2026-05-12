@@ -15,6 +15,8 @@
 // All tests use ProviderScope with overrides for appSettingsProvider so no
 // file system access or real database is required.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -191,7 +193,7 @@ void main() {
         final BuildContext context = tester.element(
           find.byType(AccountListScreen),
         );
-        context.push('/accounts/test-id-123');
+        unawaited(context.push('/accounts/test-id-123'));
         await tester.pumpAndSettle();
 
         // The route should resolve without throwing GoException.

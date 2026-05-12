@@ -23,7 +23,7 @@ import 'package:variance/domain/services/net_worth_calculator.dart';
 
 void main() {
   const homeCurrency = 'INR';
-  const _microDivisor = 1000000;
+  const microDivisor = 1000000;
 
   // Helpers
   Account makeAccount({
@@ -97,7 +97,7 @@ void main() {
       // USD account, balance 100 USD (10000 minor = $100.00)
       // USD→INR rate = 83.0 → rateMicro = 83_000_000
       final acc = makeAccount(id: 'a1', currencyCode: 'USD');
-      final rate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * _microDivisor);
+      final rate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * microDivisor);
 
       final result = calculator.compute(
         accounts: [acc],
@@ -131,7 +131,7 @@ void main() {
       final accUsd = makeAccount(id: 'usd', currencyCode: 'USD');
       final accGbp = makeAccount(id: 'gbp', currencyCode: 'GBP'); // no rate
 
-      final usdRate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * _microDivisor);
+      final usdRate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * microDivisor);
 
       final result = calculator.compute(
         accounts: [accInr, accUsd, accGbp],
@@ -178,8 +178,8 @@ void main() {
       final accUsd = makeAccount(id: 'usd', currencyCode: 'USD');
       final accEur = makeAccount(id: 'eur', currencyCode: 'EUR');
 
-      final usdRate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * _microDivisor);
-      final eurRate = makeRate(from: 'EUR', to: homeCurrency, rateMicro: 90 * _microDivisor);
+      final usdRate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * microDivisor);
+      final eurRate = makeRate(from: 'EUR', to: homeCurrency, rateMicro: 90 * microDivisor);
 
       final result = calculator.compute(
         accounts: [accInr, accUsd, accEur],
@@ -200,7 +200,7 @@ void main() {
       const staleDays = 15;
       final staleEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000 - staleDays * 86400;
       final acc = makeAccount(id: 'a1', currencyCode: 'USD');
-      final staleRate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * _microDivisor, fetchedAt: staleEpoch);
+      final staleRate = makeRate(from: 'USD', to: homeCurrency, rateMicro: 83 * microDivisor, fetchedAt: staleEpoch);
 
       final result = calculator.compute(
         accounts: [acc],
