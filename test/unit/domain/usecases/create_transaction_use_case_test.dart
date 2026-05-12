@@ -83,6 +83,7 @@ class FakeTransactionRepository implements ITransactionRepository {
       _savedEntries[transactionId] ?? [];
 
   /// Mirrors [TransactionRepositoryImpl.createWithEntries].
+  @override
   Future<Result<Transaction>> createWithEntries(
     Transaction draft,
     List<Entry> entries,
@@ -106,6 +107,25 @@ class FakeTransactionRepository implements ITransactionRepository {
   Future<Result<Transaction>> correctFinancial(String id, Transaction draft) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<Result<Transaction>> correctFinancialChain({
+    required String originalId,
+    required Transaction reversal,
+    required List<Entry> reversalEntries,
+    required Transaction correction,
+    required List<Entry> correctionEntries,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Transaction>> getDuePendingTransactions(int nowEpoch) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<void>> postPending(String id, List<Entry> entries) =>
+      throw UnimplementedError();
 
   @override
   Future<Result<Transaction>> updateNonFinancial(
