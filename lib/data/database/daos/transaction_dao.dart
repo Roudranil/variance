@@ -328,4 +328,50 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
     return (select(transactions)..where((t) => t.id.isIn(ids))).get();
   }
+
+  /// Returns all transactions with status = 'pending' whose
+  /// [transaction_date] is at or before [nowEpoch].
+  ///
+  /// Used by [PostPendingTransactionsUseCase] on app launch (T-60).
+  ///
+  /// Parameters:
+  /// - [nowEpoch]: Unix epoch seconds threshold.
+  Future<List<Transaction>> getDuePendingTransactions(int nowEpoch) {
+    return (select(transactions)
+          ..where(
+            (t) =>
+                t.status.equals('pending') &
+                t.transactionDate.isSmallerOrEqualValue(nowEpoch),
+          ))
+        .get();
+  }
+
+  /// Atomically inserts [entries] and sets status = 'posted' for [id].
+  ///
+  /// Called by [PostPendingTransactionsUseCase] after building entries for a
+  /// due pending transaction (T-60).
+  ///
+  /// Parameters:
+  /// - [id]: UUID of the pending transaction.
+  /// - [entries]: Balanced entry companions from [LedgerEngine].
+  /// - [nowEpoch]: Current Unix epoch seconds for timestamps.
+  Future<void> postPendingTransaction(
+    String id,
+    List<EntriesCompanion> entries,
+    int nowEpoch,
+  ) async {
+    await db.transaction(() async {
+      // Insert entries first.
+      for (final entry in entries) {
+        await into(this.entries).insert(entry);
+      }
+      // Promote status to posted.
+      await (update(transactions)..where((t) => t.id.equals(id))).write(
+        TransactionsCompanion(
+          status: const Value('posted'),
+          updatedAt: Value(nowEpoch),
+        ),
+      );
+    });
+  }
 }

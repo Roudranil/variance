@@ -107,6 +107,21 @@ class CreateTransactionUseCase {
     // --- Build the nowEpoch for entry createdAt ---
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
+    // --- Future-dated: save as pending without entries (T-60) ---
+    // If date_time is in the future, the transaction is saved with
+    // status = 'pending'. Entries are NOT written now; they will be posted
+    // by PostPendingTransactionsUseCase when the date arrives.
+    if (txnToWrite.dateTime > nowEpoch) {
+      final pendingTxn = txnToWrite.copyWith(
+        status: TransactionStatus.pending,
+      );
+      final saveResult = await _repository.create(pendingTxn);
+      return switch (saveResult) {
+        Ok(:final value) => Ok(value),
+        Err(:final failure) => Err(failure),
+      };
+    }
+
     // --- Post ledger entries via LedgerEngine ---
     final ledgerInput = CreateTransactionInput(
       postingCase: postingCase,
