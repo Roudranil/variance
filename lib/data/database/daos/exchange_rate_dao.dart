@@ -44,15 +44,27 @@ class ExchangeRateDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  /// Upserts an exchange rate using INSERT OR REPLACE semantics.
+  /// Upserts an exchange rate using ON CONFLICT DO UPDATE semantics.
   ///
-  /// The UNIQUE constraint on (from_currency, to_currency) triggers the
-  /// replace on conflict.
+  /// The UNIQUE constraint on (from_currency, to_currency) is the conflict
+  /// target. When a row with the same pair already exists, its [rateMicro],
+  /// [fetchedAt], and [rateDate] columns are updated in-place.
   ///
   /// Parameters:
   /// - [rate]: The companion carrying the rate values to upsert.
   Future<int> upsertRate(ExchangeRatesCompanion rate) {
-    return into(exchangeRates).insertOnConflictUpdate(rate);
+    return into(exchangeRates).insert(
+      rate,
+      onConflict: DoUpdate(
+        (old) => ExchangeRatesCompanion.custom(
+          // Variable() wraps a plain Dart value as a Drift Expression.
+          rateMicro: Variable(rate.rateMicro.value),
+          fetchedAt: Variable(rate.fetchedAt.value),
+          rateDate: Variable(rate.rateDate.value),
+        ),
+        target: [exchangeRates.fromCurrency, exchangeRates.toCurrency],
+      ),
+    );
   }
 
   /// Returns all cached rates fetched before the [thresholdEpoch] (i.e.
@@ -67,5 +79,14 @@ class ExchangeRateDao extends DatabaseAccessor<AppDatabase>
     return (select(exchangeRates)
           ..where((r) => r.fetchedAt.isSmallerThanValue(thresholdEpoch)))
         .get();
+  }
+
+  /// Watches all cached exchange rate rows as a reactive stream.
+  ///
+  /// Emits a new list whenever any row in the `exchange_rates` table changes.
+  /// Consumed by [IExchangeRateRepository.watchAllRates] and UI staleness
+  /// indicators.
+  Stream<List<ExchangeRate>> watchAllRates() {
+    return select(exchangeRates).watch();
   }
 }
