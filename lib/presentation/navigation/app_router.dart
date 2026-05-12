@@ -55,6 +55,7 @@ import 'package:variance/presentation/features/accounts/account_list_screen.dart
 import 'package:variance/presentation/features/accounts/reconcile_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/transactions/transaction_detail_screen.dart';
+import 'package:variance/presentation/features/transactions/transaction_form_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/appearance_settings_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
@@ -540,9 +541,13 @@ GoRouter makeAppRouter(WidgetRef ref) {
       GoRoute(
         path: AppRoutes.transactionNew,
         builder: (context, state) {
-          // TODO(dev): return CreateTransactionScreen();
-          return const RouteErrorScreen(
-            errorMessage: 'Create transaction not yet implemented.',
+          // Optional pre-fill for destination account (credit card Pay FAB).
+          final extra = state.extra;
+          final prefillDestId = extra is Map<String, dynamic>
+              ? extra['prefillDestinationId'] as String?
+              : null;
+          return TransactionFormScreen(
+            prefillDestinationAccountId: prefillDestId,
           );
         },
       ),
