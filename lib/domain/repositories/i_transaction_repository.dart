@@ -5,8 +5,13 @@
 // Financial edits use correctFinancial (reversal + correction pair in a single
 // DB transaction). Non-financial in-place edits use updateNonFinancial.
 // Void and bulk-void mark transactions as voided without a correction chain.
+//
+// createWithEntries atomically writes the transaction header + entry rows in a
+// single DB transaction — used by CreateTransactionUseCase (T-49, T-50) to
+// satisfy SDS §1.6.2 atomicity requirement.
 
 import 'package:variance/domain/core/result.dart';
+import 'package:variance/domain/entities/entry.dart';
 import 'package:variance/domain/entities/transaction.dart';
 
 /// Patch object for non-financial in-place edits.
@@ -56,6 +61,20 @@ abstract interface class ITransactionRepository {
   /// Creates a new transaction from [draft] (a fully validated Transaction
   /// value object in status=pending or posted).
   Future<Result<Transaction>> create(Transaction draft);
+
+  /// Creates a transaction header and its [entries] atomically in one DB
+  /// transaction (SDS §1.6.2).
+  ///
+  /// Called by [CreateTransactionUseCase] after [LedgerEngine] has built the
+  /// balanced entry set. The caller must never write the entries separately.
+  ///
+  /// Parameters:
+  /// - [draft]: The fully validated [Transaction] entity to persist.
+  /// - [entries]: The balanced [Entry] list from [LedgerEngine].
+  Future<Result<Transaction>> createWithEntries(
+    Transaction draft,
+    List<Entry> entries,
+  );
 
   /// Corrects financial fields via a reversal + correction pair, both
   /// wrapped in a single database transaction.

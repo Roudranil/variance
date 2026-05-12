@@ -208,6 +208,53 @@ class LedgerEngine {
   // ignore: prefer_const_constructors
   static final Uuid _uuid = Uuid();
 
+  /// Builds a balanced [Entry] set for [input] without persisting it.
+  ///
+  /// Used by [CreateTransactionUseCase] to obtain the entry list before
+  /// delegating the atomic write (transaction header + entries) to the
+  /// repository (SDS §1.6.2).
+  ///
+  /// Returns [Ok] wrapping the entry list on success.
+  /// Returns [Err] wrapping [BusinessRuleFailure] if the set is imbalanced,
+  /// or [DatabaseFailure] if EQ account creation fails.
+  ///
+  /// Parameters:
+  /// - [input]: All data required to construct the entry set.
+  Future<Result<List<Entry>>> buildOnly(CreateTransactionInput input) async {
+    try {
+      final String? eqAccountId;
+      if (_requiresEqAccount(input.postingCase)) {
+        eqAccountId = await _resolveEqAccount(input.currencyCode);
+        if (eqAccountId == null) {
+          return const Err(
+            DatabaseFailure('Failed to resolve EQ account for currency'),
+          );
+        }
+      } else {
+        eqAccountId = null;
+      }
+
+      final entries = _buildEntries(input, eqAccountId);
+
+      final balanced = _assertBalanced(entries);
+      if (!balanced) {
+        return const Err(
+          BusinessRuleFailure(
+            'Ledger imbalance: Σdebit ≠ Σcredit. Entry set rejected.',
+          ),
+        );
+      }
+      return Ok(entries);
+    } on Object catch (e, st) {
+      dev.log(
+        'LedgerEngine.buildOnly error: $e',
+        name: 'LedgerEngine',
+        stackTrace: st,
+      );
+      return Err(DatabaseFailure('Unexpected error during entry build: $e'));
+    }
+  }
+
   /// Builds a balanced [Entry] set for [input] and persists it.
   ///
   /// Returns [Ok] wrapping the written entries on success.

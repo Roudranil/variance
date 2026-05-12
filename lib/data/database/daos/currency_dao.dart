@@ -51,4 +51,24 @@ class CurrencyDao extends DatabaseAccessor<AppDatabase>
           ..orderBy([(c) => OrderingTerm.asc(c.code)]))
         .watch();
   }
+
+  /// Returns a reactive stream of all currencies (including inactive).
+  Stream<List<Currency>> watchAll() {
+    return (select(currencies)..orderBy([(c) => OrderingTerm.asc(c.code)]))
+        .watch();
+  }
+
+  // -----------------------------------------------------------------------
+  // Write operations (T-83)
+  // -----------------------------------------------------------------------
+
+  /// Sets [isActive] = true for the currency with [code].
+  ///
+  /// Parameters:
+  /// - [code]: ISO 4217 3-letter currency code.
+  Future<void> setActive(String code, {required bool isActive}) {
+    return (update(currencies)..where((c) => c.code.equals(code))).write(
+      CurrenciesCompanion(isActive: Value(isActive)),
+    );
+  }
 }

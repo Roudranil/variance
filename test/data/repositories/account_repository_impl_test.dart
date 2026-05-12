@@ -20,9 +20,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/daos/account_dao.dart';
 import 'package:variance/data/repositories/account_repository_impl.dart';
+import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart' as domain;
 import 'package:variance/domain/entities/account_detail.dart' as domain;
-import 'package:variance/domain/core/result.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -176,7 +176,8 @@ void main() {
   // -----------------------------------------------------------------------
 
   group('findSoftDeletedByNameAndCategory', () {
-    test('8. returns soft-deleted account matching name and category', () async {
+    test('8. returns soft-deleted account matching name and category',
+        () async {
       final account = makeAccount(
         name: 'SavingsOld',
         category: domain.AccountCategory.bankAccount,

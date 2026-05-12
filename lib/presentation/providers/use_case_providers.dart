@@ -39,11 +39,13 @@ part 'use_case_providers.g.dart';
 // Transaction use cases
 // ---------------------------------------------------------------------------
 
-/// Provides a [CreateTransactionUseCase] bound to the transaction repository.
+/// Provides a [CreateTransactionUseCase] bound to the transaction repository
+/// and [LedgerEngine] (T-49, T-50).
 @riverpod
 Future<CreateTransactionUseCase> createTransactionUseCase(Ref ref) async {
   final repo = await ref.watch(transactionRepositoryProvider.future);
-  return CreateTransactionUseCase(repo);
+  final engine = await ref.watch(ledgerEngineProvider.future);
+  return CreateTransactionUseCase(repo, engine);
 }
 
 /// Provides a [WatchMonthlyTransactionsUseCase] bound to the transaction
