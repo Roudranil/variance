@@ -8,6 +8,8 @@
 //   - [AppThemeData.fromSeed] — builds a pair from an arbitrary seed color
 //   - [AppThemeData.fromColorSchemes] — builds a pair from pre-built schemes
 //     (used by DynamicColorBuilder when OEM wallpaper extraction succeeds)
+//   - [AppThemeData.fromCatppuccin] — builds a pair using the Catppuccin palette
+//     (Latte for light, Mocha for dark) per SDS §2.18.2
 //
 // Dynamic color (T-18):
 //   DynamicColorBuilder is wired at the root widget (AppRouterWidget). When
@@ -26,6 +28,7 @@
 //   - DynamicColorBuilder null-fallback path produces a valid theme with
 //     non-null VarianceColors tokens
 
+import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 
 import 'package:variance/presentation/theme/variance_colors.dart';
@@ -115,7 +118,40 @@ abstract final class AppThemeData {
   }
 
   // -------------------------------------------------------------------------
-  // Internal builder
+  // Catppuccin-based factory (SDS §2.18.2)
+  // -------------------------------------------------------------------------
+
+  /// Builds a [ThemePair] using the Catppuccin palette.
+  ///
+  /// Light mode uses the Latte flavour; dark mode uses the Mocha flavour.
+  /// The seed color is [Flavor.mauve] per the SDS decision table.
+  ///
+  /// [VarianceColors] tokens are mapped to Catppuccin palette colors:
+  /// - incomeAmount → Catppuccin green
+  /// - expenseAmount → Catppuccin red
+  /// - warningAmount → Catppuccin peach
+  /// - accentPastel → Catppuccin lavender
+  static ThemePair fromCatppuccin() {
+    final latte = catppuccin.latte;
+    final mocha = catppuccin.mocha;
+
+    final lightScheme = ColorScheme.fromSeed(
+      seedColor: latte.mauve,
+      brightness: Brightness.light,
+    );
+    final darkScheme = ColorScheme.fromSeed(
+      seedColor: mocha.mauve,
+      brightness: Brightness.dark,
+    );
+
+    return ThemePair(
+      light: _buildThemeWithCatppuccin(lightScheme, Brightness.light, latte),
+      dark: _buildThemeWithCatppuccin(darkScheme, Brightness.dark, mocha),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Internal builders
   // -------------------------------------------------------------------------
 
   /// Constructs a single [ThemeData] with M3 enabled, the given [scheme] and
@@ -130,6 +166,36 @@ abstract final class AppThemeData {
         // Financial semantic color tokens (income/expense/warning/accent).
         isLight ? VarianceColors.light : VarianceColors.dark,
         // Compile-time font size constants (no light/dark variation needed).
+        VarianceTypography.defaults,
+      ],
+    );
+  }
+
+  /// Constructs a single [ThemeData] with [VarianceColors] mapped to
+  /// the given Catppuccin [flavor] palette colors.
+  ///
+  /// Parameters:
+  /// - [scheme]: The M3 [ColorScheme] built from the Catppuccin mauve seed.
+  /// - [brightness]: The brightness mode.
+  /// - [flavor]: The Catppuccin [Flavor] (Latte for light, Mocha for dark).
+  static ThemeData _buildThemeWithCatppuccin(
+    ColorScheme scheme,
+    Brightness brightness,
+    Flavor flavor,
+  ) {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      brightness: brightness,
+      extensions: [
+        // Catppuccin-mapped VarianceColors tokens (SDS §2.18.2).
+        // Flavor colors are dart:ui Color — they are directly assignable.
+        VarianceColors(
+          incomeAmount: flavor.green,
+          expenseAmount: flavor.red,
+          warningAmount: flavor.peach,
+          accentPastel: flavor.lavender,
+        ),
         VarianceTypography.defaults,
       ],
     );
