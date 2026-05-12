@@ -111,6 +111,7 @@ class TransactionRepositoryImpl implements ITransactionRepository {
   /// Parameters:
   /// - [draft]: The fully validated [Transaction] domain entity.
   /// - [entries]: The balanced [Entry] list produced by [LedgerEngine].
+  @override
   Future<Result<Transaction>> createWithEntries(
     Transaction draft,
     List<Entry> entries,
@@ -150,6 +151,54 @@ class TransactionRepositoryImpl implements ITransactionRepository {
     // the primitive write operations.
     // TODO(dev): Implement full correction flow in EditTransactionUseCase (S-5).
     throw UnimplementedError('correctFinancial not yet implemented — S-5');
+  }
+
+  @override
+  Future<Result<Transaction>> correctFinancialChain({
+    required String originalId,
+    required Transaction reversal,
+    required List<Entry> reversalEntries,
+    required Transaction correction,
+    required List<Entry> correctionEntries,
+  }) async {
+    try {
+      final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+      // All three writes happen inside a single Drift database transaction.
+      await _dao.db.transaction(() async {
+        // 1. Void the original.
+        await _dao.voidTransaction(originalId, nowEpoch);
+
+        // 2. Insert reversal header + entries.
+        await _dao.insertTransactionWithEntries(
+          TransactionDto.toCompanion(reversal),
+          reversalEntries.map(EntryDto.toCompanion).toList(),
+        );
+
+        // 3. Insert correction header + entries.
+        await _dao.insertTransactionWithEntries(
+          TransactionDto.toCompanion(correction),
+          correctionEntries.map(EntryDto.toCompanion).toList(),
+        );
+      });
+
+      final savedRow = await _dao.getById(correction.id);
+      if (savedRow == null) {
+        return const Err(
+          DatabaseFailure('Correction transaction not found after insert'),
+        );
+      }
+      return Ok(TransactionDto.fromRow(savedRow).toEntity());
+    } on Object catch (e, st) {
+      dev.log(
+        'TransactionRepositoryImpl.correctFinancialChain error: $e',
+        name: 'TransactionRepo',
+        stackTrace: st,
+      );
+      return Err(
+        DatabaseFailure('Failed to execute correction chain: $e'),
+      );
+    }
   }
 
   @override
@@ -234,6 +283,29 @@ class TransactionRepositoryImpl implements ITransactionRepository {
         stackTrace: st,
       );
       return Err(DatabaseFailure('FTS search failed: $e'));
+    }
+  }
+
+  @override
+  Future<List<Transaction>> getDuePendingTransactions(int nowEpoch) async {
+    final rows = await _dao.getDuePendingTransactions(nowEpoch);
+    return rows.map((r) => TransactionDto.fromRow(r).toEntity()).toList();
+  }
+
+  @override
+  Future<Result<void>> postPending(String id, List<Entry> entries) async {
+    try {
+      final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final entryCompanions = entries.map(EntryDto.toCompanion).toList();
+      await _dao.postPendingTransaction(id, entryCompanions, nowEpoch);
+      return const Ok(null);
+    } on Object catch (e, st) {
+      dev.log(
+        'TransactionRepositoryImpl.postPending error: $e',
+        name: 'TransactionRepo',
+        stackTrace: st,
+      );
+      return Err(DatabaseFailure('Failed to post pending transaction: $e'));
     }
   }
 

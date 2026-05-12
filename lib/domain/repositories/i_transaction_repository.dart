@@ -80,6 +80,27 @@ abstract interface class ITransactionRepository {
   /// wrapped in a single database transaction.
   Future<Result<Transaction>> correctFinancial(String id, Transaction draft);
 
+  /// Atomically executes the full correction chain in one DB transaction:
+  ///   1. Voids the original ([originalId]).
+  ///   2. Inserts [reversal] + [reversalEntries].
+  ///   3. Inserts [correction] + [correctionEntries].
+  ///
+  /// Returns the persisted [correction] transaction on success.
+  ///
+  /// Parameters:
+  /// - [originalId]: UUID of the posted transaction being corrected.
+  /// - [reversal]: Pre-built reversal transaction (purpose = 'reversal').
+  /// - [reversalEntries]: Balanced entries for the reversal.
+  /// - [correction]: Pre-built correction transaction (purpose = 'correction').
+  /// - [correctionEntries]: Balanced entries for the correction.
+  Future<Result<Transaction>> correctFinancialChain({
+    required String originalId,
+    required Transaction reversal,
+    required List<Entry> reversalEntries,
+    required Transaction correction,
+    required List<Entry> correctionEntries,
+  });
+
   /// Updates non-financial fields (title, description, dateTime, payeeId)
   /// in-place; does not create a ledger entry pair.
   Future<Result<Transaction>> updateNonFinancial(
@@ -98,4 +119,25 @@ abstract interface class ITransactionRepository {
     String query, {
     TransactionFilters? filters,
   });
+
+  /// Returns all transactions with status = 'pending' whose date_time is
+  /// at or before [nowEpoch].
+  ///
+  /// Used by [PostPendingTransactionsUseCase] on app launch to sweep due
+  /// transactions (T-60).
+  ///
+  /// Parameters:
+  /// - [nowEpoch]: Current Unix epoch seconds (the threshold).
+  Future<List<Transaction>> getDuePendingTransactions(int nowEpoch);
+
+  /// Atomically writes [entries] for transaction [id] and sets
+  /// status = 'posted'.
+  ///
+  /// Called by [PostPendingTransactionsUseCase] after building balanced
+  /// entries for a pending transaction that has become due.
+  ///
+  /// Parameters:
+  /// - [id]: UUID of the pending transaction to post.
+  /// - [entries]: Balanced entry list from [LedgerEngine].
+  Future<Result<void>> postPending(String id, List<Entry> entries);
 }

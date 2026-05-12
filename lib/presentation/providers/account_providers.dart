@@ -96,3 +96,21 @@ Stream<NetWorthResult> netWorth(Ref ref) async* {
 
   yield* useCase.call();
 }
+
+// ---------------------------------------------------------------------------
+// accountByIdProvider (T-41)
+// ---------------------------------------------------------------------------
+
+/// Watches a single account by [accountId].
+///
+/// Emits null if the account does not exist or has been soft-deleted.
+/// Used by [AccountDetailScreen] and anywhere a single-account stream
+/// is needed outside the list view.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+@riverpod
+Stream<Account?> accountById(Ref ref, String accountId) async* {
+  final repo = await ref.watch(accountRepositoryProvider.future);
+  yield* repo.watchById(accountId);
+}

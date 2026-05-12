@@ -242,3 +242,120 @@ final class NetWorthProvider extends $FunctionalProvider<
 }
 
 String _$netWorthHash() => r'16a00f3c8b3b92f3b9c0cd713237267de99451eb';
+
+/// Watches a single account by [accountId].
+///
+/// Emits null if the account does not exist or has been soft-deleted.
+/// Used by [AccountDetailScreen] and anywhere a single-account stream
+/// is needed outside the list view.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+
+@ProviderFor(accountById)
+final accountByIdProvider = AccountByIdFamily._();
+
+/// Watches a single account by [accountId].
+///
+/// Emits null if the account does not exist or has been soft-deleted.
+/// Used by [AccountDetailScreen] and anywhere a single-account stream
+/// is needed outside the list view.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+
+final class AccountByIdProvider extends $FunctionalProvider<
+        AsyncValue<Account?>, Account?, Stream<Account?>>
+    with $FutureModifier<Account?>, $StreamProvider<Account?> {
+  /// Watches a single account by [accountId].
+  ///
+  /// Emits null if the account does not exist or has been soft-deleted.
+  /// Used by [AccountDetailScreen] and anywhere a single-account stream
+  /// is needed outside the list view.
+  ///
+  /// Parameters:
+  /// - [accountId]: UUID of the account to watch.
+  AccountByIdProvider._(
+      {required AccountByIdFamily super.from, required String super.argument})
+      : super(
+          retry: null,
+          name: r'accountByIdProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$accountByIdHash();
+
+  @override
+  String toString() {
+    return r'accountByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Account?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Account?> create(Ref ref) {
+    final argument = this.argument as String;
+    return accountById(
+      ref,
+      argument,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AccountByIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$accountByIdHash() => r'fb7b1d51d47ccdec81bfb751b773af9fa71de755';
+
+/// Watches a single account by [accountId].
+///
+/// Emits null if the account does not exist or has been soft-deleted.
+/// Used by [AccountDetailScreen] and anywhere a single-account stream
+/// is needed outside the list view.
+///
+/// Parameters:
+/// - [accountId]: UUID of the account to watch.
+
+final class AccountByIdFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Account?>, String> {
+  AccountByIdFamily._()
+      : super(
+          retry: null,
+          name: r'accountByIdProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  /// Watches a single account by [accountId].
+  ///
+  /// Emits null if the account does not exist or has been soft-deleted.
+  /// Used by [AccountDetailScreen] and anywhere a single-account stream
+  /// is needed outside the list view.
+  ///
+  /// Parameters:
+  /// - [accountId]: UUID of the account to watch.
+
+  AccountByIdProvider call(
+    String accountId,
+  ) =>
+      AccountByIdProvider._(argument: accountId, from: this);
+
+  @override
+  String toString() => r'accountByIdProvider';
+}

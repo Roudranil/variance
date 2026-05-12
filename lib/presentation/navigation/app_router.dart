@@ -49,9 +49,13 @@ import 'package:go_router/go_router.dart';
 
 import 'package:variance/domain/entities/account.dart';
 import 'package:variance/domain/entities/app_settings.dart';
+import 'package:variance/presentation/features/accounts/account_detail_screen.dart';
 import 'package:variance/presentation/features/accounts/account_form_screen.dart';
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
+import 'package:variance/presentation/features/accounts/reconcile_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
+import 'package:variance/presentation/features/transactions/transaction_detail_screen.dart';
+import 'package:variance/presentation/features/transactions/transaction_form_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/appearance_settings_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
@@ -155,6 +159,25 @@ abstract final class AppRoutes {
 
   /// Exchange rate detail (full-screen modal, outside shell).
   static const exchangeRateDetail = '/exchange-rate-detail';
+
+  // -----------------------------------------------------------------------
+  // Path builders — replaces :id parameter at call sites.
+  // -----------------------------------------------------------------------
+
+  /// Builds the account detail path for [id].
+  static String accountDetailPath(String id) => '/accounts/$id';
+
+  /// Builds the account edit path for [id].
+  static String accountEdit(String id) => '/accounts/$id/edit';
+
+  /// Builds the reconcile path for account [id].
+  static String accountReconcile(String id) => '/accounts/$id/reconcile';
+
+  /// Builds the transaction detail path for [id].
+  static String transactionDetailPath(String id) => '/transaction/$id';
+
+  /// Builds the transaction edit path for [id].
+  static String transactionEditPath(String id) => '/transaction/$id/edit';
 }
 
 // ---------------------------------------------------------------------------
@@ -254,10 +277,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                           errorMessage: 'Transaction ID is missing.',
                         );
                       }
-                      // TODO(dev): return TransactionDetailScreen(id: id);
-                      return const RouteErrorScreen(
-                        errorMessage: 'Transaction detail not yet implemented.',
-                      );
+                      return TransactionDetailScreen(transactionId: id);
                     },
                     routes: [
                       // /transaction/:id/edit — in-tab push (context.push)
@@ -307,10 +327,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                           errorMessage: 'Account ID is missing.',
                         );
                       }
-                      // TODO(dev): return AccountDetailScreen(id: id);
-                      return const RouteErrorScreen(
-                        errorMessage: 'Account detail not yet implemented.',
-                      );
+                      return AccountDetailScreen(accountId: id);
                     },
                     routes: [
                       // /accounts/:id/edit
@@ -325,6 +342,19 @@ GoRouter makeAppRouter(WidgetRef ref) {
                             );
                           }
                           return AccountFormScreen(existingAccount: account);
+                        },
+                      ),
+                      // /accounts/:id/reconcile — T-43
+                      GoRoute(
+                        path: 'reconcile',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id'];
+                          if (id == null || id.isEmpty) {
+                            return const RouteErrorScreen(
+                              errorMessage: 'Account ID is missing.',
+                            );
+                          }
+                          return ReconcileScreen(accountId: id);
                         },
                       ),
                     ],
@@ -511,9 +541,13 @@ GoRouter makeAppRouter(WidgetRef ref) {
       GoRoute(
         path: AppRoutes.transactionNew,
         builder: (context, state) {
-          // TODO(dev): return CreateTransactionScreen();
-          return const RouteErrorScreen(
-            errorMessage: 'Create transaction not yet implemented.',
+          // Optional pre-fill for destination account (credit card Pay FAB).
+          final extra = state.extra;
+          final prefillDestId = extra is Map<String, dynamic>
+              ? extra['prefillDestinationId'] as String?
+              : null;
+          return TransactionFormScreen(
+            prefillDestinationAccountId: prefillDestId,
           );
         },
       ),

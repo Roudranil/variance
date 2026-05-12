@@ -106,13 +106,6 @@ class _FakeCategoryList extends CategoryList {
   }
 }
 
-// Fake notifier that stays in initial loading state (for error test override).
-class _FakeErrorCategoryList extends CategoryList {
-  @override
-  Future<List<Category>> build() async =>
-      Completer<List<Category>>().future; // stays loading until state is set
-}
-
 // ---------------------------------------------------------------------------
 // Router helper
 // ---------------------------------------------------------------------------
@@ -120,9 +113,7 @@ class _FakeErrorCategoryList extends CategoryList {
 String? _lastNavigatedTo;
 
 Widget _buildApp(
-  AsyncValue<List<Category>> categoriesState, {
-  bool trackNavigation = true,
-}) {
+  AsyncValue<List<Category>> categoriesState,) {
   _lastNavigatedTo = null;
 
   final router = GoRouter(

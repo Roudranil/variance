@@ -594,15 +594,15 @@ final class GetExchangeRateUseCaseProvider extends $FunctionalProvider<
 String _$getExchangeRateUseCaseHash() =>
     r'a7a98e609a3d3d6bc464edffe5ca7e6cf43ff22f';
 
-/// Provides a [RefreshExchangeRatesUseCase] bound to the exchange rate
-/// repository.
+/// Provides a [RefreshExchangeRatesUseCase] wired with account repository,
+/// exchange rate upsert sink, HTTP service, and home currency from settings.
 
 @ProviderFor(refreshExchangeRatesUseCase)
 final refreshExchangeRatesUseCaseProvider =
     RefreshExchangeRatesUseCaseProvider._();
 
-/// Provides a [RefreshExchangeRatesUseCase] bound to the exchange rate
-/// repository.
+/// Provides a [RefreshExchangeRatesUseCase] wired with account repository,
+/// exchange rate upsert sink, HTTP service, and home currency from settings.
 
 final class RefreshExchangeRatesUseCaseProvider extends $FunctionalProvider<
         AsyncValue<RefreshExchangeRatesUseCase>,
@@ -611,8 +611,8 @@ final class RefreshExchangeRatesUseCaseProvider extends $FunctionalProvider<
     with
         $FutureModifier<RefreshExchangeRatesUseCase>,
         $FutureProvider<RefreshExchangeRatesUseCase> {
-  /// Provides a [RefreshExchangeRatesUseCase] bound to the exchange rate
-  /// repository.
+  /// Provides a [RefreshExchangeRatesUseCase] wired with account repository,
+  /// exchange rate upsert sink, HTTP service, and home currency from settings.
   RefreshExchangeRatesUseCaseProvider._()
       : super(
           from: null,
@@ -640,4 +640,4 @@ final class RefreshExchangeRatesUseCaseProvider extends $FunctionalProvider<
 }
 
 String _$refreshExchangeRatesUseCaseHash() =>
-    r'1e671ed285298b4a7104200edf3125e79a87e95e';
+    r'9b017f66b3fc18fd5ed955f9823ee7058adf6f87';

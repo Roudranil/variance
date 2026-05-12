@@ -226,7 +226,7 @@ void main() {
       await tester.pump();
 
       DebugErrorOverlay.capture(
-          Exception('badge test error'), StackTrace.empty);
+          Exception('badge test error'), StackTrace.empty,);
       await tester.pump();
 
       // Dismiss.

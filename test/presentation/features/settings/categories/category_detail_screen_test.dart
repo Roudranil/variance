@@ -100,13 +100,11 @@ class _FakeRepo implements ICategoryRepository {
 // ---------------------------------------------------------------------------
 
 class _FakeCreateUseCase extends CreateCategoryUseCase {
-  _FakeCreateUseCase(this._repo) : super(_repo);
-  final _FakeRepo _repo;
+  _FakeCreateUseCase(super.repo);
 }
 
 class _FakeUpdateUseCase extends UpdateCategoryUseCase {
-  _FakeUpdateUseCase(this._repo) : super(_repo);
-  final _FakeRepo _repo;
+  _FakeUpdateUseCase(super.repo);
 }
 
 // ---------------------------------------------------------------------------
@@ -166,15 +164,6 @@ Widget _buildApp({
       routerConfig: router,
     ),
   );
-}
-
-// Fake CategoryList notifier — immediately resolves via synchronous value.
-class _FakeCategoryList extends CategoryList {
-  _FakeCategoryList(this._cats);
-  final List<Category> _cats;
-
-  @override
-  Future<List<Category>> build() async => _cats;
 }
 
 // Synchronous variant that pre-populates state before build completes.

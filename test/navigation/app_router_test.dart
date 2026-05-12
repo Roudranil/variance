@@ -15,6 +15,8 @@
 // All tests use ProviderScope with overrides for appSettingsProvider so no
 // file system access or real database is required.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,6 +75,16 @@ Widget _buildApp(AppSettings settings) {
       ),
       netWorthProvider.overrideWith(
         (_) => Stream<NetWorthResult>.value(emptyNetWorth),
+      ),
+      // AccountDetailScreen watches accountByIdProvider — emit null immediately
+      // so the screen settles to "Account not found" instead of loading forever.
+      accountByIdProvider.overrideWith(
+        (_, __) => Stream<Account?>.value(null),
+      ),
+      // AccountDetailScreen watches accountBalanceProvider — override to avoid
+      // waiting on the real database.
+      accountBalanceProvider.overrideWith(
+        (_, __) => Stream<int>.value(0),
       ),
     ],
     child: const _TestRouterApp(),
@@ -191,12 +203,12 @@ void main() {
         final BuildContext context = tester.element(
           find.byType(AccountListScreen),
         );
-        context.push('/accounts/test-id-123');
+        unawaited(context.push('/accounts/test-id-123'));
         await tester.pumpAndSettle();
 
         // The route should resolve without throwing GoException.
-        // The RouteErrorScreen is shown because AccountDetailScreen is not yet
-        // implemented — that is expected behaviour.
+        // AccountDetailScreen now renders, showing "Account not found" because
+        // accountByIdProvider is overridden to emit null in this test.
         expect(tester.takeException(), isNull);
       },
     );

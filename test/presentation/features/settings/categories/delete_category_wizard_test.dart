@@ -13,28 +13,11 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:variance/domain/entities/category.dart';
 import 'package:variance/presentation/features/settings/categories/delete_category_wizard_controller.dart';
 
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
-
-final _now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
-Category _makeCat({
-  required String id,
-  required String name,
-}) {
-  return Category(
-    id: id,
-    name: name,
-    treeType: CategoryTreeType.expense,
-    iconRef: 'shopping_cart',
-    createdAt: _now,
-    updatedAt: _now,
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -77,7 +60,7 @@ void main() {
     });
 
     test('6. advance to migrationChoice step', () {
-      var state = DeleteCategoryWizardState.initial()
+      final state = DeleteCategoryWizardState.initial()
           .skipTemplateStep()
           .copyWith(transactionCount: 5)
           .advanceToMigrationChoice();

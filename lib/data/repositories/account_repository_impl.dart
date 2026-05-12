@@ -215,6 +215,11 @@ class AccountRepositoryImpl implements IAccountRepository {
     return rows.map(_detailRowToEntity).toList();
   }
 
+  @override
+  Future<List<String>> getDistinctActiveCurrencies() {
+    return _dao.getDistinctActiveCurrencies();
+  }
+
   // -----------------------------------------------------------------------
   // Private mapping helpers
   // -----------------------------------------------------------------------

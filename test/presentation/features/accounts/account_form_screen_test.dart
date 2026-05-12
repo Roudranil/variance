@@ -73,14 +73,10 @@ class _FakeSettings extends AppSettingsNotifier {
 /// specific results from [create] and [update].
 class _FakeAccountRepository implements IAccountRepository {
   _FakeAccountRepository({
-    this.createResult,
-    this.updateResult,
     this.nameTaken = false,
     this.softDeleted,
   });
 
-  final Result<Account>? createResult;
-  final Result<Account>? updateResult;
   final bool nameTaken;
   final Account? softDeleted;
 
@@ -96,12 +92,12 @@ class _FakeAccountRepository implements IAccountRepository {
 
   @override
   Future<Result<Account>> create(Account account) async {
-    return createResult ?? Ok(account);
+    return Ok(account);
   }
 
   @override
   Future<Result<Account>> update(Account account) async {
-    return updateResult ?? Ok(account);
+    return Ok(account);
   }
 
   @override
@@ -126,6 +122,9 @@ class _FakeAccountRepository implements IAccountRepository {
 
   @override
   Future<List<AccountDetail>> getAccountDetails(String accountId) async => [];
+
+  @override
+  Future<List<String>> getDistinctActiveCurrencies() async => ['INR'];
 }
 
 /// Minimal [IAccountRepository] that always returns duplicate name.

@@ -16,6 +16,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:variance/data/repositories/drift_ledger_repository.dart';
+import 'package:variance/data/repositories/exchange_rate_repository_impl.dart';
 import 'package:variance/domain/services/ledger_engine.dart';
 import 'package:variance/domain/usecases/account/create_account_use_case.dart';
 import 'package:variance/domain/usecases/account/delete_account_use_case.dart';
@@ -30,6 +31,8 @@ import 'package:variance/domain/usecases/currency/refresh_exchange_rates_use_cas
 import 'package:variance/domain/usecases/transaction/create_transaction_use_case.dart';
 import 'package:variance/domain/usecases/transaction/search_transactions_use_case.dart';
 import 'package:variance/domain/usecases/transaction/watch_monthly_transactions_use_case.dart';
+import 'package:variance/infrastructure/exchange_rates/exchange_rate_service.dart';
+import 'package:variance/presentation/providers/app_settings_providers.dart';
 import 'package:variance/presentation/providers/database_providers.dart';
 import 'package:variance/presentation/providers/repository_providers.dart';
 
@@ -159,10 +162,23 @@ Future<GetExchangeRateUseCase> getExchangeRateUseCase(Ref ref) async {
   return GetExchangeRateUseCase(repo);
 }
 
-/// Provides a [RefreshExchangeRatesUseCase] bound to the exchange rate
-/// repository.
+/// Provides a [RefreshExchangeRatesUseCase] wired with account repository,
+/// exchange rate upsert sink, HTTP service, and home currency from settings.
 @riverpod
 Future<RefreshExchangeRatesUseCase> refreshExchangeRatesUseCase(Ref ref) async {
-  final repo = await ref.watch(exchangeRateRepositoryProvider.future);
-  return RefreshExchangeRatesUseCase(repo);
+  final accountRepo = await ref.watch(accountRepositoryProvider.future);
+  final exchangeRateRepo =
+      await ref.watch(exchangeRateRepositoryProvider.future);
+  final settings = ref.watch(appSettingsProvider).value;
+  final homeCurrency = settings?.homeCurrency ?? 'INR';
+
+  // ExchangeRateRepositoryImpl implements IRateUpsertSink; cast is safe.
+  final upsertSink = exchangeRateRepo as ExchangeRateRepositoryImpl;
+
+  return RefreshExchangeRatesUseCase(
+    accountRepository: accountRepo,
+    rateUpsertSink: upsertSink,
+    exchangeRateService: ExchangeRateService(),
+    homeCurrency: homeCurrency,
+  );
 }
