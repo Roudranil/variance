@@ -13,6 +13,10 @@
 //   7. Category: constructs; default isProtected = false
 //   8. Tag: constructs minimal fields
 //   9. Payee: constructs; default isDeleted = false
+//  T-80.1. ExchangeRate.rate: rateMicro 83_000_000 → 83.0
+//  T-80.2. ExchangeRate.isStale: false within 14 days
+//  T-80.3. ExchangeRate.isStale: true beyond 14 days
+//  T-80.4. ExchangeRate.rate: rateMicro 1_000_000 → 1.0 (identity rate)
 //  10. Currency: constructs; default minorUnits = 2
 //  11. ExchangeRate: constructs all required fields
 //  12. Budget: constructs; default rollover = false
@@ -174,6 +178,67 @@ void main() {
         rateDate: '2025-05-07',
       );
       expect(rate.rateMicro, equals(83000000));
+    });
+
+    // T-80 computed getter tests
+    test('T-80.1. rate: rateMicro 83_000_000 → 83.0', () {
+      const rate = ExchangeRate(
+        id: 1,
+        fromCurrency: 'USD',
+        toCurrency: 'INR',
+        rateMicro: 83000000,
+        fetchedAt: now,
+        rateDate: '2025-05-07',
+      );
+      expect(rate.rate, closeTo(83.0, 0.000001));
+    });
+
+    test('T-80.2. isStale: false within 14 days', () {
+      // fetchedAt = 7 days ago → still fresh
+      final sevenDaysAgoEpoch =
+          DateTime.now()
+              .subtract(const Duration(days: 7))
+              .millisecondsSinceEpoch ~/
+          1000;
+      final rate = ExchangeRate(
+        id: 2,
+        fromCurrency: 'EUR',
+        toCurrency: 'USD',
+        rateMicro: 1100000,
+        fetchedAt: sevenDaysAgoEpoch,
+        rateDate: '2025-05-05',
+      );
+      expect(rate.isStale, isFalse);
+    });
+
+    test('T-80.3. isStale: true beyond 14 days', () {
+      // fetchedAt = 15 days ago → stale
+      final fifteenDaysAgoEpoch =
+          DateTime.now()
+              .subtract(const Duration(days: 15))
+              .millisecondsSinceEpoch ~/
+          1000;
+      final rate = ExchangeRate(
+        id: 3,
+        fromCurrency: 'GBP',
+        toCurrency: 'USD',
+        rateMicro: 1250000,
+        fetchedAt: fifteenDaysAgoEpoch,
+        rateDate: '2025-04-27',
+      );
+      expect(rate.isStale, isTrue);
+    });
+
+    test('T-80.4. rate: rateMicro 1_000_000 → 1.0 (identity rate)', () {
+      const rate = ExchangeRate(
+        id: 4,
+        fromCurrency: 'USD',
+        toCurrency: 'USD',
+        rateMicro: 1000000,
+        fetchedAt: now,
+        rateDate: '2025-05-07',
+      );
+      expect(rate.rate, closeTo(1.0, 0.000001));
     });
   });
 

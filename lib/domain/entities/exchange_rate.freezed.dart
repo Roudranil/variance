@@ -299,14 +299,15 @@ extension ExchangeRatePatterns on ExchangeRate {
 
 /// @nodoc
 
-class _ExchangeRate implements ExchangeRate {
+class _ExchangeRate extends ExchangeRate {
   const _ExchangeRate(
       {required this.id,
       required this.fromCurrency,
       required this.toCurrency,
       required this.rateMicro,
       required this.fetchedAt,
-      required this.rateDate});
+      required this.rateDate})
+      : super._();
 
   /// Row identifier (auto-increment, not UUID, per data model §4.2).
   @override
