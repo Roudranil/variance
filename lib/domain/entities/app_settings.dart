@@ -21,8 +21,14 @@ enum AppTheme {
 
 /// Color scheme source.
 enum ColorSchemeMode {
+  /// Use wallpaper-extracted colors via DynamicColorBuilder (Android 12+).
   dynamic,
+
+  /// Use a user-chosen seed color via ColorScheme.fromSeed.
   custom,
+
+  /// Use the Catppuccin palette (Latte for light, Mocha for dark).
+  catppuccin,
 }
 
 /// Decimal separator for number display.

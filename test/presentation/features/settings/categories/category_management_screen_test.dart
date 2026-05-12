@@ -142,7 +142,8 @@ Widget _buildApp(
           GoRoute(
             path: ':id',
             builder: (ctx, st) {
-              _lastNavigatedTo = '/settings/categories/${st.pathParameters['id']}';
+              _lastNavigatedTo =
+                  '/settings/categories/${st.pathParameters['id']}';
               return const Scaffold(body: Text('CategoryDetail'));
             },
           ),
@@ -292,7 +293,8 @@ void main() {
       expect(_lastNavigatedTo, startsWith('/settings/categories/new'));
     });
 
-    testWidgets('9. Edit navigates to /settings/categories/:id', (tester) async {
+    testWidgets('9. Edit navigates to /settings/categories/:id',
+        (tester) async {
       final cats = [_makeCat(id: 'cat-edit', name: 'Food')];
 
       await tester.pumpWidget(_buildApp(AsyncData(cats)));
@@ -310,4 +312,3 @@ void main() {
     });
   });
 }
-

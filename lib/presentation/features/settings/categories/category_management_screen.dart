@@ -69,10 +69,9 @@ class _CategoryManagementScreenState
   }
 
   /// Returns the currently active [CategoryTreeType] based on the tab index.
-  CategoryTreeType get _activeTree =>
-      _tabController.index == 0
-          ? CategoryTreeType.expense
-          : CategoryTreeType.income;
+  CategoryTreeType get _activeTree => _tabController.index == 0
+      ? CategoryTreeType.expense
+      : CategoryTreeType.income;
 
   @override
   Widget build(BuildContext context) {
@@ -269,9 +268,7 @@ class _CategoryContextMenu extends StatelessWidget {
 
           // Delete action — disabled with tooltip when children exist
           Tooltip(
-            message: canDelete
-                ? ''
-                : 'Remove all subcategories first.',
+            message: canDelete ? '' : 'Remove all subcategories first.',
             child: ListTile(
               enabled: canDelete,
               leading: Icon(

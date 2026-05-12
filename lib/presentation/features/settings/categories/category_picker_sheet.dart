@@ -206,9 +206,7 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
     }).toList();
 
     // Separate into roots and children.
-    final roots = visible
-        .where((c) => c.parentId == null)
-        .toList()
+    final roots = visible.where((c) => c.parentId == null).toList()
       ..sort((a, b) => a.name.compareTo(b.name));
     final children = visible.where((c) => c.parentId != null).toList();
 
@@ -218,13 +216,10 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
         : roots.where((c) => c.name.toLowerCase().contains(_query)).toList();
     final filteredChildren = _query.isEmpty
         ? children
-        : children
-            .where((c) => c.name.toLowerCase().contains(_query))
-            .toList();
+        : children.where((c) => c.name.toLowerCase().contains(_query)).toList();
 
     // Recents
-    final recentIds =
-        _categoryRecentsNotifier.forTree(widget.treeType);
+    final recentIds = _categoryRecentsNotifier.forTree(widget.treeType);
     final recentCats = recentIds
         .map(
           (id) => allCategories.where((c) => c.id == id).firstOrNull,
@@ -240,7 +235,9 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
     }
 
     // No results state
-    if (_query.isNotEmpty && filteredRoots.isEmpty && filteredChildren.isEmpty) {
+    if (_query.isNotEmpty &&
+        filteredRoots.isEmpty &&
+        filteredChildren.isEmpty) {
       return _NoResultsState(
         query: _query,
         onCreateTapped: () => setState(() {
@@ -294,8 +291,7 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
           // Search results: show parents then children flat
           for (final root in filteredRoots)
             _buildRootRow(context, root, children),
-          for (final child in filteredChildren)
-            _buildChildRow(context, child),
+          for (final child in filteredChildren) _buildChildRow(context, child),
         ],
 
         // Inline create row
@@ -711,7 +707,8 @@ class _IconSubSheetState extends State<_IconSubSheet> {
   void _onSearch() {
     final q = _searchController.text.toLowerCase();
     setState(() {
-      _filtered = kCategoryIcons.entries.where((e) => e.key.contains(q)).toList();
+      _filtered =
+          kCategoryIcons.entries.where((e) => e.key.contains(q)).toList();
     });
   }
 
