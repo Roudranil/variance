@@ -76,6 +76,16 @@ Widget _buildApp(AppSettings settings) {
       netWorthProvider.overrideWith(
         (_) => Stream<NetWorthResult>.value(emptyNetWorth),
       ),
+      // AccountDetailScreen watches accountByIdProvider — emit null immediately
+      // so the screen settles to "Account not found" instead of loading forever.
+      accountByIdProvider.overrideWith(
+        (_, __) => Stream<Account?>.value(null),
+      ),
+      // AccountDetailScreen watches accountBalanceProvider — override to avoid
+      // waiting on the real database.
+      accountBalanceProvider.overrideWith(
+        (_, __) => Stream<int>.value(0),
+      ),
     ],
     child: const _TestRouterApp(),
   );
@@ -197,8 +207,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // The route should resolve without throwing GoException.
-        // The RouteErrorScreen is shown because AccountDetailScreen is not yet
-        // implemented — that is expected behaviour.
+        // AccountDetailScreen now renders, showing "Account not found" because
+        // accountByIdProvider is overridden to emit null in this test.
         expect(tester.takeException(), isNull);
       },
     );
