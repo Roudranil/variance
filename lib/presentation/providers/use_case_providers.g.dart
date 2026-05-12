@@ -8,12 +8,14 @@ part of 'use_case_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provides a [CreateTransactionUseCase] bound to the transaction repository.
+/// Provides a [CreateTransactionUseCase] bound to the transaction repository
+/// and [LedgerEngine] (T-49, T-50).
 
 @ProviderFor(createTransactionUseCase)
 final createTransactionUseCaseProvider = CreateTransactionUseCaseProvider._();
 
-/// Provides a [CreateTransactionUseCase] bound to the transaction repository.
+/// Provides a [CreateTransactionUseCase] bound to the transaction repository
+/// and [LedgerEngine] (T-49, T-50).
 
 final class CreateTransactionUseCaseProvider extends $FunctionalProvider<
         AsyncValue<CreateTransactionUseCase>,
@@ -22,7 +24,8 @@ final class CreateTransactionUseCaseProvider extends $FunctionalProvider<
     with
         $FutureModifier<CreateTransactionUseCase>,
         $FutureProvider<CreateTransactionUseCase> {
-  /// Provides a [CreateTransactionUseCase] bound to the transaction repository.
+  /// Provides a [CreateTransactionUseCase] bound to the transaction repository
+  /// and [LedgerEngine] (T-49, T-50).
   CreateTransactionUseCaseProvider._()
       : super(
           from: null,
@@ -50,7 +53,7 @@ final class CreateTransactionUseCaseProvider extends $FunctionalProvider<
 }
 
 String _$createTransactionUseCaseHash() =>
-    r'364ded799523c34174e2eb1bd447c811a5aa0604';
+    r'87354daa9fa523281c7a76697c18f4a5fb3935b3';
 
 /// Provides a [WatchMonthlyTransactionsUseCase] bound to the transaction
 /// repository.
