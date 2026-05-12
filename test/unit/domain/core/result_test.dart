@@ -20,6 +20,7 @@
 //  15. Different Failure subtypes are not equal by type
 
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 
@@ -62,7 +63,7 @@ void main() {
 
   group('Switch exhaustiveness', () {
     test('5. Ok branch executes on Ok', () {
-      final Result<int> result = Ok(7);
+      const Result<int> result = Ok(7);
       final output = switch (result) {
         Ok(:final value) => 'ok:$value',
         Err(:final failure) => 'err:${failure.message}',
@@ -71,7 +72,7 @@ void main() {
     });
 
     test('6. Err branch executes on Err', () {
-      final Result<int> result = Err(const ValidationFailure('bad input'));
+      const Result<int> result = Err(ValidationFailure('bad input'));
       final output = switch (result) {
         Ok(:final value) => 'ok:$value',
         Err(:final failure) => 'err:${failure.message}',

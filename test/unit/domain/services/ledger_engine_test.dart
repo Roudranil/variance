@@ -23,6 +23,7 @@
 // Test numbering follows the cases above in order.
 
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/entry.dart';
@@ -103,7 +104,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 1.1 — Create Expense', () {
     test('posts Dr EC + Cr A; Σdebit = Σcredit', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createExpense,
         accountId: 'account-A',
         categoryId: 'category-EC',
@@ -136,7 +137,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 1.2 — Create Income', () {
     test('posts Dr A + Cr IC; Σdebit = Σcredit', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createIncome,
         accountId: 'account-A',
         categoryId: 'category-IC',
@@ -167,7 +168,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 1.3 — Create Transfer', () {
     test('posts Dr A2 + Cr A1; Σdebit = Σcredit', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createTransfer,
         accountId: 'account-A1',
         destinationAccountId: 'account-A2',
@@ -197,7 +198,7 @@ void main() {
   group('Case 1.3a — Create Transfer with Fee', () {
     test('posts 4 entries (2 balanced pairs); Σdebit = Σcredit each pair',
         () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createTransferWithFee,
         accountId: 'account-A1',
         destinationAccountId: 'account-A2',
@@ -252,7 +253,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.2a — Opening Balance (positive)', () {
     test('posts Dr A + Cr EQ; EQ account created lazily', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.openingBalancePositive,
         accountId: 'account-A',
         amountMinor: 100000,
@@ -283,7 +284,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.2b — Opening Balance (negative)', () {
     test('posts Dr EQ + Cr A', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.openingBalanceNegative,
         accountId: 'account-A',
         amountMinor: 50000,
@@ -311,7 +312,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.3a — Visible balance adjustment (increase)', () {
     test('posts Dr A + Cr BAI', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.balanceEditVisibleIncrease,
         accountId: 'account-A',
         categoryId: 'category-BAI',
@@ -339,7 +340,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.3b — Visible balance adjustment (decrease)', () {
     test('posts Dr BAE + Cr A', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.balanceEditVisibleDecrease,
         accountId: 'account-A',
         categoryId: 'category-BAE',
@@ -367,7 +368,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.4a — Invisible balance adjustment (increase)', () {
     test('posts Dr A + Cr EQ', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.balanceEditInvisibleIncrease,
         accountId: 'account-A',
         amountMinor: 4000,
@@ -394,7 +395,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.4b — Invisible balance adjustment (decrease)', () {
     test('posts Dr EQ + Cr A', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.balanceEditInvisibleDecrease,
         accountId: 'account-A',
         amountMinor: 6000,
@@ -421,7 +422,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 2.5a — Account deletion transfer', () {
     test('positive balance: Dr A₂, Cr A₁', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.accountDeletionTransferPositive,
         accountId: 'account-A1',
         destinationAccountId: 'account-A2',
@@ -444,7 +445,7 @@ void main() {
     });
 
     test('negative balance: Dr A₁, Cr A₂', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.accountDeletionTransferNegative,
         accountId: 'account-A1',
         destinationAccountId: 'account-A2',
@@ -472,7 +473,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('Case 3.1 — Recurring auto-post', () {
     test('auto-post expense: same entries as case 1.1', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createExpense,
         accountId: 'account-A',
         categoryId: 'category-EC',
@@ -504,7 +505,7 @@ void main() {
       // We use a custom PostingCase that returns mismatched amounts via
       // a fake input that has the engine build entries with known imbalance.
       // We override the injected builder to trigger the assertion.
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createExpense,
         accountId: 'account-A',
         categoryId: 'category-EC',
@@ -533,7 +534,7 @@ void main() {
       // Pre-create the EQ account
       repo.createdEqAccounts.add('__EQ_INR');
 
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.openingBalancePositive,
         accountId: 'account-B',
         amountMinor: 200000,
@@ -552,7 +553,7 @@ void main() {
     });
 
     test('EQ account created once per currency', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.openingBalancePositive,
         accountId: 'account-C',
         amountMinor: 10000,
@@ -571,7 +572,7 @@ void main() {
   // -------------------------------------------------------------------------
   group('LedgerEngine — statelessness', () {
     test('two calls with same input yield same entry structure', () async {
-      final input = CreateTransactionInput(
+      const input = CreateTransactionInput(
         postingCase: PostingCase.createExpense,
         accountId: 'account-A',
         categoryId: 'category-EC',

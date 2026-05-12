@@ -17,11 +17,11 @@
 //  12. edit mode — protected category blocks UpdateCategoryUseCase (returns Err)
 
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/category.dart';
 import 'package:variance/domain/repositories/i_category_repository.dart';
@@ -72,12 +72,10 @@ class _FakeRepo implements ICategoryRepository {
   Stream<List<Category>> watchAll() => Stream.value(_categories);
 
   @override
-  Future<Result<Category>> create(Category category) async =>
-      Ok(category);
+  Future<Result<Category>> create(Category category) async => Ok(category);
 
   @override
-  Future<Result<Category>> update(Category category) async =>
-      Ok(category);
+  Future<Result<Category>> update(Category category) async => Ok(category);
 
   @override
   Future<Result<void>> softDelete(String id, {String? replacementId}) async =>
@@ -149,8 +147,7 @@ Widget _buildApp({
       ),
       GoRoute(
         path: '/settings/categories',
-        builder: (ctx, st) =>
-            const Scaffold(body: Text('Categories List')),
+        builder: (ctx, st) => const Scaffold(body: Text('Categories List')),
       ),
     ],
   );
@@ -199,7 +196,8 @@ class _SyncCategoryList extends CategoryList {
 
 void main() {
   group('CategoryDetailScreen — create mode', () {
-    testWidgets('1. create mode AppBar title is "New Category"', (tester) async {
+    testWidgets('1. create mode AppBar title is "New Category"',
+        (tester) async {
       await tester.pumpWidget(_buildApp());
       await tester.pumpAndSettle();
       expect(find.text('New Category'), findsOneWidget);

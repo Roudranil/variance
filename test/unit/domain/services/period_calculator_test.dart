@@ -23,6 +23,7 @@
 //  15. Non-leap year 2100: Jan 31 → period 1 starts Feb 28
 
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/domain/services/period_calculator.dart';
 
@@ -30,7 +31,7 @@ DateTime _d(int year, int month, int day) => DateTime.utc(year, month, day);
 int _epoch(DateTime d) => d.millisecondsSinceEpoch ~/ 1000;
 
 void main() {
-  final calc = PeriodCalculator();
+  const calc = PeriodCalculator();
 
   group('PeriodCalculator — Daily', () {
     test('1. daily period — reference on day 3 → period [day3, day4)', () {

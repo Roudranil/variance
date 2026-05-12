@@ -12,7 +12,6 @@
 //   7. wizard aborts when cancel is called at any step
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:variance/domain/entities/category.dart';
 import 'package:variance/presentation/features/settings/categories/delete_category_wizard_controller.dart';

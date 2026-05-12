@@ -17,19 +17,18 @@
 //  12. create mode: successful save navigates back
 
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/entities/account_detail.dart';
 import 'package:variance/domain/entities/app_settings.dart';
 import 'package:variance/domain/entities/currency.dart';
-import 'package:variance/domain/entities/account_detail.dart';
 import 'package:variance/domain/entities/money.dart';
 import 'package:variance/domain/repositories/i_account_repository.dart';
-import 'package:variance/domain/usecases/account/create_account_use_case.dart';
 import 'package:variance/domain/usecases/account/update_account_use_case.dart';
 import 'package:variance/presentation/features/accounts/account_form_screen.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
@@ -115,13 +114,15 @@ class _FakeAccountRepository implements IAccountRepository {
   Future<Account?> findSoftDeletedByNameAndCategory(
     String name,
     AccountCategory category,
-  ) async => softDeleted;
+  ) async =>
+      softDeleted;
 
   @override
   Future<Result<void>> saveAccountDetails(
     String accountId,
     List<AccountDetail> details,
-  ) async => const Ok(null);
+  ) async =>
+      const Ok(null);
 
   @override
   Future<List<AccountDetail>> getAccountDetails(String accountId) async => [];
@@ -164,15 +165,17 @@ Widget _buildForm({
 
   return ProviderScope(
     overrides: [
-      appSettingsProvider.overrideWith(() => _FakeSettings()),
-      currenciesProvider.overrideWith((_) async => <Currency>[
-            const Currency(
-              code: 'INR',
-              name: 'Indian Rupee',
-              symbol: '₹',
-              minorUnits: 2,
-            ),
-          ]),
+      appSettingsProvider.overrideWith(_FakeSettings.new),
+      currenciesProvider.overrideWith(
+        (_) async => <Currency>[
+          const Currency(
+            code: 'INR',
+            name: 'Indian Rupee',
+            symbol: '₹',
+            minorUnits: 2,
+          ),
+        ],
+      ),
       // Inject a use case built on the fake repo — no LedgerEngine needed
       // because _FakeAccountRepository.create returns Ok directly.
       createAccountUseCaseProvider.overrideWith(
@@ -222,8 +225,7 @@ void main() {
       expect(find.text('Account category'), findsWidgets);
     });
 
-    testWidgets(
-        '4. category-specific fields appear when category is selected',
+    testWidgets('4. category-specific fields appear when category is selected',
         (tester) async {
       await tester.pumpWidget(_buildForm());
       await tester.pumpAndSettle();
@@ -286,7 +288,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // The name field should contain the existing account name.
-      expect(find.widgetWithText(TextFormField, 'Savings Account'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, 'Savings Account'),
+        findsOneWidget,
+      );
     });
   });
 

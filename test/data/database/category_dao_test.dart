@@ -150,18 +150,18 @@ void main() {
         makeCompanion(id: 'c1', name: 'Food'),
       );
       await dao.updateCategory(
-        CategoriesCompanion(
-          id: const Value('c1'),
-          parentId: const Value(null),
-          treeType: const Value('expense'),
-          name: const Value('Groceries'),
-          iconRef: const Value('category'),
-          isDeleted: const Value(false),
-          deletedAt: const Value(null),
-          isProtected: const Value(false),
-          sortOrder: const Value(null),
-          createdAt: const Value(kNow),
-          updatedAt: const Value(kNow),
+        const CategoriesCompanion(
+          id: Value('c1'),
+          parentId: Value(null),
+          treeType: Value('expense'),
+          name: Value('Groceries'),
+          iconRef: Value('category'),
+          isDeleted: Value(false),
+          deletedAt: Value(null),
+          isProtected: Value(false),
+          sortOrder: Value(null),
+          createdAt: Value(kNow),
+          updatedAt: Value(kNow),
         ),
       );
       final categories = await dao.watchAllCategories().first;
@@ -171,18 +171,18 @@ void main() {
 
     test('6. updateCategory returns false for non-existent id', () async {
       final result = await dao.updateCategory(
-        CategoriesCompanion(
-          id: const Value('non-existent'),
-          parentId: const Value(null),
-          treeType: const Value('expense'),
-          name: const Value('X'),
-          iconRef: const Value('category'),
-          isDeleted: const Value(false),
-          deletedAt: const Value(null),
-          isProtected: const Value(false),
-          sortOrder: const Value(null),
-          createdAt: const Value(kNow),
-          updatedAt: const Value(kNow),
+        const CategoriesCompanion(
+          id: Value('non-existent'),
+          parentId: Value(null),
+          treeType: Value('expense'),
+          name: Value('X'),
+          iconRef: Value('category'),
+          isDeleted: Value(false),
+          deletedAt: Value(null),
+          isProtected: Value(false),
+          sortOrder: Value(null),
+          createdAt: Value(kNow),
+          updatedAt: Value(kNow),
         ),
       );
       expect(result, isFalse);

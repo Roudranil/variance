@@ -18,11 +18,12 @@
 //  10. BalanceCalculator is stateless (two calls on same instance yield same result)
 
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:variance/domain/entities/entry.dart';
 import 'package:variance/domain/services/balance_calculator.dart';
 
 void main() {
-  final calculator = BalanceCalculator();
+  const calculator = BalanceCalculator();
   const homeCurrency = 'INR';
   const now = 1715000000;
 

@@ -63,8 +63,10 @@ void main() {
           .map((r) => r['name'] as String)
           .toSet();
 
-      expect(incomeParents,
-          containsAll(['Standard', 'Gift', 'Repayment', 'Other']));
+      expect(
+        incomeParents,
+        containsAll(['Standard', 'Gift', 'Repayment', 'Other']),
+      );
       expect(incomeParents, contains('Balance Adjustment'));
     });
 

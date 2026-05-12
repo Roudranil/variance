@@ -17,8 +17,8 @@
 // All tests use ProviderContainer with an in-memory AppDatabase override to
 // avoid touching the file system or FlutterSecureStorage.
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/daos/account_dao.dart';

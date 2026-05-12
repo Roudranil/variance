@@ -19,16 +19,12 @@
 //  14. select(balanceEditVisibleDecrease, ...) → PostingCase.balanceEditVisibleDecrease
 //  15. select(balanceEditInvisibleIncrease, ...) → PostingCase.balanceEditInvisibleIncrease
 //  16. select(balanceEditInvisibleDecrease, ...) → PostingCase.balanceEditInvisibleDecrease
-//  17. select(accountDeletionTransferPositive, ...) → PostingCase.accountDeletionTransferPositive
-//  18. select(accountDeletionTransferNegative, ...) → PostingCase.accountDeletionTransferNegative
-//  19. select(recurringAutoPost, expense) → PostingCase.createExpense
-//  20. PostingCaseSelector has no mutable state (same instance yields same output)
-
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:variance/domain/services/posting_case_selector.dart';
 
 void main() {
-  final selector = PostingCaseSelector();
+  const selector = PostingCaseSelector();
 
   group('PostingCaseSelector — Transaction Lifecycle (Group 1)', () {
     test('1. createExpense event → createExpense case', () {

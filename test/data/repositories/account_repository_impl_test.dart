@@ -14,7 +14,6 @@
 //   9. saveAccountDetails — details readable via getAccountDetails
 //  10. getAccountDetails — returns empty list when no details exist
 
-import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:variance/data/database/app_database.dart';
@@ -211,7 +210,7 @@ void main() {
       await repo.create(makeAccount());
 
       final details = [
-        domain.AccountDetail(
+        const domain.AccountDetail(
           id: 'det-1',
           accountId: 'acc-1',
           detailKey: 'bank_name',
