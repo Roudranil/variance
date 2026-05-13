@@ -40,10 +40,14 @@ import 'package:uuid/uuid.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
 import 'package:variance/domain/entities/category.dart';
+import 'package:variance/domain/entities/exchange_rate.dart';
 import 'package:variance/domain/entities/transaction.dart';
+import 'package:variance/domain/usecases/currency/get_exchange_rate_use_case.dart';
 import 'package:variance/presentation/providers/account_providers.dart';
+import 'package:variance/presentation/providers/app_settings_providers.dart';
 import 'package:variance/presentation/providers/category_providers.dart';
 import 'package:variance/presentation/providers/use_case_providers.dart';
+import 'package:variance/presentation/widgets/exchange_rate_estimate_widget.dart';
 
 // ignore: prefer_const_constructors — Uuid must not be const
 final _uuid = Uuid();
@@ -92,6 +96,10 @@ class _TransactionFormScreenState
 
   bool _isSaving = false;
 
+  // Exchange rate estimate state (CURR-03, T-95).
+  // Set to null when same currency or rate unavailable.
+  ExchangeRate? _exchangeRateEntity;
+
   @override
   void initState() {
     super.initState();
@@ -118,13 +126,52 @@ class _TransactionFormScreenState
     return src != null && dst != null && src != dst;
   }
 
+  /// Fetches the exchange rate estimate when the account currency differs from
+  /// home currency (CURR-03, T-95). Read-only: does not affect posted amount.
+  Future<void> _fetchExchangeRateEstimate({
+    required String accountCurrency,
+    required String homeCurrency,
+  }) async {
+    if (accountCurrency == homeCurrency) {
+      setState(() => _exchangeRateEntity = null);
+      return;
+    }
+    final useCaseAsync =
+        await ref.read(getExchangeRateUseCaseProvider.future);
+    final result = await useCaseAsync(
+      GetExchangeRateInput(from: accountCurrency, to: homeCurrency),
+    );
+    if (!mounted) return;
+    setState(() {
+      _exchangeRateEntity = switch (result) {
+        Ok(:final value) => value,
+        Err() => null,
+      };
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final accountsAsync = ref.watch(accountsProvider);
     final categoriesAsync = ref.watch(categoryListProvider);
+    final settings = ref.watch(appSettingsProvider).value;
+    final homeCurrency = settings?.homeCurrency ?? 'INR';
 
     final accounts = accountsAsync.value ?? <Account>[];
     final categories = categoriesAsync.value ?? <Category>[];
+
+    // Determine which account's currency to use for the estimate.
+    // For expense: source account. For income: destination account.
+    // For transfer: not applicable (exchange rate field handles it).
+    final String? estimateFromCurrency = switch (_type) {
+      TransactionType.expense => _sourceAccount?.currencyCode,
+      TransactionType.income => _destinationAccount?.currencyCode,
+      TransactionType.transfer => null,
+    };
+
+    // Parsed amount for the estimate.
+    final estimateAmount =
+        double.tryParse(_amountController.text.trim());
 
     return Scaffold(
       appBar: AppBar(
@@ -180,6 +227,10 @@ class _TransactionFormScreenState
                 onSelected: (a) {
                   setState(() => _destinationAccount = a);
                   _updateWarnings();
+                  _fetchExchangeRateEstimate(
+                    accountCurrency: a.currencyCode,
+                    homeCurrency: homeCurrency,
+                  );
                 },
               ),
             if (_type == TransactionType.expense)
@@ -190,8 +241,24 @@ class _TransactionFormScreenState
                 onSelected: (a) {
                   setState(() => _sourceAccount = a);
                   _updateWarnings();
+                  _fetchExchangeRateEstimate(
+                    accountCurrency: a.currencyCode,
+                    homeCurrency: homeCurrency,
+                  );
                 },
               ),
+            // Exchange rate estimate (CURR-03, T-95) — income/expense only.
+            // Shown when account currency ≠ home currency. Read-only.
+            if (estimateFromCurrency != null &&
+                estimateFromCurrency != homeCurrency) ...[
+              const SizedBox(height: 8),
+              ExchangeRateEstimateWidget(
+                fromCurrency: estimateFromCurrency,
+                toCurrency: homeCurrency,
+                amount: estimateAmount,
+                exchangeRate: _exchangeRateEntity,
+              ),
+            ],
             if (_type == TransactionType.transfer) ...[
               _AccountPicker(
                 label: 'From account',

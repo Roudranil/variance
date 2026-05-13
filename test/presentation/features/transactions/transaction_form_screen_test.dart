@@ -1,6 +1,6 @@
 // test/presentation/features/transactions/transaction_form_screen_test.dart
 //
-// Widget tests for TransactionFormScreen (T-51, T-52, T-44).
+// Widget tests for TransactionFormScreen (T-51, T-52, T-44, T-95).
 //
 // Test cases:
 //   1. income type: account picker labelled "To account (income)"
@@ -12,24 +12,34 @@
 //   7. submit disabled until required fields filled
 //   8. overdraft banner appears on asset account (stubbed balance = 0)
 //   9. credit limit banner appears on credit card account (stubbed balance = 0)
+//  10. account currency = home currency → no estimate widget shown (T-95)
+//  11. account currency ≠ home currency → estimate widget shown (T-95)
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:variance/domain/entities/app_settings.dart'
+    as variance_app_settings;
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
 import 'package:variance/domain/entities/category.dart';
 import 'package:variance/domain/entities/entry.dart';
+import 'package:variance/domain/entities/exchange_rate.dart';
 import 'package:variance/domain/entities/transaction.dart';
+import 'package:variance/domain/repositories/i_exchange_rate_repository.dart';
 import 'package:variance/domain/repositories/i_transaction_repository.dart';
 import 'package:variance/domain/services/ledger_engine.dart';
+import 'package:variance/domain/usecases/currency/get_exchange_rate_use_case.dart';
 import 'package:variance/domain/usecases/transaction/create_transaction_use_case.dart';
 import 'package:variance/presentation/features/transactions/transaction_form_screen.dart';
 import 'package:variance/presentation/providers/account_providers.dart';
+import 'package:variance/presentation/providers/app_settings_providers.dart';
 import 'package:variance/presentation/providers/category_providers.dart'
     show CategoryList, categoryListProvider;
 import 'package:variance/presentation/providers/use_case_providers.dart';
+import 'package:variance/presentation/widgets/exchange_rate_estimate_widget.dart';
 
 // ---------------------------------------------------------------------------
 // Fakes
@@ -70,6 +80,34 @@ class _FakeCategoryList extends CategoryList {
 
   @override
   Future<List<Category>> build() async => _cats;
+}
+
+// Fake AppSettingsNotifier — returns INR as home currency.
+class _FakeAppSettings extends AppSettingsNotifier {
+  @override
+  Future<variance_app_settings.AppSettings> build() async =>
+      const variance_app_settings.AppSettings(homeCurrency: 'INR');
+}
+
+// Fake IExchangeRateRepository for T-95 tests.
+class _FakeExchangeRateRepository implements IExchangeRateRepository {
+  _FakeExchangeRateRepository({this.entity});
+
+  final ExchangeRate? entity;
+
+  @override
+  Future<ExchangeRate?> getRateEntity(String from, String to) async => entity;
+
+  @override
+  Future<Result<Decimal>> getRate(String from, String to, String date) =>
+      throw UnimplementedError();
+
+  @override
+  Result<Decimal> getCachedRate(String from, String to, String date) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<void>> fetchAndCache() => throw UnimplementedError();
 }
 
 class _FakeTransactionRepository implements ITransactionRepository {
@@ -136,6 +174,7 @@ class _FakeLedgerRepository implements LedgerRepository {
 Widget _buildForm({
   List<Account>? accounts,
   List<Category>? categories,
+  ExchangeRate? exchangeRateForEstimate,
 }) {
   final accts = accounts ??
       [
@@ -147,6 +186,10 @@ Widget _buildForm({
   final repo = _FakeTransactionRepository();
   final engine = LedgerEngine(_FakeLedgerRepository());
   final useCase = CreateTransactionUseCase(repo, engine);
+
+  final fakeExchangeRepo =
+      _FakeExchangeRateRepository(entity: exchangeRateForEstimate);
+  final exchangeRateUseCase = GetExchangeRateUseCase(fakeExchangeRepo);
 
   final router = GoRouter(
     routes: [
@@ -167,6 +210,10 @@ Widget _buildForm({
       ),
       createTransactionUseCaseProvider.overrideWith(
         (_) async => useCase,
+      ),
+      appSettingsProvider.overrideWith(_FakeAppSettings.new),
+      getExchangeRateUseCaseProvider.overrideWith(
+        (_) async => exchangeRateUseCase,
       ),
     ],
     child: MaterialApp.router(routerConfig: router),
@@ -336,5 +383,61 @@ void main() {
       find.textContaining('credit card limit'),
       findsOneWidget,
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // T-95: exchange rate estimate wiring
+  // ---------------------------------------------------------------------------
+
+  testWidgets(
+      '10. account currency = home currency → no estimate widget shown',
+      (tester) async {
+    // Both accounts are INR (home = INR), so no estimate should appear.
+    final accounts = [
+      _makeAccount(id: 'inr-1', name: 'INR Bank', currency: 'INR'),
+    ];
+    await tester.pumpWidget(_buildForm(accounts: accounts));
+    await tester.pumpAndSettle();
+
+    // Select INR account for expense.
+    await tester.tap(find.text('Select account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('INR Bank'));
+    await tester.pumpAndSettle();
+
+    // No estimate widget should appear (same currency as home).
+    expect(find.byType(ExchangeRateEstimateWidget), findsNothing);
+  });
+
+  testWidgets(
+      '11. account currency ≠ home currency → estimate widget shown',
+      (tester) async {
+    final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    // Fresh rate: USD → INR @ 83
+    final freshRate = ExchangeRate(
+      id: 1,
+      fromCurrency: 'USD',
+      toCurrency: 'INR',
+      rateMicro: 83000000,
+      fetchedAt: nowEpoch,
+      rateDate: '2025-01-01',
+    );
+
+    final accounts = [
+      _makeAccount(id: 'usd-1', name: 'USD Bank', currency: 'USD'),
+    ];
+    await tester.pumpWidget(
+      _buildForm(accounts: accounts, exchangeRateForEstimate: freshRate),
+    );
+    await tester.pumpAndSettle();
+
+    // Select USD account for expense (home = INR → cross-currency).
+    await tester.tap(find.text('Select account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USD Bank'));
+    await tester.pumpAndSettle();
+
+    // Estimate widget must be present (currency differs from home).
+    expect(find.byType(ExchangeRateEstimateWidget), findsOneWidget);
   });
 }
