@@ -3,13 +3,14 @@
 // Riverpod providers for all concrete repository implementations.
 //
 // Provider tree (all keepAlive — constructed once, never disposed):
-//   transactionRepositoryProvider  ← transactionDaoProvider
-//   accountRepositoryProvider      ← accountDaoProvider
-//   categoryRepositoryProvider     ← categoryDaoProvider
-//   recurringTemplateRepositoryProvider ← templateDaoProvider
-//   exchangeRateRepositoryProvider ← exchangeRateDaoProvider
-//   currencyRepositoryProvider     ← currencyDaoProvider
-//   currenciesProvider             ← currencyRepositoryProvider (keepAlive list cache)
+//   transactionRepositoryProvider          ← transactionDaoProvider
+//   accountRepositoryProvider              ← accountDaoProvider
+//   categoryRepositoryProvider             ← categoryDaoProvider
+//   recurringTemplateRepositoryProvider    ← templateDaoProvider
+//   scheduledOccurrenceRepositoryProvider  ← scheduledOccurrenceDaoProvider
+//   exchangeRateRepositoryProvider         ← exchangeRateDaoProvider
+//   currencyRepositoryProvider             ← currencyDaoProvider
+//   currenciesProvider                     ← currencyRepositoryProvider (keepAlive list cache)
 //
 // Rules (SDS §2.2.3, §2.2.4):
 //   - All providers use @riverpod annotation; raw Provider(...) is forbidden.
@@ -28,6 +29,7 @@ import 'package:variance/data/repositories/category_repository_impl.dart';
 import 'package:variance/data/repositories/currency_repository_impl.dart';
 import 'package:variance/data/repositories/exchange_rate_repository_impl.dart';
 import 'package:variance/data/repositories/recurring_template_repository_impl.dart';
+import 'package:variance/data/repositories/scheduled_occurrence_repository_impl.dart';
 import 'package:variance/data/repositories/transaction_repository_impl.dart';
 import 'package:variance/domain/entities/currency.dart';
 import 'package:variance/domain/repositories/i_account_repository.dart';
@@ -36,6 +38,7 @@ import 'package:variance/domain/repositories/i_category_repository.dart';
 import 'package:variance/domain/repositories/i_currency_repository.dart';
 import 'package:variance/domain/repositories/i_exchange_rate_repository.dart';
 import 'package:variance/domain/repositories/i_recurring_template_repository.dart';
+import 'package:variance/domain/repositories/i_scheduled_occurrence_repository.dart';
 import 'package:variance/domain/repositories/i_transaction_repository.dart';
 import 'package:variance/presentation/providers/database_providers.dart';
 
@@ -85,6 +88,18 @@ Future<IRecurringTemplateRepository> recurringTemplateRepository(
 ) async {
   final dao = await ref.watch(templateDaoProvider.future);
   return RecurringTemplateRepositoryImpl(dao);
+}
+
+/// Provides the [IScheduledOccurrenceRepository] implementation for the
+/// lifetime of the app.
+///
+/// Depends on [scheduledOccurrenceDaoProvider].
+@Riverpod(keepAlive: true)
+Future<IScheduledOccurrenceRepository> scheduledOccurrenceRepository(
+  Ref ref,
+) async {
+  final dao = await ref.watch(scheduledOccurrenceDaoProvider.future);
+  return ScheduledOccurrenceRepositoryImpl(dao);
 }
 
 /// Provides the [IExchangeRateRepository] implementation for the lifetime of

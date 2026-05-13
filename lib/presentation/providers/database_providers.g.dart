@@ -393,3 +393,53 @@ final class AppSettingsDaoProvider extends $FunctionalProvider<
 }
 
 String _$appSettingsDaoHash() => r'73d5063a45bad708bcf496b636715c8d6d4d3f8c';
+
+/// Provides the [ScheduledOccurrenceDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+@ProviderFor(scheduledOccurrenceDao)
+final scheduledOccurrenceDaoProvider = ScheduledOccurrenceDaoProvider._();
+
+/// Provides the [ScheduledOccurrenceDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+final class ScheduledOccurrenceDaoProvider extends $FunctionalProvider<
+        AsyncValue<ScheduledOccurrenceDao>,
+        ScheduledOccurrenceDao,
+        FutureOr<ScheduledOccurrenceDao>>
+    with
+        $FutureModifier<ScheduledOccurrenceDao>,
+        $FutureProvider<ScheduledOccurrenceDao> {
+  /// Provides the [ScheduledOccurrenceDao] for the open [AppDatabase].
+  ///
+  /// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+  ScheduledOccurrenceDaoProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'scheduledOccurrenceDaoProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$scheduledOccurrenceDaoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<ScheduledOccurrenceDao> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ScheduledOccurrenceDao> create(Ref ref) {
+    return scheduledOccurrenceDao(ref);
+  }
+}
+
+String _$scheduledOccurrenceDaoHash() =>
+    r'00bf340348eeae3ba99418ec951bf40b67d26be8';
