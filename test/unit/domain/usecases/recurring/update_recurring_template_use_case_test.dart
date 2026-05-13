@@ -52,7 +52,7 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       Ok(template);
 
   @override
-  Future<Result<void>> pause(String id) async => const Ok(null);
+  Future<Result<void>> pause(String id, {required int pauseUntil}) async => const Ok(null);
 
   @override
   Future<Result<void>> resume(String id) async => const Ok(null);

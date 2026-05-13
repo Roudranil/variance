@@ -46,8 +46,8 @@ class RecurringTemplateRepositoryImpl implements IRecurringTemplateRepository {
   }
 
   @override
-  Future<Result<void>> pause(String id) {
-    // TODO(dev): Transition status → paused.
+  Future<Result<void>> pause(String id, {required int pauseUntil}) {
+    // TODO(dev): Transition status → paused with pause_until = pauseUntil.
     throw UnimplementedError('pause not yet implemented');
   }
 

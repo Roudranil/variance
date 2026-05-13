@@ -134,7 +134,7 @@ class _MinimalFakeTemplateRepo implements IRecurringTemplateRepository {
   Future<Result<RecurringTemplate>> update(RecurringTemplate t) async => Ok(t);
 
   @override
-  Future<Result<void>> pause(String id) async => const Ok(null);
+  Future<Result<void>> pause(String id, {required int pauseUntil}) async => const Ok(null);
 
   @override
   Future<Result<void>> resume(String id) async => const Ok(null);

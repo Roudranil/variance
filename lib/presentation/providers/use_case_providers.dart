@@ -27,6 +27,7 @@ import 'package:variance/domain/usecases/category/create_category_use_case.dart'
 import 'package:variance/domain/usecases/category/delete_category_use_case.dart';
 import 'package:variance/domain/usecases/category/update_category_use_case.dart';
 import 'package:variance/domain/usecases/recurring/create_recurring_template_use_case.dart';
+import 'package:variance/domain/usecases/recurring/pause_recurring_template_use_case.dart';
 import 'package:variance/domain/usecases/recurring/skip_occurrence_use_case.dart';
 import 'package:variance/domain/usecases/recurring/update_recurring_template_use_case.dart';
 import 'package:variance/domain/usecases/currency/get_exchange_rate_use_case.dart';
@@ -184,6 +185,18 @@ Future<UpdateRecurringTemplateUseCase> updateRecurringTemplateUseCase(
 Future<SkipOccurrenceUseCase> skipOccurrenceUseCase(Ref ref) async {
   final repo = await ref.watch(scheduledOccurrenceRepositoryProvider.future);
   return SkipOccurrenceUseCase(repo);
+}
+
+/// Provides a [PauseRecurringTemplateUseCase] bound to both the template
+/// and scheduled occurrence repositories.
+@riverpod
+Future<PauseRecurringTemplateUseCase> pauseRecurringTemplateUseCase(
+  Ref ref,
+) async {
+  final templateRepo =
+      await ref.watch(recurringTemplateRepositoryProvider.future);
+  final occRepo = await ref.watch(scheduledOccurrenceRepositoryProvider.future);
+  return PauseRecurringTemplateUseCase(templateRepo, occRepo);
 }
 
 // ---------------------------------------------------------------------------
