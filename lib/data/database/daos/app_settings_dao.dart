@@ -112,6 +112,62 @@ class AppSettingsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  // -----------------------------------------------------------------------
+  // Convenience key-specific methods (T-194)
+  // -----------------------------------------------------------------------
+
+  /// Returns the [value] column for [key], or null if the row is absent.
+  ///
+  /// Parameters:
+  /// - [key]: Setting key identifier (see data model §9.1).
+  Future<String?> getValue(String key) async {
+    final row = await (select(appSettings)..where((t) => t.key.equals(key)))
+        .getSingleOrNull();
+    return row?.value;
+  }
+
+  /// Inserts or replaces the row for [key] with [value].
+  ///
+  /// Sets [updatedAt] to current Unix epoch seconds. Delegates to [upsert].
+  ///
+  /// Parameters:
+  /// - [key]: Setting key identifier.
+  /// - [value]: String representation of the value.
+  Future<void> setValue(String key, String value) {
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    return upsert(key, value, now);
+  }
+
+  /// Returns true when [onboarding_complete] is set to '1'.
+  ///
+  /// Calls [getValue] for the canonical key and returns false if the row is
+  /// absent or has any value other than '1'.
+  Future<bool> getOnboardingComplete() async {
+    final value = await getValue('onboarding_complete');
+    return value == '1';
+  }
+
+  /// Sets [onboarding_complete] to '1'.
+  ///
+  /// Calls [setValue] with the canonical key.
+  Future<void> setOnboardingComplete() => setValue('onboarding_complete', '1');
+
+  /// Returns the home currency code, defaulting to 'INR' when absent.
+  ///
+  /// Calls [getValue] for the 'home_currency' key and falls back to 'INR'
+  /// when the row is missing.
+  Future<String> getHomeCurrency() async {
+    return (await getValue('home_currency')) ?? 'INR';
+  }
+
+  /// Writes [code] as the new home currency.
+  ///
+  /// Parameters:
+  /// - [code]: ISO 4217 currency code.
+  Future<void> setHomeCurrency(String code) => setValue('home_currency', code);
+
+  // -----------------------------------------------------------------------
+
   /// Seeds the default settings rows if the table is currently empty.
   ///
   /// Uses `INSERT OR IGNORE` so that pre-existing rows (e.g. from onboarding

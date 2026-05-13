@@ -11,6 +11,13 @@
 //   6. isEmpty — returns true for a manually emptied table
 //   7. seedDefaults — all expected default keys are present
 //   8. seedDefaults — idempotent: calling twice does not overwrite values
+//   T-194.1. getValue — returns the value for an existing key
+//   T-194.2. getValue — returns null for a missing key
+//   T-194.3. setValue — inserts a new key and reads it back via getValue
+//   T-194.4. getOnboardingComplete — returns false when value is '0'
+//   T-194.5. getOnboardingComplete — returns true after setOnboardingComplete
+//   T-194.6. getHomeCurrency — returns 'INR' from seeded default
+//   T-194.7. setHomeCurrency — updates value readable via getHomeCurrency
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -136,5 +143,66 @@ void main() {
       final row = rows.firstWhere((r) => r.key == 'theme');
       expect(row.value, equals('dark'));
     });
+  });
+
+  // ---------------------------------------------------------------------------
+  // T-194 convenience methods
+  // ---------------------------------------------------------------------------
+
+  group('getValue / setValue (T-194)', () {
+    test('T-194.1. getValue returns the value for an existing key', () async {
+      final value = await dao.getValue('home_currency');
+      expect(value, equals('INR'));
+    });
+
+    test('T-194.2. getValue returns null for a missing key', () async {
+      final value = await dao.getValue('nonexistent_key_xyz');
+      expect(value, isNull);
+    });
+
+    test('T-194.3. setValue inserts a new key readable via getValue', () async {
+      await dao.setValue('test_key_t194', 'hello');
+      final value = await dao.getValue('test_key_t194');
+      expect(value, equals('hello'));
+    });
+  });
+
+  group('getOnboardingComplete / setOnboardingComplete (T-194)', () {
+    test(
+      'T-194.4. getOnboardingComplete returns false when value is "0"',
+      () async {
+        // Default seed sets onboarding_complete = '0'.
+        final result = await dao.getOnboardingComplete();
+        expect(result, isFalse);
+      },
+    );
+
+    test(
+      'T-194.5. getOnboardingComplete returns true after setOnboardingComplete',
+      () async {
+        await dao.setOnboardingComplete();
+        final result = await dao.getOnboardingComplete();
+        expect(result, isTrue);
+      },
+    );
+  });
+
+  group('getHomeCurrency / setHomeCurrency (T-194)', () {
+    test(
+      'T-194.6. getHomeCurrency returns "INR" from seeded default',
+      () async {
+        final code = await dao.getHomeCurrency();
+        expect(code, equals('INR'));
+      },
+    );
+
+    test(
+      'T-194.7. setHomeCurrency updates value readable via getHomeCurrency',
+      () async {
+        await dao.setHomeCurrency('USD');
+        final code = await dao.getHomeCurrency();
+        expect(code, equals('USD'));
+      },
+    );
   });
 }
