@@ -59,17 +59,18 @@ import 'package:variance/presentation/features/settings/appearance/appearance_se
 import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_detail_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_management_screen.dart';
+import 'package:variance/presentation/features/settings/currency/currency_picker_screen.dart';
+import 'package:variance/presentation/features/settings/currency/currency_settings_screen.dart';
 import 'package:variance/presentation/features/settings/hub/settings_hub_screen.dart';
 import 'package:variance/presentation/features/settings/locale/locale_format_settings_screen.dart';
 import 'package:variance/presentation/features/settings/profile/profile_settings_screen.dart';
+import 'package:variance/presentation/features/settings/recurring/recurring_templates_list_screen.dart';
 import 'package:variance/presentation/features/settings/security/pin_setup_screen.dart';
 import 'package:variance/presentation/features/settings/security/security_settings_screen.dart';
 import 'package:variance/presentation/features/settings/transaction_entry/transaction_entry_settings_screen.dart';
 import 'package:variance/presentation/features/settings/warnings/account_limits_screen.dart';
 import 'package:variance/presentation/features/settings/warnings/category_limits_screen.dart';
 import 'package:variance/presentation/features/settings/warnings/warnings_settings_screen.dart';
-import 'package:variance/presentation/features/settings/currency/currency_settings_screen.dart';
-import 'package:variance/presentation/features/settings/currency/currency_picker_screen.dart';
 import 'package:variance/presentation/features/shared/route_error_screen.dart';
 import 'package:variance/presentation/features/transactions/exchange_rate_detail_screen.dart';
 import 'package:variance/presentation/features/transactions/transaction_detail_screen.dart';
@@ -522,13 +523,11 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       errorMessage: 'Payees settings not yet implemented.',
                     ),
                   ),
-                  // /settings/recurring — placeholder
+                  // /settings/recurring — Recurring & Installments list (T-108)
                   GoRoute(
                     path: 'recurring',
-                    builder: (context, state) => const RouteErrorScreen(
-                      errorMessage:
-                          'Recurring & installments settings not yet implemented.',
-                    ),
+                    builder: (context, state) =>
+                        const RecurringTemplatesListScreen(),
                   ),
                   // /settings/drafts — placeholder
                   GoRoute(
