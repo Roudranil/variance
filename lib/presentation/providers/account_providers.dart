@@ -3,10 +3,12 @@
 // Riverpod stream providers for account-related reactive data.
 //
 // Provider graph:
-//   accountsProvider          ← accountRepositoryProvider (via use case)
-//   accountBalanceProvider    ← accountRepositoryProvider
-//   netWorthProvider          ← accountRepositoryProvider, exchangeRateRepositoryProvider,
-//                               appSettingsProvider (home currency)
+//   accountsProvider              ← accountRepositoryProvider (via use case)
+//   accountBalanceProvider        ← accountRepositoryProvider
+//   netWorthProvider              ← accountRepositoryProvider, exchangeRateRepositoryProvider,
+//                                   appSettingsProvider (home currency)
+//   currencySymbolLabelsProvider  ← accountsProvider, currenciesProvider
+//                                   (CURR-02 symbol disambiguation, T-91)
 //
 // Rules (SDS §2.2.3, §2.2.4):
 //   - All providers use @riverpod annotation.
@@ -23,7 +25,9 @@
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:variance/domain/currency/currency_symbol_resolver.dart';
 import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/entities/currency.dart';
 import 'package:variance/domain/services/net_worth_calculator.dart';
 import 'package:variance/domain/usecases/home/watch_net_worth_use_case.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
@@ -113,4 +117,49 @@ Stream<NetWorthResult> netWorth(Ref ref) async* {
 Stream<Account?> accountById(Ref ref, String accountId) async* {
   final repo = await ref.watch(accountRepositoryProvider.future);
   yield* repo.watchById(accountId);
+}
+
+// ---------------------------------------------------------------------------
+// currencySymbolLabelsProvider (CURR-02, T-91)
+// ---------------------------------------------------------------------------
+
+/// Derives display labels for all active-account currencies.
+///
+/// Uses [CurrencySymbolResolver] to detect symbol collisions among the
+/// currencies that actually appear on active accounts. When two or more
+/// accounts share a currency symbol (e.g. '$' for USD and CAD), each
+/// conflicting currency gets an ISO-code suffix: '$USD', '$CAD'.
+///
+/// Returns a [Map] of currency code → display label. Consumers should read
+/// this map and look up the account's [Account.currencyCode] to get the
+/// correct label to show in the row.
+///
+/// Depends on [accountsProvider] (reactive) and [currenciesProvider]
+/// (keepAlive static list from seed data).
+@riverpod
+Stream<Map<String, String>> currencySymbolLabels(Ref ref) async* {
+  // Re-emit whenever the account list changes (new accounts → new currencies).
+  final accountsAsync = ref.watch(accountsProvider);
+  final allCurrencies = await ref.watch(currenciesProvider.future);
+
+  // Build a lookup for fast code → Currency access.
+  final currencyByCode = <String, Currency>{
+    for (final c in allCurrencies) c.code: c,
+  };
+
+  final accounts = accountsAsync.value ?? [];
+
+  // Collect distinct currency codes used by active (non-deleted) accounts.
+  final activeCodes = accounts
+      .where((a) => !a.isDeleted)
+      .map((a) => a.currencyCode)
+      .toSet();
+
+  final activeCurrencies = activeCodes
+      .where(currencyByCode.containsKey)
+      .map((code) => currencyByCode[code]!)
+      .toList();
+
+  const resolver = CurrencySymbolResolver();
+  yield resolver.resolve(activeCurrencies);
 }

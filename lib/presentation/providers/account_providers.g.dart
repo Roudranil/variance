@@ -359,3 +359,83 @@ final class AccountByIdFamily extends $Family
   @override
   String toString() => r'accountByIdProvider';
 }
+
+/// Derives display labels for all active-account currencies.
+///
+/// Uses [CurrencySymbolResolver] to detect symbol collisions among the
+/// currencies that actually appear on active accounts. When two or more
+/// accounts share a currency symbol (e.g. '$' for USD and CAD), each
+/// conflicting currency gets an ISO-code suffix: '$USD', '$CAD'.
+///
+/// Returns a [Map] of currency code → display label. Consumers should read
+/// this map and look up the account's [Account.currencyCode] to get the
+/// correct label to show in the row.
+///
+/// Depends on [accountsProvider] (reactive) and [currenciesProvider]
+/// (keepAlive static list from seed data).
+
+@ProviderFor(currencySymbolLabels)
+final currencySymbolLabelsProvider = CurrencySymbolLabelsProvider._();
+
+/// Derives display labels for all active-account currencies.
+///
+/// Uses [CurrencySymbolResolver] to detect symbol collisions among the
+/// currencies that actually appear on active accounts. When two or more
+/// accounts share a currency symbol (e.g. '$' for USD and CAD), each
+/// conflicting currency gets an ISO-code suffix: '$USD', '$CAD'.
+///
+/// Returns a [Map] of currency code → display label. Consumers should read
+/// this map and look up the account's [Account.currencyCode] to get the
+/// correct label to show in the row.
+///
+/// Depends on [accountsProvider] (reactive) and [currenciesProvider]
+/// (keepAlive static list from seed data).
+
+final class CurrencySymbolLabelsProvider extends $FunctionalProvider<
+        AsyncValue<Map<String, String>>,
+        Map<String, String>,
+        Stream<Map<String, String>>>
+    with
+        $FutureModifier<Map<String, String>>,
+        $StreamProvider<Map<String, String>> {
+  /// Derives display labels for all active-account currencies.
+  ///
+  /// Uses [CurrencySymbolResolver] to detect symbol collisions among the
+  /// currencies that actually appear on active accounts. When two or more
+  /// accounts share a currency symbol (e.g. '$' for USD and CAD), each
+  /// conflicting currency gets an ISO-code suffix: '$USD', '$CAD'.
+  ///
+  /// Returns a [Map] of currency code → display label. Consumers should read
+  /// this map and look up the account's [Account.currencyCode] to get the
+  /// correct label to show in the row.
+  ///
+  /// Depends on [accountsProvider] (reactive) and [currenciesProvider]
+  /// (keepAlive static list from seed data).
+  CurrencySymbolLabelsProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'currencySymbolLabelsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$currencySymbolLabelsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, String>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, String>> create(Ref ref) {
+    return currencySymbolLabels(ref);
+  }
+}
+
+String _$currencySymbolLabelsHash() =>
+    r'c23a986bd5cbea7fbad9d5652d6c21a3217aad54';
