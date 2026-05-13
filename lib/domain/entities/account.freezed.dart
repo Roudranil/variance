@@ -61,6 +61,13 @@ mixin _$Account {
   /// JSON escape hatch for forward-compatible extensions.
   String? get metadata;
 
+  /// Per-account large-transaction warning threshold in the account's native
+  /// currency (minor units). Null means no threshold is set.
+  ///
+  /// When a transaction amount exceeds this value, the app shows a warning
+  /// before posting (TC-047, SDS §5.4.4).
+  int? get largeTxnThresholdMinor;
+
   /// Create a copy of Account
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -99,7 +106,9 @@ mixin _$Account {
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.metadata, metadata) ||
-                other.metadata == metadata));
+                other.metadata == metadata) &&
+            (identical(other.largeTxnThresholdMinor, largeTxnThresholdMinor) ||
+                other.largeTxnThresholdMinor == largeTxnThresholdMinor));
   }
 
   @override
@@ -119,11 +128,12 @@ mixin _$Account {
       displayOrder,
       createdAt,
       updatedAt,
-      metadata);
+      metadata,
+      largeTxnThresholdMinor);
 
   @override
   String toString() {
-    return 'Account(id: $id, name: $name, accountCategory: $accountCategory, initialBalanceMinor: $initialBalanceMinor, currencyCode: $currencyCode, includeInNetWorth: $includeInNetWorth, notes: $notes, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, isSystem: $isSystem, displayOrder: $displayOrder, createdAt: $createdAt, updatedAt: $updatedAt, metadata: $metadata)';
+    return 'Account(id: $id, name: $name, accountCategory: $accountCategory, initialBalanceMinor: $initialBalanceMinor, currencyCode: $currencyCode, includeInNetWorth: $includeInNetWorth, notes: $notes, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, isSystem: $isSystem, displayOrder: $displayOrder, createdAt: $createdAt, updatedAt: $updatedAt, metadata: $metadata, largeTxnThresholdMinor: $largeTxnThresholdMinor)';
   }
 }
 
@@ -147,7 +157,8 @@ abstract mixin class $AccountCopyWith<$Res> {
       int? displayOrder,
       int createdAt,
       int updatedAt,
-      String? metadata});
+      String? metadata,
+      int? largeTxnThresholdMinor});
 }
 
 /// @nodoc
@@ -177,6 +188,7 @@ class _$AccountCopyWithImpl<$Res> implements $AccountCopyWith<$Res> {
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? metadata = freezed,
+    Object? largeTxnThresholdMinor = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -239,6 +251,10 @@ class _$AccountCopyWithImpl<$Res> implements $AccountCopyWith<$Res> {
           ? _self.metadata
           : metadata // ignore: cast_nullable_to_non_nullable
               as String?,
+      largeTxnThresholdMinor: freezed == largeTxnThresholdMinor
+          ? _self.largeTxnThresholdMinor
+          : largeTxnThresholdMinor // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -351,7 +367,8 @@ extension AccountPatterns on Account {
             int? displayOrder,
             int createdAt,
             int updatedAt,
-            String? metadata)?
+            String? metadata,
+            int? largeTxnThresholdMinor)?
         $default, {
     required TResult orElse(),
   }) {
@@ -373,7 +390,8 @@ extension AccountPatterns on Account {
             _that.displayOrder,
             _that.createdAt,
             _that.updatedAt,
-            _that.metadata);
+            _that.metadata,
+            _that.largeTxnThresholdMinor);
       case _:
         return orElse();
     }
@@ -409,7 +427,8 @@ extension AccountPatterns on Account {
             int? displayOrder,
             int createdAt,
             int updatedAt,
-            String? metadata)
+            String? metadata,
+            int? largeTxnThresholdMinor)
         $default,
   ) {
     final _that = this;
@@ -430,7 +449,8 @@ extension AccountPatterns on Account {
             _that.displayOrder,
             _that.createdAt,
             _that.updatedAt,
-            _that.metadata);
+            _that.metadata,
+            _that.largeTxnThresholdMinor);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -465,7 +485,8 @@ extension AccountPatterns on Account {
             int? displayOrder,
             int createdAt,
             int updatedAt,
-            String? metadata)?
+            String? metadata,
+            int? largeTxnThresholdMinor)?
         $default,
   ) {
     final _that = this;
@@ -486,7 +507,8 @@ extension AccountPatterns on Account {
             _that.displayOrder,
             _that.createdAt,
             _that.updatedAt,
-            _that.metadata);
+            _that.metadata,
+            _that.largeTxnThresholdMinor);
       case _:
         return null;
     }
@@ -511,7 +533,8 @@ class _Account implements Account {
       this.displayOrder,
       required this.createdAt,
       required this.updatedAt,
-      this.metadata});
+      this.metadata,
+      this.largeTxnThresholdMinor});
 
   /// UUID v4 stable identifier.
   @override
@@ -580,6 +603,14 @@ class _Account implements Account {
   @override
   final String? metadata;
 
+  /// Per-account large-transaction warning threshold in the account's native
+  /// currency (minor units). Null means no threshold is set.
+  ///
+  /// When a transaction amount exceeds this value, the app shows a warning
+  /// before posting (TC-047, SDS §5.4.4).
+  @override
+  final int? largeTxnThresholdMinor;
+
   /// Create a copy of Account
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -619,7 +650,9 @@ class _Account implements Account {
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.metadata, metadata) ||
-                other.metadata == metadata));
+                other.metadata == metadata) &&
+            (identical(other.largeTxnThresholdMinor, largeTxnThresholdMinor) ||
+                other.largeTxnThresholdMinor == largeTxnThresholdMinor));
   }
 
   @override
@@ -639,11 +672,12 @@ class _Account implements Account {
       displayOrder,
       createdAt,
       updatedAt,
-      metadata);
+      metadata,
+      largeTxnThresholdMinor);
 
   @override
   String toString() {
-    return 'Account(id: $id, name: $name, accountCategory: $accountCategory, initialBalanceMinor: $initialBalanceMinor, currencyCode: $currencyCode, includeInNetWorth: $includeInNetWorth, notes: $notes, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, isSystem: $isSystem, displayOrder: $displayOrder, createdAt: $createdAt, updatedAt: $updatedAt, metadata: $metadata)';
+    return 'Account(id: $id, name: $name, accountCategory: $accountCategory, initialBalanceMinor: $initialBalanceMinor, currencyCode: $currencyCode, includeInNetWorth: $includeInNetWorth, notes: $notes, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, isSystem: $isSystem, displayOrder: $displayOrder, createdAt: $createdAt, updatedAt: $updatedAt, metadata: $metadata, largeTxnThresholdMinor: $largeTxnThresholdMinor)';
   }
 }
 
@@ -668,7 +702,8 @@ abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
       int? displayOrder,
       int createdAt,
       int updatedAt,
-      String? metadata});
+      String? metadata,
+      int? largeTxnThresholdMinor});
 }
 
 /// @nodoc
@@ -698,6 +733,7 @@ class __$AccountCopyWithImpl<$Res> implements _$AccountCopyWith<$Res> {
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? metadata = freezed,
+    Object? largeTxnThresholdMinor = freezed,
   }) {
     return _then(_Account(
       id: null == id
@@ -760,6 +796,10 @@ class __$AccountCopyWithImpl<$Res> implements _$AccountCopyWith<$Res> {
           ? _self.metadata
           : metadata // ignore: cast_nullable_to_non_nullable
               as String?,
+      largeTxnThresholdMinor: freezed == largeTxnThresholdMinor
+          ? _self.largeTxnThresholdMinor
+          : largeTxnThresholdMinor // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }

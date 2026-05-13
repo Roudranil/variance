@@ -62,6 +62,14 @@ class Accounts extends Table {
   /// JSON escape hatch for future extensibility.
   TextColumn get metadata => text().nullable()();
 
+  /// Per-account large-transaction warning threshold in minor units of the
+  /// account's native currency. NULL means no threshold is configured.
+  ///
+  /// Compared against transaction amount in the account's native currency
+  /// (TC-047). Set to NULL by default; user configures via Settings >
+  /// Warnings & Limits > Per-Account Limits.
+  IntColumn get largeTxnThresholdMinor => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

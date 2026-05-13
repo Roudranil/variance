@@ -78,5 +78,12 @@ abstract class Account with _$Account {
 
     /// JSON escape hatch for forward-compatible extensions.
     String? metadata,
+
+    /// Per-account large-transaction warning threshold in the account's native
+    /// currency (minor units). Null means no threshold is set.
+    ///
+    /// When a transaction amount exceeds this value, the app shows a warning
+    /// before posting (TC-047, SDS §5.4.4).
+    int? largeTxnThresholdMinor,
   }) = _Account;
 }

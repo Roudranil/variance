@@ -143,8 +143,12 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// Increment this when the schema changes and add a corresponding
   /// migration step in [buildMigrationStrategy].
+  ///
+  /// v1 — initial schema.
+  /// v2 — add large_txn_threshold_minor to accounts and categories tables
+  ///       (T-181, T-182, TC-047).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   // -----------------------------------------------------------------------
   // Migration strategy
