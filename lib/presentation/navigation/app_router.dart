@@ -68,7 +68,10 @@ import 'package:variance/presentation/features/settings/transaction_entry/transa
 import 'package:variance/presentation/features/settings/warnings/account_limits_screen.dart';
 import 'package:variance/presentation/features/settings/warnings/category_limits_screen.dart';
 import 'package:variance/presentation/features/settings/warnings/warnings_settings_screen.dart';
+import 'package:variance/presentation/features/settings/currency/currency_settings_screen.dart';
+import 'package:variance/presentation/features/settings/currency/currency_picker_screen.dart';
 import 'package:variance/presentation/features/shared/route_error_screen.dart';
+import 'package:variance/presentation/features/transactions/exchange_rate_detail_screen.dart';
 import 'package:variance/presentation/features/transactions/transaction_detail_screen.dart';
 import 'package:variance/presentation/features/transactions/transaction_form_screen.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
@@ -176,6 +179,9 @@ abstract final class AppRoutes {
 
   /// Exchange rate detail (full-screen modal, outside shell).
   static const exchangeRateDetail = '/exchange-rate-detail';
+
+  /// Currency picker (full-screen modal, outside shell).
+  static const currencyPicker = '/currency-picker';
 
   // -----------------------------------------------------------------------
   // Path builders — replaces :id parameter at call sites.
@@ -457,15 +463,11 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       ),
                     ],
                   ),
-                  // /settings/currency — placeholder
+                  // /settings/currency — currency settings (T-96)
                   GoRoute(
                     path: 'currency',
-                    builder: (context, state) {
-                      // TODO(dev): return CurrencySettingsScreen();
-                      return const RouteErrorScreen(
-                        errorMessage: 'Currency settings not yet implemented.',
-                      );
-                    },
+                    builder: (context, state) =>
+                        const CurrencySettingsScreen(),
                   ),
                   // /settings/categories — category management
                   GoRoute(
@@ -598,15 +600,22 @@ GoRouter makeAppRouter(WidgetRef ref) {
         },
       ),
 
-      // /exchange-rate-detail — exchange rate detail modal.
+      // /exchange-rate-detail — exchange rate detail modal (T-98).
       GoRoute(
         path: AppRoutes.exchangeRateDetail,
-        builder: (context, state) {
-          // TODO(dev): return ExchangeRateDetailScreen();
-          return const RouteErrorScreen(
-            errorMessage: 'Exchange rate detail not yet implemented.',
-          );
-        },
+        builder: (context, state) => ExchangeRateDetailScreen(
+          fromCurrency:
+              state.uri.queryParameters['from'] ?? '',
+          toCurrency: state.uri.queryParameters['to'] ?? '',
+        ),
+      ),
+
+      // /currency-picker — ISO 4217 currency picker modal (T-97).
+      GoRoute(
+        path: AppRoutes.currencyPicker,
+        builder: (context, state) => CurrencyPickerScreen(
+          currentCode: state.uri.queryParameters['current'],
+        ),
       ),
     ],
   );
