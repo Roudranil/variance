@@ -54,15 +54,23 @@ import 'package:variance/presentation/features/accounts/account_form_screen.dart
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/accounts/reconcile_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
-import 'package:variance/presentation/features/transactions/transaction_detail_screen.dart';
-import 'package:variance/presentation/features/transactions/transaction_form_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/appearance_settings_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_detail_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_management_screen.dart';
 import 'package:variance/presentation/features/settings/hub/settings_hub_screen.dart';
+import 'package:variance/presentation/features/settings/locale/locale_format_settings_screen.dart';
+import 'package:variance/presentation/features/settings/profile/profile_settings_screen.dart';
+import 'package:variance/presentation/features/settings/security/pin_setup_screen.dart';
+import 'package:variance/presentation/features/settings/security/security_settings_screen.dart';
+import 'package:variance/presentation/features/settings/transaction_entry/transaction_entry_settings_screen.dart';
+import 'package:variance/presentation/features/settings/warnings/account_limits_screen.dart';
+import 'package:variance/presentation/features/settings/warnings/category_limits_screen.dart';
+import 'package:variance/presentation/features/settings/warnings/warnings_settings_screen.dart';
 import 'package:variance/presentation/features/shared/route_error_screen.dart';
+import 'package:variance/presentation/features/transactions/transaction_detail_screen.dart';
+import 'package:variance/presentation/features/transactions/transaction_form_screen.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
 import 'package:variance/presentation/theme/app_theme.dart';
 
@@ -127,11 +135,20 @@ abstract final class AppRoutes {
   /// Warnings & limits settings (in-tab push on Tab 2).
   static const settingsWarnings = '/settings/warnings';
 
+  /// Per-account limits sub-screen (in-tab push on Tab 2).
+  static const settingsWarningsAccounts = '/settings/warnings/accounts';
+
+  /// Per-category limits sub-screen (in-tab push on Tab 2).
+  static const settingsWarningsCategories = '/settings/warnings/categories';
+
   /// Profile settings (in-tab push on Tab 2).
   static const settingsProfile = '/settings/profile';
 
   /// Security settings (in-tab push on Tab 2).
   static const settingsSecurity = '/settings/security';
+
+  /// PIN setup screen (push from security settings).
+  static const settingsSecurityPinSetup = '/settings/security/pin-setup';
 
   /// Tags settings (in-tab push on Tab 2).
   static const settingsTags = '/settings/tags';
@@ -385,42 +402,60 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       ),
                     ],
                   ),
-                  // /settings/locale — placeholder
+                  // /settings/locale — Locale & Format settings (T-177)
                   GoRoute(
                     path: 'locale',
-                    builder: (context, state) => const RouteErrorScreen(
-                      errorMessage: 'Locale settings not yet implemented.',
-                    ),
+                    builder: (context, state) =>
+                        const LocaleFormatSettingsScreen(),
                   ),
-                  // /settings/transaction-entry — placeholder
+                  // /settings/transaction-entry — Transaction Entry settings (T-179)
                   GoRoute(
                     path: 'transaction-entry',
-                    builder: (context, state) => const RouteErrorScreen(
-                      errorMessage:
-                          'Transaction entry settings not yet implemented.',
-                    ),
+                    builder: (context, state) =>
+                        const TransactionEntrySettingsScreen(),
                   ),
-                  // /settings/warnings — placeholder
+                  // /settings/warnings — Warnings & Limits hub (T-181, T-182)
                   GoRoute(
                     path: 'warnings',
-                    builder: (context, state) => const RouteErrorScreen(
-                      errorMessage:
-                          'Warnings & limits settings not yet implemented.',
-                    ),
+                    builder: (context, state) => const WarningsSettingsScreen(),
+                    routes: [
+                      // /settings/warnings/accounts — Per-Account Limits (T-181)
+                      GoRoute(
+                        path: 'accounts',
+                        builder: (context, state) => const AccountLimitsScreen(),
+                      ),
+                      // /settings/warnings/categories — Per-Category Limits (T-182)
+                      GoRoute(
+                        path: 'categories',
+                        builder: (context, state) =>
+                            const CategoryLimitsScreen(),
+                      ),
+                    ],
                   ),
-                  // /settings/profile — placeholder
+                  // /settings/profile — Profile settings (T-183)
                   GoRoute(
                     path: 'profile',
-                    builder: (context, state) => const RouteErrorScreen(
-                      errorMessage: 'Profile settings not yet implemented.',
-                    ),
+                    builder: (context, state) => const ProfileSettingsScreen(),
                   ),
-                  // /settings/security — placeholder
+                  // /settings/security — Security settings (T-184)
                   GoRoute(
                     path: 'security',
-                    builder: (context, state) => const RouteErrorScreen(
-                      errorMessage: 'Security settings not yet implemented.',
-                    ),
+                    builder: (context, state) =>
+                        const SecuritySettingsScreen(),
+                    routes: [
+                      // /settings/security/pin-setup — PIN setup (T-185)
+                      GoRoute(
+                        path: 'pin-setup',
+                        builder: (context, state) {
+                          final modeStr =
+                              state.uri.queryParameters['mode'] ?? 'create';
+                          final mode = modeStr == 'change'
+                              ? PinSetupMode.change
+                              : PinSetupMode.create;
+                          return PinSetupScreen(mode: mode);
+                        },
+                      ),
+                    ],
                   ),
                   // /settings/currency — placeholder
                   GoRoute(
