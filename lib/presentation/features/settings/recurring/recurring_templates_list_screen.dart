@@ -36,10 +36,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/presentation/features/settings/recurring/recurring_template_list_notifier.dart';
+import 'package:variance/presentation/navigation/app_router.dart';
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -90,6 +92,11 @@ class _RecurringTemplatesListScreenState
             Tab(text: 'Installments'),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push(AppRoutes.settingsRecurringNew),
+        tooltip: 'Add Recurring Template',
+        child: const Icon(Icons.add),
       ),
       body: TabBarView(
         controller: _tabController,
