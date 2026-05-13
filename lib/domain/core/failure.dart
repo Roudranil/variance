@@ -75,3 +75,12 @@ final class ReinstateOfferFailure extends Failure {
 final class LastAccountFailure extends Failure {
   const LastAccountFailure(super.message);
 }
+
+/// Returned by [GetExchangeRateUseCase] when no cached rate exists for the
+/// requested currency pair.
+///
+/// The caller should either display "Rate unavailable" or fall back to a
+/// manual rate entry.
+final class RateUnavailableFailure extends Failure {
+  const RateUnavailableFailure(super.message);
+}
