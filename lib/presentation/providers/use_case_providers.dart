@@ -26,6 +26,9 @@ import 'package:variance/domain/usecases/account/watch_accounts_use_case.dart';
 import 'package:variance/domain/usecases/category/create_category_use_case.dart';
 import 'package:variance/domain/usecases/category/delete_category_use_case.dart';
 import 'package:variance/domain/usecases/category/update_category_use_case.dart';
+import 'package:variance/domain/usecases/recurring/create_recurring_template_use_case.dart';
+import 'package:variance/domain/usecases/recurring/skip_occurrence_use_case.dart';
+import 'package:variance/domain/usecases/recurring/update_recurring_template_use_case.dart';
 import 'package:variance/domain/usecases/currency/get_exchange_rate_use_case.dart';
 import 'package:variance/domain/usecases/currency/refresh_exchange_rates_use_case.dart';
 import 'package:variance/domain/usecases/transaction/create_transaction_use_case.dart';
@@ -149,6 +152,38 @@ Future<UpdateCategoryUseCase> updateCategoryUseCase(Ref ref) async {
 Future<DeleteCategoryUseCase> deleteCategoryUseCase(Ref ref) async {
   final repo = await ref.watch(categoryRepositoryProvider.future);
   return DeleteCategoryUseCase(repo);
+}
+
+// ---------------------------------------------------------------------------
+// Recurring template use cases (T-106, T-110, T-112)
+// ---------------------------------------------------------------------------
+
+/// Provides a [CreateRecurringTemplateUseCase] bound to the template
+/// repository.
+@riverpod
+Future<CreateRecurringTemplateUseCase> createRecurringTemplateUseCase(
+  Ref ref,
+) async {
+  final repo = await ref.watch(recurringTemplateRepositoryProvider.future);
+  return CreateRecurringTemplateUseCase(repo);
+}
+
+/// Provides an [UpdateRecurringTemplateUseCase] bound to the template
+/// repository.
+@riverpod
+Future<UpdateRecurringTemplateUseCase> updateRecurringTemplateUseCase(
+  Ref ref,
+) async {
+  final repo = await ref.watch(recurringTemplateRepositoryProvider.future);
+  return UpdateRecurringTemplateUseCase(repo);
+}
+
+/// Provides a [SkipOccurrenceUseCase] bound to the scheduled occurrence
+/// repository.
+@riverpod
+Future<SkipOccurrenceUseCase> skipOccurrenceUseCase(Ref ref) async {
+  final repo = await ref.watch(scheduledOccurrenceRepositoryProvider.future);
+  return SkipOccurrenceUseCase(repo);
 }
 
 // ---------------------------------------------------------------------------

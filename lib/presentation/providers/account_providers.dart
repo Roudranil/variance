@@ -83,7 +83,8 @@ Stream<int> accountBalance(
 @riverpod
 Stream<NetWorthResult> netWorth(Ref ref) async* {
   final accountRepo = await ref.watch(accountRepositoryProvider.future);
-  final exchangeRateRepo = await ref.watch(exchangeRateRepositoryProvider.future);
+  final exchangeRateRepo =
+      await ref.watch(exchangeRateRepositoryProvider.future);
 
   // Read home currency from app settings; fall back to 'INR' while loading.
   final settings = ref.watch(appSettingsProvider).value;
@@ -99,6 +100,23 @@ Stream<NetWorthResult> netWorth(Ref ref) async* {
   );
 
   yield* useCase.call();
+}
+
+// ---------------------------------------------------------------------------
+// activeAccountsProvider (T-106)
+// ---------------------------------------------------------------------------
+
+/// Async snapshot of all non-deleted, non-system accounts.
+///
+/// Thin convenience provider over [accountsProvider] for use in form screens
+/// that need a one-time or auto-refreshed list of accounts to populate
+/// dropdowns.
+@riverpod
+Stream<List<Account>> activeAccounts(Ref ref) async* {
+  final repo = await ref.watch(accountRepositoryProvider.future);
+  yield* repo
+      .watchAll()
+      .map((list) => list.where((a) => !a.isDeleted).toList());
 }
 
 // ---------------------------------------------------------------------------
@@ -150,10 +168,8 @@ Stream<Map<String, String>> currencySymbolLabels(Ref ref) async* {
   final accounts = accountsAsync.value ?? [];
 
   // Collect distinct currency codes used by active (non-deleted) accounts.
-  final activeCodes = accounts
-      .where((a) => !a.isDeleted)
-      .map((a) => a.currencyCode)
-      .toSet();
+  final activeCodes =
+      accounts.where((a) => !a.isDeleted).map((a) => a.currencyCode).toSet();
 
   final activeCurrencies = activeCodes
       .where(currencyByCode.containsKey)

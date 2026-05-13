@@ -64,6 +64,7 @@ import 'package:variance/presentation/features/settings/currency/currency_settin
 import 'package:variance/presentation/features/settings/hub/settings_hub_screen.dart';
 import 'package:variance/presentation/features/settings/locale/locale_format_settings_screen.dart';
 import 'package:variance/presentation/features/settings/profile/profile_settings_screen.dart';
+import 'package:variance/presentation/features/settings/recurring/create_recurring_template_screen.dart';
 import 'package:variance/presentation/features/settings/recurring/recurring_templates_list_screen.dart';
 import 'package:variance/presentation/features/settings/security/pin_setup_screen.dart';
 import 'package:variance/presentation/features/settings/security/security_settings_screen.dart';
@@ -162,6 +163,9 @@ abstract final class AppRoutes {
 
   /// Recurring & installments settings (in-tab push on Tab 2).
   static const settingsRecurring = '/settings/recurring';
+
+  /// Create recurring template form (in-tab push on Tab 2).
+  static const settingsRecurringNew = '/settings/recurring/new';
 
   /// Drafts settings (in-tab push on Tab 2).
   static const settingsDrafts = '/settings/drafts';
@@ -528,6 +532,14 @@ GoRouter makeAppRouter(WidgetRef ref) {
                     path: 'recurring',
                     builder: (context, state) =>
                         const RecurringTemplatesListScreen(),
+                    routes: [
+                      // /settings/recurring/new — Create template (T-106)
+                      GoRoute(
+                        path: 'new',
+                        builder: (context, state) =>
+                            const CreateRecurringTemplateScreen(),
+                      ),
+                    ],
                   ),
                   // /settings/drafts — placeholder
                   GoRoute(

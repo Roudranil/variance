@@ -550,6 +550,149 @@ final class DeleteCategoryUseCaseProvider extends $FunctionalProvider<
 String _$deleteCategoryUseCaseHash() =>
     r'0c81dc0b385b23806019075fd973d9116b2f4369';
 
+/// Provides a [CreateRecurringTemplateUseCase] bound to the template
+/// repository.
+
+@ProviderFor(createRecurringTemplateUseCase)
+final createRecurringTemplateUseCaseProvider =
+    CreateRecurringTemplateUseCaseProvider._();
+
+/// Provides a [CreateRecurringTemplateUseCase] bound to the template
+/// repository.
+
+final class CreateRecurringTemplateUseCaseProvider extends $FunctionalProvider<
+        AsyncValue<CreateRecurringTemplateUseCase>,
+        CreateRecurringTemplateUseCase,
+        FutureOr<CreateRecurringTemplateUseCase>>
+    with
+        $FutureModifier<CreateRecurringTemplateUseCase>,
+        $FutureProvider<CreateRecurringTemplateUseCase> {
+  /// Provides a [CreateRecurringTemplateUseCase] bound to the template
+  /// repository.
+  CreateRecurringTemplateUseCaseProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'createRecurringTemplateUseCaseProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$createRecurringTemplateUseCaseHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<CreateRecurringTemplateUseCase> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CreateRecurringTemplateUseCase> create(Ref ref) {
+    return createRecurringTemplateUseCase(ref);
+  }
+}
+
+String _$createRecurringTemplateUseCaseHash() =>
+    r'd7332c9ff6f8d677a7e46a65f46f165a7b281671';
+
+/// Provides an [UpdateRecurringTemplateUseCase] bound to the template
+/// repository.
+
+@ProviderFor(updateRecurringTemplateUseCase)
+final updateRecurringTemplateUseCaseProvider =
+    UpdateRecurringTemplateUseCaseProvider._();
+
+/// Provides an [UpdateRecurringTemplateUseCase] bound to the template
+/// repository.
+
+final class UpdateRecurringTemplateUseCaseProvider extends $FunctionalProvider<
+        AsyncValue<UpdateRecurringTemplateUseCase>,
+        UpdateRecurringTemplateUseCase,
+        FutureOr<UpdateRecurringTemplateUseCase>>
+    with
+        $FutureModifier<UpdateRecurringTemplateUseCase>,
+        $FutureProvider<UpdateRecurringTemplateUseCase> {
+  /// Provides an [UpdateRecurringTemplateUseCase] bound to the template
+  /// repository.
+  UpdateRecurringTemplateUseCaseProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'updateRecurringTemplateUseCaseProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$updateRecurringTemplateUseCaseHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<UpdateRecurringTemplateUseCase> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<UpdateRecurringTemplateUseCase> create(Ref ref) {
+    return updateRecurringTemplateUseCase(ref);
+  }
+}
+
+String _$updateRecurringTemplateUseCaseHash() =>
+    r'744edf7e144992b9149d4c2df54099356d01f8f7';
+
+/// Provides a [SkipOccurrenceUseCase] bound to the scheduled occurrence
+/// repository.
+
+@ProviderFor(skipOccurrenceUseCase)
+final skipOccurrenceUseCaseProvider = SkipOccurrenceUseCaseProvider._();
+
+/// Provides a [SkipOccurrenceUseCase] bound to the scheduled occurrence
+/// repository.
+
+final class SkipOccurrenceUseCaseProvider extends $FunctionalProvider<
+        AsyncValue<SkipOccurrenceUseCase>,
+        SkipOccurrenceUseCase,
+        FutureOr<SkipOccurrenceUseCase>>
+    with
+        $FutureModifier<SkipOccurrenceUseCase>,
+        $FutureProvider<SkipOccurrenceUseCase> {
+  /// Provides a [SkipOccurrenceUseCase] bound to the scheduled occurrence
+  /// repository.
+  SkipOccurrenceUseCaseProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'skipOccurrenceUseCaseProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$skipOccurrenceUseCaseHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<SkipOccurrenceUseCase> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SkipOccurrenceUseCase> create(Ref ref) {
+    return skipOccurrenceUseCase(ref);
+  }
+}
+
+String _$skipOccurrenceUseCaseHash() =>
+    r'2ad0d6449191eaa9dc2fe6487d283002067c1953';
+
 /// Provides a [GetExchangeRateUseCase] bound to the exchange rate repository.
 
 @ProviderFor(getExchangeRateUseCase)
