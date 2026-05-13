@@ -12,6 +12,8 @@
 //   7. loading state shows CircularProgressIndicator
 //   8. FAB navigates to /accounts/new route
 //   9. row tap navigates to /accounts/:id
+//  10. two-currency scenario renders ISO-suffixed labels in account rows (T-91)
+//  11. single-currency scenario renders plain symbol in account rows (T-91)
 
 import 'dart:async';
 
@@ -67,11 +69,15 @@ class _FakeAppSettings extends AppSettingsNotifier {
 }
 
 /// Wraps the screen in a ProviderScope + GoRouter.
+///
+/// [symbolLabels] allows overriding the CURR-02 disambiguation map directly
+/// (T-91). When omitted the provider emits an empty map (bare-code fallback).
 Widget _buildTestWidget({
   required List<Account> accounts,
   NetWorthResult? netWorthResult,
   AppSettings settings = _defaultSettings,
   Map<String, int>? balanceOverrides,
+  Map<String, String>? symbolLabels,
   GoRouter? router,
 }) {
   final netWorth = netWorthResult ??
@@ -83,6 +89,9 @@ Widget _buildTestWidget({
 
   // Default balance: 0 for each account.
   final balances = balanceOverrides ?? {for (final a in accounts) a.id: 0};
+
+  // Default symbol labels: empty map (no disambiguation).
+  final labels = symbolLabels ?? {};
 
   final testRouter = router ??
       GoRouter(
@@ -116,6 +125,10 @@ Widget _buildTestWidget({
 
       // net worth stream provider
       netWorthProvider.overrideWith((_) => Stream.value(netWorth)),
+
+      // currency symbol labels (CURR-02, T-91)
+      currencySymbolLabelsProvider
+          .overrideWith((_) => Stream.value(labels)),
 
       // account balance per id
       for (final acc in accounts)
@@ -324,6 +337,67 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Detail:abc123'), findsOneWidget);
+    });
+
+    // -------------------------------------------------------------------------
+    // T-91: currency symbol disambiguation in account rows
+    // -------------------------------------------------------------------------
+
+    testWidgets(
+        '10. two-currency scenario renders ISO-suffixed labels in rows',
+        (tester) async {
+      final usdAcc = _makeAccount(
+        id: 'u1',
+        name: 'USD Account',
+        category: AccountCategory.bankAccount,
+        currencyCode: 'USD',
+      );
+      final cadAcc = _makeAccount(
+        id: 'c1',
+        name: 'CAD Account',
+        category: AccountCategory.bankAccount,
+        currencyCode: 'CAD',
+      );
+
+      await tester.pumpWidget(
+        _buildTestWidget(
+          accounts: [usdAcc, cadAcc],
+          // Simulate resolver output: both $ codes get ISO suffix.
+          symbolLabels: {r'USD': r'$USD', r'CAD': r'$CAD'},
+          balanceOverrides: {'u1': 10000, 'c1': 20000},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Both ISO-suffixed labels must appear in the balance displays.
+      expect(find.textContaining(r'$USD'), findsWidgets);
+      expect(find.textContaining(r'$CAD'), findsWidgets);
+    });
+
+    testWidgets(
+        '11. single-currency scenario renders plain symbol in row',
+        (tester) async {
+      final inrAcc = _makeAccount(
+        id: 'i1',
+        name: 'INR Account',
+        category: AccountCategory.bankAccount,
+        currencyCode: 'INR',
+      );
+
+      await tester.pumpWidget(
+        _buildTestWidget(
+          accounts: [inrAcc],
+          // No collision: bare symbol.
+          symbolLabels: {'INR': '₹'},
+          balanceOverrides: {'i1': 500000},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The rupee symbol should appear (bare, not '₹INR').
+      expect(find.textContaining('₹ 5000'), findsOneWidget);
+      // ISO-suffix form must NOT appear.
+      expect(find.textContaining('₹INR'), findsNothing);
     });
   });
 }

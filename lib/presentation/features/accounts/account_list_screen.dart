@@ -23,6 +23,10 @@
 //   - Negative balance: VarianceColors.warningAmount
 //   - Accessibility label includes "negative" for negative balances
 //
+// Currency symbol disambiguation (CURR-02, T-91):
+//   - When two+ active accounts share a currency symbol, each account row
+//     appends the ISO code: '$USD', '$CAD'. Single currency → bare symbol.
+//
 // Test cases (see test/presentation/features/accounts/account_list_screen_test.dart):
 //   1. empty state — shows illustration + "No accounts yet" + FAB
 //   2. populated state — net worth card visible
@@ -33,6 +37,8 @@
 //   7. loading state shows shimmer/progress indicator
 //   8. FAB taps navigate to /accounts/new
 //   9. row tap navigates to /accounts/:id
+//  10. two-currency scenario renders ISO-suffixed labels in account rows
+//  11. single-currency scenario renders plain symbol in account rows
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,6 +101,10 @@ class AccountListScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 /// Renders the net worth card + grouped account rows.
+///
+/// Reads [currencySymbolLabelsProvider] (CURR-02, T-91) to resolve display
+/// labels for each account's currency. When multiple active accounts share a
+/// symbol (e.g. '$' for USD and CAD), ISO-code suffixes are appended.
 class _AccountList extends ConsumerWidget {
   const _AccountList({
     required this.accounts,
@@ -111,9 +121,13 @@ class _AccountList extends ConsumerWidget {
     final excluded =
         accounts.where((a) => !a.includeInNetWorth && !a.isDeleted).toList();
 
-    // Read home currency for display
+    // Read home currency for display.
     final settings = ref.watch(appSettingsProvider).value;
     final homeCurrency = settings?.homeCurrency ?? 'INR';
+
+    // Currency symbol disambiguation (CURR-02, T-91): resolves display labels
+    // for all active-account currencies. Falls back to bare code when loading.
+    final symbolLabels = ref.watch(currencySymbolLabelsProvider).value ?? {};
 
     return CustomScrollView(
       slivers: [
@@ -135,6 +149,7 @@ class _AccountList extends ConsumerWidget {
             itemBuilder: (context, index) => _AccountRow(
               account: contributing[index],
               excluded: false,
+              symbolLabels: symbolLabels,
             ),
           ),
 
@@ -148,6 +163,7 @@ class _AccountList extends ConsumerWidget {
             itemBuilder: (context, index) => _AccountRow(
               account: excluded[index],
               excluded: true,
+              symbolLabels: symbolLabels,
             ),
           ),
         ],
@@ -166,7 +182,10 @@ class _AccountList extends ConsumerWidget {
 /// FilledCard showing the aggregate net worth total.
 ///
 /// Shows a staleness chip when [NetWorthResult.hasStaleRates] is true.
-class _NetWorthCard extends StatelessWidget {
+/// Uses [currencySymbolLabelsProvider] (CURR-02, T-92) to resolve the display
+/// label for the home currency. If only one home currency is active the bare
+/// symbol is shown; in a multi-currency session the ISO suffix is appended.
+class _NetWorthCard extends ConsumerWidget {
   const _NetWorthCard({
     required this.netWorthAsync,
     required this.homeCurrency,
@@ -176,10 +195,15 @@ class _NetWorthCard extends StatelessWidget {
   final String homeCurrency;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final typo = Theme.of(context).extension<VarianceTypography>() ??
         VarianceTypography.defaults;
+
+    // Resolve home-currency display label (CURR-02, T-92).
+    final symbolLabels =
+        ref.watch(currencySymbolLabelsProvider).value ?? {};
+    final currencyLabel = symbolLabels[homeCurrency] ?? homeCurrency;
 
     return Card.filled(
       color: colorScheme.primaryContainer,
@@ -205,7 +229,7 @@ class _NetWorthCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                _formatAmount(result.totalMinor, homeCurrency),
+                _formatAmount(result.totalMinor, currencyLabel),
                 style: TextStyle(
                   fontSize: typo.displayHeroAmount,
                   fontWeight: FontWeight.w600,
@@ -215,7 +239,9 @@ class _NetWorthCard extends StatelessWidget {
               ),
               if (result.hasStaleRates) ...[
                 const SizedBox(height: 8),
-                _StalenessChip(onPrimaryContainer: colorScheme.onPrimaryContainer),
+                _StalenessChip(
+                  onPrimaryContainer: colorScheme.onPrimaryContainer,
+                ),
               ],
             ],
           ),
@@ -224,14 +250,14 @@ class _NetWorthCard extends StatelessWidget {
     );
   }
 
-  String _formatAmount(int minorUnits, String currency) {
+  String _formatAmount(int minorUnits, String currencyLabel) {
     // Simple integer-based formatting (minor units → whole.fraction).
     // TODO(dev): Replace with locale-aware formatting from AppSettings when
-    //            the number format preferences are implemented.
+    //            the number format preferences are implemented (T-178).
     final whole = minorUnits.abs() ~/ 100;
     final frac = (minorUnits.abs() % 100).toString().padLeft(2, '0');
     final sign = minorUnits < 0 ? '-' : '';
-    return '$sign$currency $whole.$frac';
+    return '$sign$currencyLabel $whole.$frac';
   }
 }
 
@@ -272,18 +298,29 @@ class _StalenessChip extends StatelessWidget {
 ///
 /// Wraps the content in [Opacity] when [excluded] is true to visually gray it
 /// out (UI Spec §7.1.1 "excluded account row: reduced opacity 0.5").
+///
+/// [symbolLabels] carries the CURR-02 disambiguation map (code → display label).
 class _AccountRow extends ConsumerWidget {
   const _AccountRow({
     required this.account,
     required this.excluded,
+    required this.symbolLabels,
   });
 
   final Account account;
   final bool excluded;
 
+  /// Map from currency code to display label (e.g. '\$USD' when colliding,
+  /// '\$' when unique). Produced by [currencySymbolLabelsProvider].
+  final Map<String, String> symbolLabels;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tile = _AccountTile(account: account, excluded: excluded);
+    final tile = _AccountTile(
+      account: account,
+      excluded: excluded,
+      symbolLabels: symbolLabels,
+    );
 
     if (excluded) {
       return Opacity(opacity: 0.5, child: tile);
@@ -293,11 +330,21 @@ class _AccountRow extends ConsumerWidget {
 }
 
 /// The actual [ListTile] content for an account row.
+///
+/// [symbolLabels] carries the CURR-02 disambiguation map (code → display label).
 class _AccountTile extends ConsumerWidget {
-  const _AccountTile({required this.account, required this.excluded});
+  const _AccountTile({
+    required this.account,
+    required this.excluded,
+    required this.symbolLabels,
+  });
 
   final Account account;
   final bool excluded;
+
+  /// Map from currency code to display label produced by
+  /// [currencySymbolLabelsProvider] (CURR-02, T-91).
+  final Map<String, String> symbolLabels;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -308,6 +355,11 @@ class _AccountTile extends ConsumerWidget {
 
     final balanceAsync =
         ref.watch(accountBalanceProvider(account.id, account.currencyCode));
+
+    // Resolve display label: ISO-suffixed when colliding, bare symbol
+    // otherwise. Fall back to bare code when the resolver hasn't fired yet.
+    final currencyLabel =
+        symbolLabels[account.currencyCode] ?? account.currencyCode;
 
     return ListTile(
       leading: CircleAvatar(
@@ -335,7 +387,8 @@ class _AccountTile extends ConsumerWidget {
         error: (_, __) => const Icon(Icons.error_outline, size: 18),
         data: (balanceMinor) => _BalanceDisplay(
           balanceMinor: balanceMinor,
-          currencyCode: account.currencyCode,
+          // Pass the resolved label (e.g. '$USD') instead of bare code.
+          currencyLabel: currencyLabel,
           typo: typo,
           colorScheme: colorScheme,
           varianceColors: varianceColors,
@@ -365,19 +418,25 @@ class _AccountTile extends ConsumerWidget {
 /// - Positive / zero: [ColorScheme.onSurface]
 /// - Negative: [VarianceColors.warningAmount]
 ///
-/// Accessibility: negative balance gets a semantic label with the word
-/// "negative" so screen readers convey the liability state (PRD §5.1.4.1).
+/// [currencyLabel] is the CURR-02 disambiguated label (e.g. '\$USD', '\$CAD',
+/// or '₹' when no collision). Accessibility: negative balance includes the
+/// word "negative" so screen readers convey the liability state (PRD §5.1.4.1).
 class _BalanceDisplay extends StatelessWidget {
   const _BalanceDisplay({
     required this.balanceMinor,
-    required this.currencyCode,
+    required this.currencyLabel,
     required this.typo,
     required this.colorScheme,
     required this.varianceColors,
   });
 
   final int balanceMinor;
-  final String currencyCode;
+
+  /// Disambiguated display label from [currencySymbolLabelsProvider] (T-91).
+  /// May be a bare symbol ('₹'), ISO-suffixed ('$USD'), or bare code ('INR')
+  /// as a fallback when the resolver hasn't emitted yet.
+  final String currencyLabel;
+
   final VarianceTypography typo;
   final ColorScheme colorScheme;
   final VarianceColors? varianceColors;
@@ -392,12 +451,12 @@ class _BalanceDisplay extends StatelessWidget {
     // Format: absolute value, no minus sign in primary display (PRD §5.1.4.1).
     final whole = balanceMinor.abs() ~/ 100;
     final frac = (balanceMinor.abs() % 100).toString().padLeft(2, '0');
-    final displayText = '$currencyCode $whole.$frac';
+    final displayText = '$currencyLabel $whole.$frac';
 
     // Screen reader label conveys liability state (PRD §5.1.4.1).
     final semanticsLabel = isNegative
-        ? 'negative $currencyCode $whole.$frac'
-        : '$currencyCode $whole.$frac';
+        ? 'negative $currencyLabel $whole.$frac'
+        : '$currencyLabel $whole.$frac';
 
     return Semantics(
       label: semanticsLabel,

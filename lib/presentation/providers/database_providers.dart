@@ -8,6 +8,7 @@
 //     ├── accountDaoProvider
 //     ├── categoryDaoProvider
 //     ├── templateDaoProvider
+//     ├── scheduledOccurrenceDaoProvider
 //     ├── exchangeRateDaoProvider
 //     ├── currencyDaoProvider
 //     └── appSettingsDaoProvider
@@ -33,6 +34,7 @@ import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/daos/category_dao.dart';
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
+import 'package:variance/data/database/daos/scheduled_occurrence_dao.dart';
 import 'package:variance/data/database/daos/template_dao.dart';
 import 'package:variance/data/database/daos/transaction_dao.dart';
 
@@ -125,4 +127,13 @@ Future<CurrencyDao> currencyDao(Ref ref) async {
 Future<AppSettingsDao> appSettingsDao(Ref ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return db.appSettingsDao;
+}
+
+/// Provides the [ScheduledOccurrenceDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+@Riverpod(keepAlive: true)
+Future<ScheduledOccurrenceDao> scheduledOccurrenceDao(Ref ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return db.scheduledOccurrenceDao;
 }

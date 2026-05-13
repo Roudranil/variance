@@ -220,6 +220,60 @@ final class RecurringTemplateRepositoryProvider extends $FunctionalProvider<
 String _$recurringTemplateRepositoryHash() =>
     r'1822175bc52f447020143fc5cf869dc9b143b700';
 
+/// Provides the [IScheduledOccurrenceRepository] implementation for the
+/// lifetime of the app.
+///
+/// Depends on [scheduledOccurrenceDaoProvider].
+
+@ProviderFor(scheduledOccurrenceRepository)
+final scheduledOccurrenceRepositoryProvider =
+    ScheduledOccurrenceRepositoryProvider._();
+
+/// Provides the [IScheduledOccurrenceRepository] implementation for the
+/// lifetime of the app.
+///
+/// Depends on [scheduledOccurrenceDaoProvider].
+
+final class ScheduledOccurrenceRepositoryProvider extends $FunctionalProvider<
+        AsyncValue<IScheduledOccurrenceRepository>,
+        IScheduledOccurrenceRepository,
+        FutureOr<IScheduledOccurrenceRepository>>
+    with
+        $FutureModifier<IScheduledOccurrenceRepository>,
+        $FutureProvider<IScheduledOccurrenceRepository> {
+  /// Provides the [IScheduledOccurrenceRepository] implementation for the
+  /// lifetime of the app.
+  ///
+  /// Depends on [scheduledOccurrenceDaoProvider].
+  ScheduledOccurrenceRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'scheduledOccurrenceRepositoryProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$scheduledOccurrenceRepositoryHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<IScheduledOccurrenceRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<IScheduledOccurrenceRepository> create(Ref ref) {
+    return scheduledOccurrenceRepository(ref);
+  }
+}
+
+String _$scheduledOccurrenceRepositoryHash() =>
+    r'215cb231e2aaa851d3ae17b6691833786b634a98';
+
 /// Provides the [IExchangeRateRepository] implementation for the lifetime of
 /// the app.
 ///

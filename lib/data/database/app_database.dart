@@ -39,6 +39,7 @@ import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/daos/category_dao.dart';
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
+import 'package:variance/data/database/daos/scheduled_occurrence_dao.dart';
 import 'package:variance/data/database/daos/template_dao.dart';
 import 'package:variance/data/database/daos/transaction_dao.dart';
 import 'package:variance/data/database/migrations/migrations.dart';
@@ -126,6 +127,7 @@ const _kEncryptionKeyBytes = 32;
     ExchangeRateDao,
     CurrencyDao,
     AppSettingsDao,
+    ScheduledOccurrenceDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

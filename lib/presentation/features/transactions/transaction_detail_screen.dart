@@ -14,10 +14,16 @@
 //   - Overflow menu: Edit → TransactionFormScreen; Delete → confirmation dialog
 //   - Pending transaction: all fields unlocked for in-place edit
 //
+// Currency symbol disambiguation (CURR-02, T-92):
+//   - _AmountRow reads currencySymbolLabelsProvider to resolve the currency
+//     display label, appending ISO code when there is a symbol collision.
+//
 // Widget tests:
 //   1. compound transfer shows fee breakdown section
 //   2. empty photo carousel shows placeholder
 //   3. pending transaction shows "Pending" badge
+//   4. collision scenario: ISO-suffixed label rendered in amount header (T-92)
+//   5. no-collision scenario: bare symbol rendered in amount header (T-92)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +31,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:variance/domain/entities/transaction.dart';
 import 'package:variance/presentation/navigation/app_router.dart';
+import 'package:variance/presentation/providers/account_providers.dart';
 import 'package:variance/presentation/providers/transaction_providers.dart';
 
 /// Detail screen for a single transaction.
@@ -216,13 +223,17 @@ class _PendingBadge extends StatelessWidget {
 }
 
 /// Row displaying amount with currency and optional exchange rate.
-class _AmountRow extends StatelessWidget {
+///
+/// Reads [currencySymbolLabelsProvider] (CURR-02, T-92) to resolve the
+/// display label for the transaction's currency. When multiple active accounts
+/// share a symbol (e.g. '$' for USD and CAD), the ISO-code suffix is shown.
+class _AmountRow extends ConsumerWidget {
   const _AmountRow({required this.transaction});
 
   final Transaction transaction;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final tx = transaction;
     final isIncome = tx.type == TransactionType.income;
@@ -233,11 +244,18 @@ class _AmountRow extends StatelessWidget {
             ? theme.colorScheme.error
             : theme.colorScheme.onSurface;
 
+    // Resolve the display label from the CURR-02 disambiguation map.
+    // Falls back to bare ISO code when the provider hasn't emitted yet.
+    final symbolLabels =
+        ref.watch(currencySymbolLabelsProvider).value ?? {};
+    final currencyLabel =
+        symbolLabels[tx.currencyCode] ?? tx.currencyCode;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${tx.currencyCode} ${(tx.amountMinor / 100).toStringAsFixed(2)}',
+          '$currencyLabel ${(tx.amountMinor / 100).toStringAsFixed(2)}',
           style: theme.textTheme.headlineMedium?.copyWith(
             color: amountColor,
             fontWeight: FontWeight.bold,
