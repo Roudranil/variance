@@ -24,7 +24,6 @@ import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
 import 'package:variance/domain/entities/currency.dart';
 import 'package:variance/domain/entities/exchange_rate.dart';
-import 'package:variance/domain/repositories/i_account_repository.dart';
 import 'package:variance/domain/repositories/i_currency_repository.dart';
 import 'package:variance/domain/repositories/i_exchange_rate_repository.dart';
 import 'package:variance/presentation/providers/app_settings_providers.dart';
