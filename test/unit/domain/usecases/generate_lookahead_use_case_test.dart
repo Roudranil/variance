@@ -80,7 +80,7 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       throw UnimplementedError();
 
   @override
-  Future<Result<void>> pause(String id) => throw UnimplementedError();
+  Future<Result<void>> pause(String id, {required int pauseUntil}) => throw UnimplementedError();
 
   @override
   Future<Result<void>> resume(String id) => throw UnimplementedError();

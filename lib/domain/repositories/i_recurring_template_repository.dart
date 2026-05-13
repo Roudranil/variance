@@ -19,8 +19,11 @@ abstract interface class IRecurringTemplateRepository {
   /// Updates an editable template (amount, accounts, category, title, etc.).
   Future<Result<RecurringTemplate>> update(RecurringTemplate template);
 
-  /// Transitions a template to status = paused.
-  Future<Result<void>> pause(String id);
+  /// Transitions a template to status = paused with the given [pauseUntil] epoch.
+  ///
+  /// [pauseUntil] is a Unix epoch second representing when the template should
+  /// automatically resume. Must be strictly in the future.
+  Future<Result<void>> pause(String id, {required int pauseUntil});
 
   /// Transitions a paused template back to status = active.
   Future<Result<void>> resume(String id);

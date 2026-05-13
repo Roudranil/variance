@@ -243,6 +243,57 @@ final class NetWorthProvider extends $FunctionalProvider<
 
 String _$netWorthHash() => r'16a00f3c8b3b92f3b9c0cd713237267de99451eb';
 
+/// Async snapshot of all non-deleted, non-system accounts.
+///
+/// Thin convenience provider over [accountsProvider] for use in form screens
+/// that need a one-time or auto-refreshed list of accounts to populate
+/// dropdowns.
+
+@ProviderFor(activeAccounts)
+final activeAccountsProvider = ActiveAccountsProvider._();
+
+/// Async snapshot of all non-deleted, non-system accounts.
+///
+/// Thin convenience provider over [accountsProvider] for use in form screens
+/// that need a one-time or auto-refreshed list of accounts to populate
+/// dropdowns.
+
+final class ActiveAccountsProvider extends $FunctionalProvider<
+        AsyncValue<List<Account>>, List<Account>, Stream<List<Account>>>
+    with $FutureModifier<List<Account>>, $StreamProvider<List<Account>> {
+  /// Async snapshot of all non-deleted, non-system accounts.
+  ///
+  /// Thin convenience provider over [accountsProvider] for use in form screens
+  /// that need a one-time or auto-refreshed list of accounts to populate
+  /// dropdowns.
+  ActiveAccountsProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'activeAccountsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeAccountsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Account>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Account>> create(Ref ref) {
+    return activeAccounts(ref);
+  }
+}
+
+String _$activeAccountsHash() => r'af2cd9da48166b4e35de736b05c0787dcdc6e48d';
+
 /// Watches a single account by [accountId].
 ///
 /// Emits null if the account does not exist or has been soft-deleted.
