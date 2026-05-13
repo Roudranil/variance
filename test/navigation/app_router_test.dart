@@ -213,4 +213,125 @@ void main() {
       },
     );
   });
+
+  // T-196: onboarding guard routes — comprehensive coverage
+  group('T-196 Onboarding redirect guard (additional routes)', () {
+    testWidgets(
+      'navigating to /accounts redirects to /onboarding when not onboarded',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildApp(const AppSettings(onboardingComplete: false)),
+        );
+        await tester.pumpAndSettle();
+
+        // Attempt to go to accounts — guard should redirect to onboarding.
+        final ctx = tester.element(find.byType(OnboardingScreen));
+        ctx.go('/accounts');
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'navigating to /settings redirects to /onboarding when not onboarded',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildApp(const AppSettings(onboardingComplete: false)),
+        );
+        await tester.pumpAndSettle();
+
+        final ctx = tester.element(find.byType(OnboardingScreen));
+        ctx.go('/settings');
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'onboarded user navigating to /onboarding redirects to /',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildApp(const AppSettings(onboardingComplete: true)),
+        );
+        await tester.pumpAndSettle();
+
+        // Onboarded user tries to visit /onboarding — should redirect to /.
+        final ctx = tester.element(find.byType(HomeScreen));
+        ctx.go('/onboarding');
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(OnboardingScreen), findsNothing);
+      },
+    );
+  });
+
+  // T-177/T-179/T-181/T-182/T-183/T-184 — verify new settings routes resolve
+  group('New settings routes resolve without errors (T-177..T-184)', () {
+    testWidgets('/settings/locale resolves', (tester) async {
+      await tester.pumpWidget(
+        _buildApp(const AppSettings(onboardingComplete: true)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+
+      final ctx = tester.element(find.byType(SettingsHubScreen));
+      unawaited(ctx.push('/settings/locale'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('/settings/transaction-entry resolves', (tester) async {
+      await tester.pumpWidget(
+        _buildApp(const AppSettings(onboardingComplete: true)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+
+      final ctx = tester.element(find.byType(SettingsHubScreen));
+      unawaited(ctx.push('/settings/transaction-entry'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('/settings/profile resolves', (tester) async {
+      await tester.pumpWidget(
+        _buildApp(const AppSettings(onboardingComplete: true)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+
+      final ctx = tester.element(find.byType(SettingsHubScreen));
+      unawaited(ctx.push('/settings/profile'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('/settings/security resolves', (tester) async {
+      await tester.pumpWidget(
+        _buildApp(const AppSettings(onboardingComplete: true)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+
+      final ctx = tester.element(find.byType(SettingsHubScreen));
+      unawaited(ctx.push('/settings/security'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

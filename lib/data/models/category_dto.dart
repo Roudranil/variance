@@ -50,6 +50,7 @@ class CategoryDto {
       sortOrder: _row.sortOrder,
       createdAt: _row.createdAt,
       updatedAt: _row.updatedAt,
+      largeTxnThresholdMinor: _row.largeTxnThresholdMinor,
     );
   }
 

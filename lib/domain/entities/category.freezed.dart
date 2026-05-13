@@ -47,6 +47,14 @@ mixin _$Category {
   /// Last-modified epoch (Unix seconds).
   int get updatedAt;
 
+  /// Per-category large-transaction warning threshold in home currency minor
+  /// units. Null means no threshold is set.
+  ///
+  /// Category thresholds are always denominated in the home currency (TC-047).
+  /// When a transaction's home-currency-equivalent amount exceeds this value,
+  /// the app shows a warning before posting.
+  int? get largeTxnThresholdMinor;
+
   /// Create a copy of Category
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -77,7 +85,9 @@ mixin _$Category {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.largeTxnThresholdMinor, largeTxnThresholdMinor) ||
+                other.largeTxnThresholdMinor == largeTxnThresholdMinor));
   }
 
   @override
@@ -93,11 +103,12 @@ mixin _$Category {
       isProtected,
       sortOrder,
       createdAt,
-      updatedAt);
+      updatedAt,
+      largeTxnThresholdMinor);
 
   @override
   String toString() {
-    return 'Category(id: $id, parentId: $parentId, treeType: $treeType, name: $name, iconRef: $iconRef, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Category(id: $id, parentId: $parentId, treeType: $treeType, name: $name, iconRef: $iconRef, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, largeTxnThresholdMinor: $largeTxnThresholdMinor)';
   }
 }
 
@@ -117,7 +128,8 @@ abstract mixin class $CategoryCopyWith<$Res> {
       bool isProtected,
       int? sortOrder,
       int createdAt,
-      int updatedAt});
+      int updatedAt,
+      int? largeTxnThresholdMinor});
 }
 
 /// @nodoc
@@ -143,6 +155,7 @@ class _$CategoryCopyWithImpl<$Res> implements $CategoryCopyWith<$Res> {
     Object? sortOrder = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
+    Object? largeTxnThresholdMinor = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -189,6 +202,10 @@ class _$CategoryCopyWithImpl<$Res> implements $CategoryCopyWith<$Res> {
           ? _self.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as int,
+      largeTxnThresholdMinor: freezed == largeTxnThresholdMinor
+          ? _self.largeTxnThresholdMinor
+          : largeTxnThresholdMinor // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -297,7 +314,8 @@ extension CategoryPatterns on Category {
             bool isProtected,
             int? sortOrder,
             int createdAt,
-            int updatedAt)?
+            int updatedAt,
+            int? largeTxnThresholdMinor)?
         $default, {
     required TResult orElse(),
   }) {
@@ -315,7 +333,8 @@ extension CategoryPatterns on Category {
             _that.isProtected,
             _that.sortOrder,
             _that.createdAt,
-            _that.updatedAt);
+            _that.updatedAt,
+            _that.largeTxnThresholdMinor);
       case _:
         return orElse();
     }
@@ -347,7 +366,8 @@ extension CategoryPatterns on Category {
             bool isProtected,
             int? sortOrder,
             int createdAt,
-            int updatedAt)
+            int updatedAt,
+            int? largeTxnThresholdMinor)
         $default,
   ) {
     final _that = this;
@@ -364,7 +384,8 @@ extension CategoryPatterns on Category {
             _that.isProtected,
             _that.sortOrder,
             _that.createdAt,
-            _that.updatedAt);
+            _that.updatedAt,
+            _that.largeTxnThresholdMinor);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -395,7 +416,8 @@ extension CategoryPatterns on Category {
             bool isProtected,
             int? sortOrder,
             int createdAt,
-            int updatedAt)?
+            int updatedAt,
+            int? largeTxnThresholdMinor)?
         $default,
   ) {
     final _that = this;
@@ -412,7 +434,8 @@ extension CategoryPatterns on Category {
             _that.isProtected,
             _that.sortOrder,
             _that.createdAt,
-            _that.updatedAt);
+            _that.updatedAt,
+            _that.largeTxnThresholdMinor);
       case _:
         return null;
     }
@@ -433,7 +456,8 @@ class _Category implements Category {
       this.isProtected = false,
       this.sortOrder,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.largeTxnThresholdMinor});
 
   /// UUID v4 stable identifier.
   @override
@@ -481,6 +505,15 @@ class _Category implements Category {
   @override
   final int updatedAt;
 
+  /// Per-category large-transaction warning threshold in home currency minor
+  /// units. Null means no threshold is set.
+  ///
+  /// Category thresholds are always denominated in the home currency (TC-047).
+  /// When a transaction's home-currency-equivalent amount exceeds this value,
+  /// the app shows a warning before posting.
+  @override
+  final int? largeTxnThresholdMinor;
+
   /// Create a copy of Category
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -512,7 +545,9 @@ class _Category implements Category {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.largeTxnThresholdMinor, largeTxnThresholdMinor) ||
+                other.largeTxnThresholdMinor == largeTxnThresholdMinor));
   }
 
   @override
@@ -528,11 +563,12 @@ class _Category implements Category {
       isProtected,
       sortOrder,
       createdAt,
-      updatedAt);
+      updatedAt,
+      largeTxnThresholdMinor);
 
   @override
   String toString() {
-    return 'Category(id: $id, parentId: $parentId, treeType: $treeType, name: $name, iconRef: $iconRef, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Category(id: $id, parentId: $parentId, treeType: $treeType, name: $name, iconRef: $iconRef, isDeleted: $isDeleted, deletedAt: $deletedAt, isProtected: $isProtected, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, largeTxnThresholdMinor: $largeTxnThresholdMinor)';
   }
 }
 
@@ -554,7 +590,8 @@ abstract mixin class _$CategoryCopyWith<$Res>
       bool isProtected,
       int? sortOrder,
       int createdAt,
-      int updatedAt});
+      int updatedAt,
+      int? largeTxnThresholdMinor});
 }
 
 /// @nodoc
@@ -580,6 +617,7 @@ class __$CategoryCopyWithImpl<$Res> implements _$CategoryCopyWith<$Res> {
     Object? sortOrder = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
+    Object? largeTxnThresholdMinor = freezed,
   }) {
     return _then(_Category(
       id: null == id
@@ -626,6 +664,10 @@ class __$CategoryCopyWithImpl<$Res> implements _$CategoryCopyWith<$Res> {
           ? _self.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as int,
+      largeTxnThresholdMinor: freezed == largeTxnThresholdMinor
+          ? _self.largeTxnThresholdMinor
+          : largeTxnThresholdMinor // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }

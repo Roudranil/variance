@@ -52,5 +52,13 @@ abstract class Category with _$Category {
 
     /// Last-modified epoch (Unix seconds).
     required int updatedAt,
+
+    /// Per-category large-transaction warning threshold in home currency minor
+    /// units. Null means no threshold is set.
+    ///
+    /// Category thresholds are always denominated in the home currency (TC-047).
+    /// When a transaction's home-currency-equivalent amount exceeds this value,
+    /// the app shows a warning before posting.
+    int? largeTxnThresholdMinor,
   }) = _Category;
 }

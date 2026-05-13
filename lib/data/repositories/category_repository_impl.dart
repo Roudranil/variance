@@ -197,6 +197,7 @@ class CategoryRepositoryImpl implements ICategoryRepository {
       sortOrder: Value(entity.sortOrder),
       createdAt: Value(entity.createdAt),
       updatedAt: Value(entity.updatedAt),
+      largeTxnThresholdMinor: Value(entity.largeTxnThresholdMinor),
     );
   }
 }

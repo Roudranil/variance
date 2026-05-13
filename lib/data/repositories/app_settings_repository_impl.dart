@@ -64,6 +64,21 @@ const _kDisplayName = 'display_name';
 /// app_settings key for last exchange rate fetch epoch.
 const _kLastExchangeRateFetch = 'last_exchange_rate_fetch';
 
+/// app_settings key for the decimal separator preference.
+const _kNumberDecimalSeparator = 'number_decimal_separator';
+
+/// app_settings key for the thousands grouping style.
+const _kNumberThousandsGrouping = 'number_thousands_grouping';
+
+/// app_settings key for currency symbol placement.
+const _kCurrencySymbolPlacement = 'currency_symbol_placement';
+
+/// app_settings key for currency symbol spacing.
+const _kCurrencySymbolSpacing = 'currency_symbol_spacing';
+
+/// app_settings key for time format (12h/24h).
+const _kTimeFormat = 'time_format';
+
 // ---------------------------------------------------------------------------
 // Implementation
 // ---------------------------------------------------------------------------
@@ -102,6 +117,27 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
       await _maybeUpsert(_kTheme, patch.theme?.name, now);
       await _maybeUpsert(_kColorSchemeMode, patch.colorSchemeMode?.name, now);
       await _maybeUpsert(_kColorSeed, patch.colorSeed, now);
+      await _maybeUpsert(
+        _kNumberDecimalSeparator,
+        patch.numberDecimalSeparator?.name,
+        now,
+      );
+      await _maybeUpsert(
+        _kNumberThousandsGrouping,
+        patch.numberThousandsGrouping?.name,
+        now,
+      );
+      await _maybeUpsert(
+        _kCurrencySymbolPlacement,
+        patch.currencySymbolPlacement?.name,
+        now,
+      );
+      await _maybeUpsert(
+        _kCurrencySymbolSpacing,
+        patch.currencySymbolSpacing?.name,
+        now,
+      );
+      await _maybeUpsert(_kTimeFormat, patch.timeFormat?.name, now);
 
       if (patch.animationsEnabled != null) {
         await _dao.upsert(
@@ -194,8 +230,25 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
               ColorSchemeMode.dynamic,
       colorSeed: kv[_kColorSeed],
       animationsEnabled: kv[_kAnimationsEnabled] != '0',
+      numberDecimalSeparator: _parseEnum(
+        kv[_kNumberDecimalSeparator],
+        DecimalSeparator.values,
+      ),
+      numberThousandsGrouping: _parseEnum(
+        kv[_kNumberThousandsGrouping],
+        ThousandsGrouping.values,
+      ),
+      currencySymbolPlacement: _parseEnum(
+        kv[_kCurrencySymbolPlacement],
+        CurrencySymbolPlacement.values,
+      ),
+      currencySymbolSpacing: _parseEnum(
+        kv[_kCurrencySymbolSpacing],
+        CurrencySymbolSpacing.values,
+      ),
       weekStart:
           _parseEnum(kv[_kWeekStart], WeekStart.values) ?? WeekStart.monday,
+      timeFormat: _parseEnum(kv[_kTimeFormat], TimeFormat.values),
       percentagePrecision: int.tryParse(kv[_kPercentagePrecision] ?? '') ?? 0,
       descriptionMaxLength:
           int.tryParse(kv[_kDescriptionMaxLength] ?? '') ?? 1000,

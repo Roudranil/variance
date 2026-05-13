@@ -174,8 +174,11 @@ MigrationStrategy buildMigrationStrategy(
       // Each helper must be idempotent.
       // ------------------------------------------------------------------
 
-      // v1 → v2: (placeholder — no migrations exist yet)
-      // if (from < 2) { await _migrateToV2(m); }
+      // v1 → v2: add large_txn_threshold_minor to accounts and categories.
+      // Uses ADD COLUMN with NULL default — safe and idempotent.
+      if (from < 2) {
+        await _migrateToV2(database);
+      }
     },
 
     // ------------------------------------------------------------------
@@ -197,6 +200,34 @@ MigrationStrategy buildMigrationStrategy(
       );
     },
   );
+}
+
+// ---------------------------------------------------------------------------
+// v2 migration
+// ---------------------------------------------------------------------------
+
+/// Adds [large_txn_threshold_minor] columns to `accounts` and `categories`.
+///
+/// Both columns default to NULL (no threshold configured). Uses raw
+/// `ALTER TABLE ADD COLUMN` for idempotency-friendly additive change.
+///
+/// Parameters:
+/// - [database]: The Drift [GeneratedDatabase] whose executor runs the DDL.
+Future<void> _migrateToV2(GeneratedDatabase database) async {
+  dev.log(
+    'AppDatabase _migrateToV2: adding large_txn_threshold_minor columns',
+    name: 'AppDatabase',
+  );
+
+  await database.customStatement(
+    'ALTER TABLE accounts ADD COLUMN large_txn_threshold_minor INTEGER',
+  );
+
+  await database.customStatement(
+    'ALTER TABLE categories ADD COLUMN large_txn_threshold_minor INTEGER',
+  );
+
+  dev.log('AppDatabase _migrateToV2: done', name: 'AppDatabase');
 }
 
 // ---------------------------------------------------------------------------

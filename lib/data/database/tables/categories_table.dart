@@ -46,6 +46,14 @@ class Categories extends Table {
   /// Unix epoch seconds when this row was last modified.
   IntColumn get updatedAt => integer()();
 
+  /// Per-category large-transaction warning threshold in home-currency minor
+  /// units. NULL means no threshold is configured.
+  ///
+  /// Always denominated in the app's home currency (TC-047). Set to NULL by
+  /// default; user configures via Settings > Warnings & Limits >
+  /// Per-Category Limits.
+  IntColumn get largeTxnThresholdMinor => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

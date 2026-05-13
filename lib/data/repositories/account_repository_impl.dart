@@ -242,6 +242,7 @@ class AccountRepositoryImpl implements IAccountRepository {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       metadata: row.metadata,
+      largeTxnThresholdMinor: row.largeTxnThresholdMinor,
     );
   }
 
@@ -263,6 +264,7 @@ class AccountRepositoryImpl implements IAccountRepository {
       createdAt: Value(entity.createdAt),
       updatedAt: Value(entity.updatedAt),
       metadata: Value(entity.metadata),
+      largeTxnThresholdMinor: Value(entity.largeTxnThresholdMinor),
     );
   }
 

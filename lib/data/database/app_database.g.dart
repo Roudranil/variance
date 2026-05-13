@@ -113,6 +113,12 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
   late final GeneratedColumn<String> metadata = GeneratedColumn<String>(
       'metadata', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _largeTxnThresholdMinorMeta =
+      const VerificationMeta('largeTxnThresholdMinor');
+  @override
+  late final GeneratedColumn<int> largeTxnThresholdMinor = GeneratedColumn<int>(
+      'large_txn_threshold_minor', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -129,7 +135,8 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         displayOrder,
         createdAt,
         updatedAt,
-        metadata
+        metadata,
+        largeTxnThresholdMinor
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -224,6 +231,12 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
       context.handle(_metadataMeta,
           metadata.isAcceptableOrUnknown(data['metadata']!, _metadataMeta));
     }
+    if (data.containsKey('large_txn_threshold_minor')) {
+      context.handle(
+          _largeTxnThresholdMinorMeta,
+          largeTxnThresholdMinor.isAcceptableOrUnknown(
+              data['large_txn_threshold_minor']!, _largeTxnThresholdMinorMeta));
+    }
     return context;
   }
 
@@ -263,6 +276,9 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
           .read(DriftSqlType.int, data['${effectivePrefix}updated_at'])!,
       metadata: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}metadata']),
+      largeTxnThresholdMinor: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}large_txn_threshold_minor']),
     );
   }
 
@@ -318,6 +334,14 @@ class Account extends DataClass implements Insertable<Account> {
 
   /// JSON escape hatch for future extensibility.
   final String? metadata;
+
+  /// Per-account large-transaction warning threshold in minor units of the
+  /// account's native currency. NULL means no threshold is configured.
+  ///
+  /// Compared against transaction amount in the account's native currency
+  /// (TC-047). Set to NULL by default; user configures via Settings >
+  /// Warnings & Limits > Per-Account Limits.
+  final int? largeTxnThresholdMinor;
   const Account(
       {required this.id,
       required this.name,
@@ -333,7 +357,8 @@ class Account extends DataClass implements Insertable<Account> {
       this.displayOrder,
       required this.createdAt,
       required this.updatedAt,
-      this.metadata});
+      this.metadata,
+      this.largeTxnThresholdMinor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -359,6 +384,9 @@ class Account extends DataClass implements Insertable<Account> {
     map['updated_at'] = Variable<int>(updatedAt);
     if (!nullToAbsent || metadata != null) {
       map['metadata'] = Variable<String>(metadata);
+    }
+    if (!nullToAbsent || largeTxnThresholdMinor != null) {
+      map['large_txn_threshold_minor'] = Variable<int>(largeTxnThresholdMinor);
     }
     return map;
   }
@@ -387,6 +415,9 @@ class Account extends DataClass implements Insertable<Account> {
       metadata: metadata == null && nullToAbsent
           ? const Value.absent()
           : Value(metadata),
+      largeTxnThresholdMinor: largeTxnThresholdMinor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(largeTxnThresholdMinor),
     );
   }
 
@@ -410,6 +441,8 @@ class Account extends DataClass implements Insertable<Account> {
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       metadata: serializer.fromJson<String?>(json['metadata']),
+      largeTxnThresholdMinor:
+          serializer.fromJson<int?>(json['largeTxnThresholdMinor']),
     );
   }
   @override
@@ -431,6 +464,7 @@ class Account extends DataClass implements Insertable<Account> {
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'metadata': serializer.toJson<String?>(metadata),
+      'largeTxnThresholdMinor': serializer.toJson<int?>(largeTxnThresholdMinor),
     };
   }
 
@@ -449,7 +483,8 @@ class Account extends DataClass implements Insertable<Account> {
           Value<int?> displayOrder = const Value.absent(),
           int? createdAt,
           int? updatedAt,
-          Value<String?> metadata = const Value.absent()}) =>
+          Value<String?> metadata = const Value.absent(),
+          Value<int?> largeTxnThresholdMinor = const Value.absent()}) =>
       Account(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -467,6 +502,9 @@ class Account extends DataClass implements Insertable<Account> {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         metadata: metadata.present ? metadata.value : this.metadata,
+        largeTxnThresholdMinor: largeTxnThresholdMinor.present
+            ? largeTxnThresholdMinor.value
+            : this.largeTxnThresholdMinor,
       );
   Account copyWithCompanion(AccountsCompanion data) {
     return Account(
@@ -496,6 +534,9 @@ class Account extends DataClass implements Insertable<Account> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       metadata: data.metadata.present ? data.metadata.value : this.metadata,
+      largeTxnThresholdMinor: data.largeTxnThresholdMinor.present
+          ? data.largeTxnThresholdMinor.value
+          : this.largeTxnThresholdMinor,
     );
   }
 
@@ -516,7 +557,8 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('metadata: $metadata')
+          ..write('metadata: $metadata, ')
+          ..write('largeTxnThresholdMinor: $largeTxnThresholdMinor')
           ..write(')'))
         .toString();
   }
@@ -537,7 +579,8 @@ class Account extends DataClass implements Insertable<Account> {
       displayOrder,
       createdAt,
       updatedAt,
-      metadata);
+      metadata,
+      largeTxnThresholdMinor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -556,7 +599,8 @@ class Account extends DataClass implements Insertable<Account> {
           other.displayOrder == this.displayOrder &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.metadata == this.metadata);
+          other.metadata == this.metadata &&
+          other.largeTxnThresholdMinor == this.largeTxnThresholdMinor);
 }
 
 class AccountsCompanion extends UpdateCompanion<Account> {
@@ -575,6 +619,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> createdAt;
   final Value<int> updatedAt;
   final Value<String?> metadata;
+  final Value<int?> largeTxnThresholdMinor;
   final Value<int> rowid;
   const AccountsCompanion({
     this.id = const Value.absent(),
@@ -592,6 +637,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.metadata = const Value.absent(),
+    this.largeTxnThresholdMinor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AccountsCompanion.insert({
@@ -610,6 +656,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     required int createdAt,
     required int updatedAt,
     this.metadata = const Value.absent(),
+    this.largeTxnThresholdMinor = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
@@ -633,6 +680,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
     Expression<String>? metadata,
+    Expression<int>? largeTxnThresholdMinor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -652,6 +700,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (metadata != null) 'metadata': metadata,
+      if (largeTxnThresholdMinor != null)
+        'large_txn_threshold_minor': largeTxnThresholdMinor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -672,6 +722,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       Value<int>? createdAt,
       Value<int>? updatedAt,
       Value<String?>? metadata,
+      Value<int?>? largeTxnThresholdMinor,
       Value<int>? rowid}) {
     return AccountsCompanion(
       id: id ?? this.id,
@@ -689,6 +740,8 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,
+      largeTxnThresholdMinor:
+          largeTxnThresholdMinor ?? this.largeTxnThresholdMinor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -741,6 +794,10 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (metadata.present) {
       map['metadata'] = Variable<String>(metadata.value);
     }
+    if (largeTxnThresholdMinor.present) {
+      map['large_txn_threshold_minor'] =
+          Variable<int>(largeTxnThresholdMinor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -765,6 +822,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('metadata: $metadata, ')
+          ..write('largeTxnThresholdMinor: $largeTxnThresholdMinor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1549,6 +1607,12 @@ class $CategoriesTable extends Categories
   late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _largeTxnThresholdMinorMeta =
+      const VerificationMeta('largeTxnThresholdMinor');
+  @override
+  late final GeneratedColumn<int> largeTxnThresholdMinor = GeneratedColumn<int>(
+      'large_txn_threshold_minor', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1561,7 +1625,8 @@ class $CategoriesTable extends Categories
         isProtected,
         sortOrder,
         createdAt,
-        updatedAt
+        updatedAt,
+        largeTxnThresholdMinor
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1630,6 +1695,12 @@ class $CategoriesTable extends Categories
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('large_txn_threshold_minor')) {
+      context.handle(
+          _largeTxnThresholdMinorMeta,
+          largeTxnThresholdMinor.isAcceptableOrUnknown(
+              data['large_txn_threshold_minor']!, _largeTxnThresholdMinorMeta));
+    }
     return context;
   }
 
@@ -1661,6 +1732,9 @@ class $CategoriesTable extends Categories
           .read(DriftSqlType.int, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}updated_at'])!,
+      largeTxnThresholdMinor: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}large_txn_threshold_minor']),
     );
   }
 
@@ -1703,6 +1777,14 @@ class Category extends DataClass implements Insertable<Category> {
 
   /// Unix epoch seconds when this row was last modified.
   final int updatedAt;
+
+  /// Per-category large-transaction warning threshold in home-currency minor
+  /// units. NULL means no threshold is configured.
+  ///
+  /// Always denominated in the app's home currency (TC-047). Set to NULL by
+  /// default; user configures via Settings > Warnings & Limits >
+  /// Per-Category Limits.
+  final int? largeTxnThresholdMinor;
   const Category(
       {required this.id,
       this.parentId,
@@ -1714,7 +1796,8 @@ class Category extends DataClass implements Insertable<Category> {
       required this.isProtected,
       this.sortOrder,
       required this.createdAt,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.largeTxnThresholdMinor});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1735,6 +1818,9 @@ class Category extends DataClass implements Insertable<Category> {
     }
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || largeTxnThresholdMinor != null) {
+      map['large_txn_threshold_minor'] = Variable<int>(largeTxnThresholdMinor);
+    }
     return map;
   }
 
@@ -1757,6 +1843,9 @@ class Category extends DataClass implements Insertable<Category> {
           : Value(sortOrder),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      largeTxnThresholdMinor: largeTxnThresholdMinor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(largeTxnThresholdMinor),
     );
   }
 
@@ -1775,6 +1864,8 @@ class Category extends DataClass implements Insertable<Category> {
       sortOrder: serializer.fromJson<int?>(json['sortOrder']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      largeTxnThresholdMinor:
+          serializer.fromJson<int?>(json['largeTxnThresholdMinor']),
     );
   }
   @override
@@ -1792,6 +1883,7 @@ class Category extends DataClass implements Insertable<Category> {
       'sortOrder': serializer.toJson<int?>(sortOrder),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'largeTxnThresholdMinor': serializer.toJson<int?>(largeTxnThresholdMinor),
     };
   }
 
@@ -1806,7 +1898,8 @@ class Category extends DataClass implements Insertable<Category> {
           bool? isProtected,
           Value<int?> sortOrder = const Value.absent(),
           int? createdAt,
-          int? updatedAt}) =>
+          int? updatedAt,
+          Value<int?> largeTxnThresholdMinor = const Value.absent()}) =>
       Category(
         id: id ?? this.id,
         parentId: parentId.present ? parentId.value : this.parentId,
@@ -1819,6 +1912,9 @@ class Category extends DataClass implements Insertable<Category> {
         sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        largeTxnThresholdMinor: largeTxnThresholdMinor.present
+            ? largeTxnThresholdMinor.value
+            : this.largeTxnThresholdMinor,
       );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -1834,6 +1930,9 @@ class Category extends DataClass implements Insertable<Category> {
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      largeTxnThresholdMinor: data.largeTxnThresholdMinor.present
+          ? data.largeTxnThresholdMinor.value
+          : this.largeTxnThresholdMinor,
     );
   }
 
@@ -1850,14 +1949,26 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('isProtected: $isProtected, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('largeTxnThresholdMinor: $largeTxnThresholdMinor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, parentId, treeType, name, iconRef,
-      isDeleted, deletedAt, isProtected, sortOrder, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id,
+      parentId,
+      treeType,
+      name,
+      iconRef,
+      isDeleted,
+      deletedAt,
+      isProtected,
+      sortOrder,
+      createdAt,
+      updatedAt,
+      largeTxnThresholdMinor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1872,7 +1983,8 @@ class Category extends DataClass implements Insertable<Category> {
           other.isProtected == this.isProtected &&
           other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.largeTxnThresholdMinor == this.largeTxnThresholdMinor);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -1887,6 +1999,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int?> sortOrder;
   final Value<int> createdAt;
   final Value<int> updatedAt;
+  final Value<int?> largeTxnThresholdMinor;
   final Value<int> rowid;
   const CategoriesCompanion({
     this.id = const Value.absent(),
@@ -1900,6 +2013,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.largeTxnThresholdMinor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CategoriesCompanion.insert({
@@ -1914,6 +2028,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.sortOrder = const Value.absent(),
     required int createdAt,
     required int updatedAt,
+    this.largeTxnThresholdMinor = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         treeType = Value(treeType),
@@ -1933,6 +2048,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<int>? sortOrder,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
+    Expression<int>? largeTxnThresholdMinor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1947,6 +2063,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (largeTxnThresholdMinor != null)
+        'large_txn_threshold_minor': largeTxnThresholdMinor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1963,6 +2081,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       Value<int?>? sortOrder,
       Value<int>? createdAt,
       Value<int>? updatedAt,
+      Value<int?>? largeTxnThresholdMinor,
       Value<int>? rowid}) {
     return CategoriesCompanion(
       id: id ?? this.id,
@@ -1976,6 +2095,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      largeTxnThresholdMinor:
+          largeTxnThresholdMinor ?? this.largeTxnThresholdMinor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2016,6 +2137,10 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (largeTxnThresholdMinor.present) {
+      map['large_txn_threshold_minor'] =
+          Variable<int>(largeTxnThresholdMinor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2036,6 +2161,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('largeTxnThresholdMinor: $largeTxnThresholdMinor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9836,6 +9962,7 @@ typedef $$AccountsTableCreateCompanionBuilder = AccountsCompanion Function({
   required int createdAt,
   required int updatedAt,
   Value<String?> metadata,
+  Value<int?> largeTxnThresholdMinor,
   Value<int> rowid,
 });
 typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
@@ -9854,6 +9981,7 @@ typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
   Value<int> createdAt,
   Value<int> updatedAt,
   Value<String?> metadata,
+  Value<int?> largeTxnThresholdMinor,
   Value<int> rowid,
 });
 
@@ -9948,6 +10076,10 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<String> get metadata => $composableBuilder(
       column: $table.metadata, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get largeTxnThresholdMinor => $composableBuilder(
+      column: $table.largeTxnThresholdMinor,
+      builder: (column) => ColumnFilters(column));
 
   Expression<bool> accountDetailsRefs(
       Expression<bool> Function($$AccountDetailsTableFilterComposer f) f) {
@@ -10050,6 +10182,10 @@ class $$AccountsTableOrderingComposer
 
   ColumnOrderings<String> get metadata => $composableBuilder(
       column: $table.metadata, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get largeTxnThresholdMinor => $composableBuilder(
+      column: $table.largeTxnThresholdMinor,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$AccountsTableAnnotationComposer
@@ -10105,6 +10241,9 @@ class $$AccountsTableAnnotationComposer
 
   GeneratedColumn<String> get metadata =>
       $composableBuilder(column: $table.metadata, builder: (column) => column);
+
+  GeneratedColumn<int> get largeTxnThresholdMinor => $composableBuilder(
+      column: $table.largeTxnThresholdMinor, builder: (column) => column);
 
   Expression<T> accountDetailsRefs<T extends Object>(
       Expression<T> Function($$AccountDetailsTableAnnotationComposer a) f) {
@@ -10187,6 +10326,7 @@ class $$AccountsTableTableManager extends RootTableManager<
             Value<int> createdAt = const Value.absent(),
             Value<int> updatedAt = const Value.absent(),
             Value<String?> metadata = const Value.absent(),
+            Value<int?> largeTxnThresholdMinor = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AccountsCompanion(
@@ -10205,6 +10345,7 @@ class $$AccountsTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             metadata: metadata,
+            largeTxnThresholdMinor: largeTxnThresholdMinor,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -10223,6 +10364,7 @@ class $$AccountsTableTableManager extends RootTableManager<
             required int createdAt,
             required int updatedAt,
             Value<String?> metadata = const Value.absent(),
+            Value<int?> largeTxnThresholdMinor = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               AccountsCompanion.insert(
@@ -10241,6 +10383,7 @@ class $$AccountsTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             metadata: metadata,
+            largeTxnThresholdMinor: largeTxnThresholdMinor,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -11014,6 +11157,7 @@ typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   Value<int?> sortOrder,
   required int createdAt,
   required int updatedAt,
+  Value<int?> largeTxnThresholdMinor,
   Value<int> rowid,
 });
 typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
@@ -11028,6 +11172,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
   Value<int?> sortOrder,
   Value<int> createdAt,
   Value<int> updatedAt,
+  Value<int?> largeTxnThresholdMinor,
   Value<int> rowid,
 });
 
@@ -11119,6 +11264,10 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get largeTxnThresholdMinor => $composableBuilder(
+      column: $table.largeTxnThresholdMinor,
+      builder: (column) => ColumnFilters(column));
 
   $$CategoriesTableFilterComposer get parentId {
     final $$CategoriesTableFilterComposer composer = $composerBuilder(
@@ -11222,6 +11371,10 @@ class $$CategoriesTableOrderingComposer
   ColumnOrderings<int> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get largeTxnThresholdMinor => $composableBuilder(
+      column: $table.largeTxnThresholdMinor,
+      builder: (column) => ColumnOrderings(column));
+
   $$CategoriesTableOrderingComposer get parentId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -11281,6 +11434,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get largeTxnThresholdMinor => $composableBuilder(
+      column: $table.largeTxnThresholdMinor, builder: (column) => column);
 
   $$CategoriesTableAnnotationComposer get parentId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -11380,6 +11536,7 @@ class $$CategoriesTableTableManager extends RootTableManager<
             Value<int?> sortOrder = const Value.absent(),
             Value<int> createdAt = const Value.absent(),
             Value<int> updatedAt = const Value.absent(),
+            Value<int?> largeTxnThresholdMinor = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               CategoriesCompanion(
@@ -11394,6 +11551,7 @@ class $$CategoriesTableTableManager extends RootTableManager<
             sortOrder: sortOrder,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            largeTxnThresholdMinor: largeTxnThresholdMinor,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -11408,6 +11566,7 @@ class $$CategoriesTableTableManager extends RootTableManager<
             Value<int?> sortOrder = const Value.absent(),
             required int createdAt,
             required int updatedAt,
+            Value<int?> largeTxnThresholdMinor = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               CategoriesCompanion.insert(
@@ -11422,6 +11581,7 @@ class $$CategoriesTableTableManager extends RootTableManager<
             sortOrder: sortOrder,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            largeTxnThresholdMinor: largeTxnThresholdMinor,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
