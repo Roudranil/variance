@@ -7,6 +7,8 @@
 //   accountRepositoryProvider              ← accountDaoProvider
 //   categoryRepositoryProvider             ← categoryDaoProvider
 //   recurringTemplateRepositoryProvider    ← templateDaoProvider
+//   installmentPlanRepositoryProvider      ← installmentPlanDaoProvider, installmentOccurrenceDaoProvider
+//   installmentOccurrenceRepositoryProvider ← installmentOccurrenceDaoProvider
 //   scheduledOccurrenceRepositoryProvider  ← scheduledOccurrenceDaoProvider
 //   exchangeRateRepositoryProvider         ← exchangeRateDaoProvider
 //   currencyRepositoryProvider             ← currencyDaoProvider
@@ -28,6 +30,8 @@ import 'package:variance/data/repositories/app_settings_repository_impl.dart';
 import 'package:variance/data/repositories/category_repository_impl.dart';
 import 'package:variance/data/repositories/currency_repository_impl.dart';
 import 'package:variance/data/repositories/exchange_rate_repository_impl.dart';
+import 'package:variance/data/repositories/installment_occurrence_repository_impl.dart';
+import 'package:variance/data/repositories/installment_plan_repository_impl.dart';
 import 'package:variance/data/repositories/recurring_template_repository_impl.dart';
 import 'package:variance/data/repositories/scheduled_occurrence_repository_impl.dart';
 import 'package:variance/data/repositories/transaction_repository_impl.dart';
@@ -37,6 +41,8 @@ import 'package:variance/domain/repositories/i_app_settings_repository.dart';
 import 'package:variance/domain/repositories/i_category_repository.dart';
 import 'package:variance/domain/repositories/i_currency_repository.dart';
 import 'package:variance/domain/repositories/i_exchange_rate_repository.dart';
+import 'package:variance/domain/repositories/i_installment_occurrence_repository.dart';
+import 'package:variance/domain/repositories/i_installment_plan_repository.dart';
 import 'package:variance/domain/repositories/i_recurring_template_repository.dart';
 import 'package:variance/domain/repositories/i_scheduled_occurrence_repository.dart';
 import 'package:variance/domain/repositories/i_transaction_repository.dart';
@@ -131,6 +137,31 @@ Future<ICurrencyRepository> currencyRepository(Ref ref) async {
 Future<IAppSettingsRepository> appSettingsRepository(Ref ref) async {
   final dao = await ref.watch(appSettingsDaoProvider.future);
   return AppSettingsRepositoryImpl(dao);
+}
+
+/// Provides the [IInstallmentPlanRepository] implementation for the lifetime
+/// of the app.
+///
+/// Depends on both [installmentPlanDaoProvider] and
+/// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
+/// cancellation of pending occurrences.
+@Riverpod(keepAlive: true)
+Future<IInstallmentPlanRepository> installmentPlanRepository(Ref ref) async {
+  final planDao = await ref.watch(installmentPlanDaoProvider.future);
+  final occDao = await ref.watch(installmentOccurrenceDaoProvider.future);
+  return InstallmentPlanRepositoryImpl(planDao, occDao);
+}
+
+/// Provides the [IInstallmentOccurrenceRepository] implementation for the
+/// lifetime of the app.
+///
+/// Depends on [installmentOccurrenceDaoProvider].
+@Riverpod(keepAlive: true)
+Future<IInstallmentOccurrenceRepository> installmentOccurrenceRepository(
+  Ref ref,
+) async {
+  final dao = await ref.watch(installmentOccurrenceDaoProvider.future);
+  return InstallmentOccurrenceRepositoryImpl(dao);
 }
 
 // ---------------------------------------------------------------------------
