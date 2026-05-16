@@ -71,8 +71,7 @@ class TransactionFormScreen extends ConsumerStatefulWidget {
       _TransactionFormScreenState();
 }
 
-class _TransactionFormScreenState
-    extends ConsumerState<TransactionFormScreen> {
+class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _titleController = TextEditingController();
@@ -136,8 +135,7 @@ class _TransactionFormScreenState
       setState(() => _exchangeRateEntity = null);
       return;
     }
-    final useCaseAsync =
-        await ref.read(getExchangeRateUseCaseProvider.future);
+    final useCaseAsync = await ref.read(getExchangeRateUseCaseProvider.future);
     final result = await useCaseAsync(
       GetExchangeRateInput(from: accountCurrency, to: homeCurrency),
     );
@@ -170,8 +168,7 @@ class _TransactionFormScreenState
     };
 
     // Parsed amount for the estimate.
-    final estimateAmount =
-        double.tryParse(_amountController.text.trim());
+    final estimateAmount = double.tryParse(_amountController.text.trim());
 
     return Scaffold(
       appBar: AppBar(
@@ -321,7 +318,8 @@ class _TransactionFormScreenState
                   ),
                   validator: (v) {
                     if (!_feeEnabled) return null;
-                    if (v == null || v.trim().isEmpty) return 'Enter fee amount';
+                    if (v == null || v.trim().isEmpty)
+                      return 'Enter fee amount';
                     final f = double.tryParse(v.trim());
                     if (f == null || f <= 0) return 'Enter a valid fee amount';
                     return null;
@@ -431,7 +429,8 @@ class _TransactionFormScreenState
     }
 
     // Overdraft: asset account with insufficient balance (T-44)
-    const srcBalance = 0; // stub — real balance comes from accountBalanceProvider
+    const srcBalance =
+        0; // stub — real balance comes from accountBalanceProvider
     final isAsset = _sourceAccount != null &&
         _sourceAccount!.accountCategory != AccountCategory.creditCard &&
         _sourceAccount!.accountCategory != AccountCategory.loan;
@@ -471,8 +470,7 @@ class _TransactionFormScreenState
         status: TransactionStatus.posted,
         dateTime: dateEpoch,
         amountMinor: amtMinor,
-        currencyCode:
-            _sourceAccount?.currencyCode ??
+        currencyCode: _sourceAccount?.currencyCode ??
             _destinationAccount?.currencyCode ??
             'INR',
         accountSourceId: _sourceAccount?.id,

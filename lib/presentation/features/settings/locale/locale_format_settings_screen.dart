@@ -97,7 +97,8 @@ class _LocaleBody extends ConsumerWidget {
               label: Text('Period ( . )'),
             ),
           ],
-          onChanged: (v) => _save(ref, patch: AppSettingsPatch(numberDecimalSeparator: v)),
+          onChanged: (v) =>
+              _save(ref, patch: AppSettingsPatch(numberDecimalSeparator: v)),
         ),
         _SegmentedRow<ThousandsGrouping>(
           title: 'Thousands grouping',
@@ -112,7 +113,8 @@ class _LocaleBody extends ConsumerWidget {
               label: Text('Indian'),
             ),
           ],
-          onChanged: (v) => _save(ref, patch: AppSettingsPatch(numberThousandsGrouping: v)),
+          onChanged: (v) =>
+              _save(ref, patch: AppSettingsPatch(numberThousandsGrouping: v)),
         ),
         const Divider(indent: 16, endIndent: 16),
 

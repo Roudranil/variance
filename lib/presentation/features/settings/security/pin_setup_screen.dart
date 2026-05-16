@@ -360,9 +360,8 @@ class _PinDotIndicator extends StatelessWidget {
               shape: BoxShape.circle,
               color: isFilled ? colorScheme.primary : Colors.transparent,
               border: Border.all(
-                color: isFilled
-                    ? colorScheme.primary
-                    : colorScheme.outlineVariant,
+                color:
+                    isFilled ? colorScheme.primary : colorScheme.outlineVariant,
                 width: 1.5,
               ),
             ),

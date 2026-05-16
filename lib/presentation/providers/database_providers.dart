@@ -8,6 +8,8 @@
 //     ├── accountDaoProvider
 //     ├── categoryDaoProvider
 //     ├── templateDaoProvider
+//     ├── installmentPlanDaoProvider
+//     ├── installmentOccurrenceDaoProvider
 //     ├── scheduledOccurrenceDaoProvider
 //     ├── exchangeRateDaoProvider
 //     ├── currencyDaoProvider
@@ -34,6 +36,7 @@ import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/daos/category_dao.dart';
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
+import 'package:variance/data/database/daos/installment_dao.dart';
 import 'package:variance/data/database/daos/scheduled_occurrence_dao.dart';
 import 'package:variance/data/database/daos/template_dao.dart';
 import 'package:variance/data/database/daos/transaction_dao.dart';
@@ -127,6 +130,24 @@ Future<CurrencyDao> currencyDao(Ref ref) async {
 Future<AppSettingsDao> appSettingsDao(Ref ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return db.appSettingsDao;
+}
+
+/// Provides the [InstallmentPlanDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+@Riverpod(keepAlive: true)
+Future<InstallmentPlanDao> installmentPlanDao(Ref ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return db.installmentPlanDao;
+}
+
+/// Provides the [InstallmentOccurrenceDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+@Riverpod(keepAlive: true)
+Future<InstallmentOccurrenceDao> installmentOccurrenceDao(Ref ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return db.installmentOccurrenceDao;
 }
 
 /// Provides the [ScheduledOccurrenceDao] for the open [AppDatabase].

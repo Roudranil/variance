@@ -87,10 +87,8 @@ void main() {
 
       // Verify INR (popular) is above Swiss Franc (CHF) in the list by
       // checking the tile subtitle 'Indian Rupee' appears above 'Swiss Franc'.
-      final inrOffset =
-          tester.getTopLeft(find.text('Indian Rupee')).dy;
-      final chfOffset =
-          tester.getTopLeft(find.text('Swiss Franc')).dy;
+      final inrOffset = tester.getTopLeft(find.text('Indian Rupee')).dy;
+      final chfOffset = tester.getTopLeft(find.text('Swiss Franc')).dy;
       expect(inrOffset, lessThan(chfOffset));
     });
 
@@ -104,14 +102,15 @@ void main() {
       expect(find.byIcon(Icons.check), findsOneWidget);
     });
 
-    testWidgets('5. no results state shows appropriate message', (tester) async {
+    testWidgets('5. no results state shows appropriate message',
+        (tester) async {
       await tester.pumpWidget(_buildPicker(currencies: currencies));
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'ZZZNOTFOUND');
       await tester.pumpAndSettle();
 
-      expect(find.textContaining("No currencies match"), findsOneWidget);
+      expect(find.textContaining('No currencies match'), findsOneWidget);
     });
   });
 }

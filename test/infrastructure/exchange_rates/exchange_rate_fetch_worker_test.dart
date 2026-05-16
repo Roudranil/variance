@@ -37,10 +37,12 @@ class _FakeAppSettingsRepository implements IAppSettingsRepository {
   List<AppSettingsPatch> get patches => List.unmodifiable(_patches);
 
   @override
-  Stream<AppSettings> watch() => Stream.value(AppSettings(
-        lastExchangeRateFetch: _lastFetch,
-        onboardingComplete: true,
-      ),);
+  Stream<AppSettings> watch() => Stream.value(
+        AppSettings(
+          lastExchangeRateFetch: _lastFetch,
+          onboardingComplete: true,
+        ),
+      );
 
   @override
   Future<Result<void>> update(AppSettingsPatch patch) async {
@@ -76,11 +78,15 @@ class _NoOpAccountRepository implements IAccountRepository {
   Future<bool> isNameTaken(String name) => throw UnimplementedError();
   @override
   Future<Account?> findSoftDeletedByNameAndCategory(
-          String name, AccountCategory category,) =>
+    String name,
+    AccountCategory category,
+  ) =>
       throw UnimplementedError();
   @override
   Future<Result<void>> saveAccountDetails(
-          String accountId, List<AccountDetail> details,) =>
+    String accountId,
+    List<AccountDetail> details,
+  ) =>
       throw UnimplementedError();
   @override
   Future<List<AccountDetail>> getAccountDetails(String accountId) =>
@@ -152,8 +158,7 @@ void main() {
   });
 
   // T-88.2. Outside 23 hours — fetch triggered, timestamp updated
-  test('T-88.2 outside 23 hours: fetch triggered, timestamp updated',
-      () async {
+  test('T-88.2 outside 23 hours: fetch triggered, timestamp updated', () async {
     // Last fetch was 24 hours ago.
     final settings = _FakeAppSettingsRepository(lastFetch: nowEpoch - 86400);
     final useCase = _FakeRefreshUseCase(fakeResult: const Ok(null));

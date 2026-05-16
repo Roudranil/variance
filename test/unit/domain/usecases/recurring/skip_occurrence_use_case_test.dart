@@ -60,7 +60,8 @@ void main() {
     // -------------------------------------------------------------------------
     // 1. Valid skip
     // -------------------------------------------------------------------------
-    test('valid skip returns Ok and calls markSkipped with correct id', () async {
+    test('valid skip returns Ok and calls markSkipped with correct id',
+        () async {
       final repo = _FakeOccurrenceRepository();
       final useCase = SkipOccurrenceUseCase(repo);
 

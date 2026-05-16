@@ -214,7 +214,8 @@ class _ReconcileScreenState extends ConsumerState<ReconcileScreen> {
           );
       }
     } on Exception catch (e) {
-      dev.log('ReconcileScreen: unexpected error — $e', name: 'ReconcileScreen');
+      dev.log('ReconcileScreen: unexpected error — $e',
+          name: 'ReconcileScreen');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),

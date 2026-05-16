@@ -394,6 +394,106 @@ final class AppSettingsDaoProvider extends $FunctionalProvider<
 
 String _$appSettingsDaoHash() => r'73d5063a45bad708bcf496b636715c8d6d4d3f8c';
 
+/// Provides the [InstallmentPlanDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+@ProviderFor(installmentPlanDao)
+final installmentPlanDaoProvider = InstallmentPlanDaoProvider._();
+
+/// Provides the [InstallmentPlanDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+final class InstallmentPlanDaoProvider extends $FunctionalProvider<
+        AsyncValue<InstallmentPlanDao>,
+        InstallmentPlanDao,
+        FutureOr<InstallmentPlanDao>>
+    with
+        $FutureModifier<InstallmentPlanDao>,
+        $FutureProvider<InstallmentPlanDao> {
+  /// Provides the [InstallmentPlanDao] for the open [AppDatabase].
+  ///
+  /// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+  InstallmentPlanDaoProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'installmentPlanDaoProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$installmentPlanDaoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<InstallmentPlanDao> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<InstallmentPlanDao> create(Ref ref) {
+    return installmentPlanDao(ref);
+  }
+}
+
+String _$installmentPlanDaoHash() =>
+    r'220c880cccfdc4d08646679ee8543c0bb8c1fa36';
+
+/// Provides the [InstallmentOccurrenceDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+@ProviderFor(installmentOccurrenceDao)
+final installmentOccurrenceDaoProvider = InstallmentOccurrenceDaoProvider._();
+
+/// Provides the [InstallmentOccurrenceDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+final class InstallmentOccurrenceDaoProvider extends $FunctionalProvider<
+        AsyncValue<InstallmentOccurrenceDao>,
+        InstallmentOccurrenceDao,
+        FutureOr<InstallmentOccurrenceDao>>
+    with
+        $FutureModifier<InstallmentOccurrenceDao>,
+        $FutureProvider<InstallmentOccurrenceDao> {
+  /// Provides the [InstallmentOccurrenceDao] for the open [AppDatabase].
+  ///
+  /// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+  InstallmentOccurrenceDaoProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'installmentOccurrenceDaoProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$installmentOccurrenceDaoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<InstallmentOccurrenceDao> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<InstallmentOccurrenceDao> create(Ref ref) {
+    return installmentOccurrenceDao(ref);
+  }
+}
+
+String _$installmentOccurrenceDaoHash() =>
+    r'f6cacdc6b82723fc2b20dc1012905d3f983bc15e';
+
 /// Provides the [ScheduledOccurrenceDao] for the open [AppDatabase].
 ///
 /// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.

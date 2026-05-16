@@ -113,7 +113,8 @@ class _FakeCategoryList extends CategoryList {
 String? _lastNavigatedTo;
 
 Widget _buildApp(
-  AsyncValue<List<Category>> categoriesState,) {
+  AsyncValue<List<Category>> categoriesState,
+) {
   _lastNavigatedTo = null;
 
   final router = GoRouter(

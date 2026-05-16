@@ -145,8 +145,7 @@ class PhotoService {
       await File(destPath).writeAsBytes(compressed);
 
       // Relative path for storage in DB (path relative to appDir)
-      final relativePath =
-          p.relative(destPath, from: appDir.path);
+      final relativePath = p.relative(destPath, from: appDir.path);
 
       return PhotoSaveResult(
         relativePath: relativePath,

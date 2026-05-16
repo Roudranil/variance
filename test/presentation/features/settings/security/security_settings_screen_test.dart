@@ -205,8 +205,10 @@ void main() {
     testWidgets(
       '7. selecting "30 seconds" writes lockTimeoutSeconds=30 patch',
       (tester) async {
-        final n = _FakeAppSettingsNotifier(const AppSettings(lockTimeoutSeconds: 0));
-        await tester.pumpWidget(_buildSecurityWidget(lockTimeout: 0, notifier: n));
+        final n =
+            _FakeAppSettingsNotifier(const AppSettings(lockTimeoutSeconds: 0));
+        await tester
+            .pumpWidget(_buildSecurityWidget(lockTimeout: 0, notifier: n));
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Immediately'));
@@ -223,8 +225,10 @@ void main() {
     testWidgets(
       '8. selecting "1 minute" writes lockTimeoutSeconds=60 patch',
       (tester) async {
-        final n = _FakeAppSettingsNotifier(const AppSettings(lockTimeoutSeconds: 0));
-        await tester.pumpWidget(_buildSecurityWidget(lockTimeout: 0, notifier: n));
+        final n =
+            _FakeAppSettingsNotifier(const AppSettings(lockTimeoutSeconds: 0));
+        await tester
+            .pumpWidget(_buildSecurityWidget(lockTimeout: 0, notifier: n));
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Immediately'));
@@ -240,8 +244,10 @@ void main() {
     testWidgets(
       '9. selecting "Immediately" writes lockTimeoutSeconds=0 patch',
       (tester) async {
-        final n = _FakeAppSettingsNotifier(const AppSettings(lockTimeoutSeconds: 30));
-        await tester.pumpWidget(_buildSecurityWidget(lockTimeout: 30, notifier: n));
+        final n =
+            _FakeAppSettingsNotifier(const AppSettings(lockTimeoutSeconds: 30));
+        await tester
+            .pumpWidget(_buildSecurityWidget(lockTimeout: 30, notifier: n));
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('30 seconds'));
@@ -297,7 +303,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Failed to load security settings'), findsOneWidget);
+      expect(find.textContaining('Failed to load security settings'),
+          findsOneWidget);
     });
   });
 

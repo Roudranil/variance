@@ -156,8 +156,10 @@ void main() {
         await tester.tap(find.text('Period ( . )'));
         await tester.pump();
 
-        expect(notifier.savedPatches.last.numberDecimalSeparator,
-            equals(DecimalSeparator.period));
+        expect(
+          notifier.savedPatches.last.numberDecimalSeparator,
+          equals(DecimalSeparator.period),
+        );
       },
     );
 
@@ -182,8 +184,10 @@ void main() {
         await tester.tap(find.text('Indian').first);
         await tester.pump();
 
-        expect(notifier.savedPatches.last.numberThousandsGrouping,
-            equals(ThousandsGrouping.indian));
+        expect(
+          notifier.savedPatches.last.numberThousandsGrouping,
+          equals(ThousandsGrouping.indian),
+        );
       },
     );
 
@@ -208,8 +212,10 @@ void main() {
         await tester.tap(find.text('Suffix').first);
         await tester.pump();
 
-        expect(notifier.savedPatches.last.currencySymbolPlacement,
-            equals(CurrencySymbolPlacement.suffix));
+        expect(
+          notifier.savedPatches.last.currencySymbolPlacement,
+          equals(CurrencySymbolPlacement.suffix),
+        );
       },
     );
 
@@ -360,8 +366,8 @@ void main() {
             overrides: [
               appSettingsProvider.overrideWith(() => notifier),
             ],
-            child: MaterialApp(
-              home: const LocaleFormatSettingsScreen(),
+            child: const MaterialApp(
+              home: LocaleFormatSettingsScreen(),
             ),
           ),
         );

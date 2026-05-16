@@ -112,23 +112,37 @@ void main() {
 
   group('pendingDueOn', () {
     test('1. returns occurrences with scheduled_date <= asOfDays', () async {
-      await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayFirstEpochDay,);
-      await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMaySecondEpochDay,);
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayFirstEpochDay,
+      );
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMaySecondEpochDay,
+      );
 
       final result = await dao.pendingDueOn(_kMaySecondEpochDay);
 
       expect(result, hasLength(2));
-      expect(result.map((r) => r.scheduledDate),
-          containsAll([_kMayFirstEpochDay, _kMaySecondEpochDay]),);
+      expect(
+        result.map((r) => r.scheduledDate),
+        containsAll([_kMayFirstEpochDay, _kMaySecondEpochDay]),
+      );
     });
 
     test('2. excludes occurrences with scheduled_date > asOfDays', () async {
-      await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayFirstEpochDay,);
-      await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayThirdEpochDay,);
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayFirstEpochDay,
+      );
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayThirdEpochDay,
+      );
 
       final result = await dao.pendingDueOn(_kMaySecondEpochDay);
 
@@ -137,16 +151,23 @@ void main() {
     });
 
     test('3. excludes non-pending occurrences', () async {
-      await _insertOccurrence(dao,
-          templateId: templateId,
-          scheduledDate: _kMayFirstEpochDay,
-          status: 'posted',);
-      await _insertOccurrence(dao,
-          templateId: templateId,
-          scheduledDate: _kMaySecondEpochDay,
-          status: 'skipped',);
-      await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayThirdEpochDay,);
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayFirstEpochDay,
+        status: 'posted',
+      );
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMaySecondEpochDay,
+        status: 'skipped',
+      );
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayThirdEpochDay,
+      );
 
       final result = await dao.pendingDueOn(_kMayThirdEpochDay);
 
@@ -179,8 +200,11 @@ void main() {
     });
 
     test('5. transitions to skipped', () async {
-      final occId = await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayFirstEpochDay,);
+      final occId = await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayFirstEpochDay,
+      );
 
       await dao.updateStatus(occId, 'skipped');
 
@@ -190,8 +214,11 @@ void main() {
     });
 
     test('6. transitions to cancelled', () async {
-      final occId = await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayFirstEpochDay,);
+      final occId = await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayFirstEpochDay,
+      );
 
       await dao.updateStatus(occId, 'cancelled');
 
@@ -207,16 +234,23 @@ void main() {
 
   group('existingScheduledDates', () {
     test('7. returns non-cancelled dates for templateId', () async {
-      await _insertOccurrence(dao,
-          templateId: templateId, scheduledDate: _kMayFirstEpochDay,);
-      await _insertOccurrence(dao,
-          templateId: templateId,
-          scheduledDate: _kMaySecondEpochDay,
-          status: 'posted',);
-      await _insertOccurrence(dao,
-          templateId: templateId,
-          scheduledDate: _kMayThirdEpochDay,
-          status: 'cancelled',);
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayFirstEpochDay,
+      );
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMaySecondEpochDay,
+        status: 'posted',
+      );
+      await _insertOccurrence(
+        dao,
+        templateId: templateId,
+        scheduledDate: _kMayThirdEpochDay,
+        status: 'cancelled',
+      );
 
       final dates = await dao.existingScheduledDates(templateId);
 

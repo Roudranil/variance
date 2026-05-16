@@ -82,7 +82,8 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       throw UnimplementedError();
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) => throw UnimplementedError();
+  Future<Result<void>> pause(String id, {required int pauseUntil}) =>
+      throw UnimplementedError();
 
   @override
   Future<Result<void>> resume(String id) => throw UnimplementedError();
@@ -105,8 +106,11 @@ class _FakeTransactionRepository implements ITransactionRepository {
       throw UnimplementedError();
 
   @override
-  Stream<List<Transaction>> watchByMonth(int year, int month,
-          {TransactionFilters? filters,}) =>
+  Stream<List<Transaction>> watchByMonth(
+    int year,
+    int month, {
+    TransactionFilters? filters,
+  }) =>
       throw UnimplementedError();
 
   @override
@@ -140,8 +144,7 @@ class _FakeTransactionRepository implements ITransactionRepository {
   Future<Result<void>> void$(String id) => throw UnimplementedError();
 
   @override
-  Future<Result<void>> bulkVoid(List<String> ids) =>
-      throw UnimplementedError();
+  Future<Result<void>> bulkVoid(List<String> ids) => throw UnimplementedError();
 
   @override
   Future<Result<List<Transaction>>> search(
@@ -259,8 +262,7 @@ void main() {
     test(
       '3. PostDueOccurrencesUseCase failure → lastAutoPostedCount = 0',
       () async {
-        final postUseCase =
-            _FakePostDueOccurrencesUseCase(shouldFail: true);
+        final postUseCase = _FakePostDueOccurrencesUseCase(shouldFail: true);
         final lookaheadUseCase = _FakeGenerateLookaheadUseCase();
 
         await AppInitializer.run(

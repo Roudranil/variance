@@ -121,8 +121,7 @@ class _TransactionDetailView extends StatelessWidget {
           ),
 
           // Title
-          if (tx.title != null)
-            _DetailRow(label: 'Title', value: tx.title!),
+          if (tx.title != null) _DetailRow(label: 'Title', value: tx.title!),
 
           // Description
           if (tx.description != null)
@@ -132,16 +131,14 @@ class _TransactionDetailView extends StatelessWidget {
           _AccountInfoSection(transaction: tx),
 
           // Category (not for transfers)
-          if (tx.type != TransactionType.transfer &&
-              tx.categoryId != null)
+          if (tx.type != TransactionType.transfer && tx.categoryId != null)
             _DetailRow(
               label: 'Category',
               value: tx.categoryId ?? '-',
             ),
 
           // Fee breakdown (compound transfer with fee)
-          if (tx.compoundGroupId != null)
-            _FeeBreakdownSection(transaction: tx),
+          if (tx.compoundGroupId != null) _FeeBreakdownSection(transaction: tx),
 
           const Divider(),
 
@@ -246,10 +243,8 @@ class _AmountRow extends ConsumerWidget {
 
     // Resolve the display label from the CURR-02 disambiguation map.
     // Falls back to bare ISO code when the provider hasn't emitted yet.
-    final symbolLabels =
-        ref.watch(currencySymbolLabelsProvider).value ?? {};
-    final currencyLabel =
-        symbolLabels[tx.currencyCode] ?? tx.currencyCode;
+    final symbolLabels = ref.watch(currencySymbolLabelsProvider).value ?? {};
+    final currencyLabel = symbolLabels[tx.currencyCode] ?? tx.currencyCode;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -52,7 +52,8 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       Ok(template);
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) async => const Ok(null);
+  Future<Result<void>> pause(String id, {required int pauseUntil}) async =>
+      const Ok(null);
 
   @override
   Future<Result<void>> resume(String id) async => const Ok(null);
@@ -69,7 +70,7 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
 // Test fixtures
 // ---------------------------------------------------------------------------
 
-final _baseTemplate = RecurringTemplate(
+const _baseTemplate = RecurringTemplate(
   id: 'tpl-001',
   transactionType: 'expense',
   amountMinor: 10000,
@@ -129,7 +130,8 @@ void main() {
       final result = await useCase(updated);
 
       expect(result, isA<Err<RecurringTemplate>>());
-      expect((result as Err<RecurringTemplate>).failure, isA<BusinessRuleFailure>());
+      expect((result as Err<RecurringTemplate>).failure,
+          isA<BusinessRuleFailure>());
     });
 
     // -------------------------------------------------------------------------
@@ -139,7 +141,8 @@ void main() {
       final repo = _FakeTemplateRepository(stored: _baseTemplate);
       final useCase = UpdateRecurringTemplateUseCase(repo);
 
-      final updated = _baseTemplate.copyWith(recurrenceUnit: RecurrenceUnit.week);
+      final updated =
+          _baseTemplate.copyWith(recurrenceUnit: RecurrenceUnit.week);
       final result = await useCase(updated);
 
       expect(result, isA<Err<RecurringTemplate>>());
@@ -152,7 +155,8 @@ void main() {
     // -------------------------------------------------------------------------
     // 5. Attempt to change recurrenceConstraints
     // -------------------------------------------------------------------------
-    test('changing recurrenceConstraints returns BusinessRuleFailure', () async {
+    test('changing recurrenceConstraints returns BusinessRuleFailure',
+        () async {
       final repo = _FakeTemplateRepository(stored: _baseTemplate);
       final useCase = UpdateRecurringTemplateUseCase(repo);
 

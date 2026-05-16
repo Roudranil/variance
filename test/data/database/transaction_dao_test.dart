@@ -52,7 +52,8 @@ void main() {
   tearDown(() => db.close());
 
   group('TransactionDao — T-47', () {
-    test('T-47.1. insertTransactionWithEntries inserts header + entries', () async {
+    test('T-47.1. insertTransactionWithEntries inserts header + entries',
+        () async {
       final txId = _uuid.v4();
       await dao.insertTransactionWithEntries(
         _makeTxn(id: txId, date: _kMayEpoch),
@@ -223,34 +224,34 @@ Future<void> _insertSeedData(AppDatabase db) async {
   // Accounts
   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   await db.into(db.accounts).insert(
-    AccountsCompanion(
-      id: const Value(_kAccountId),
-      name: const Value('Test Account'),
-      accountCategory: const Value('bank_account'),
-      currencyCode: const Value(_kCurrencyCode),
-      initialBalanceMinor: const Value(0),
-      includeInNetWorth: const Value(true),
-      isProtected: const Value(false),
-      isSystem: const Value(false),
-      createdAt: Value(now),
-      updatedAt: Value(now),
-    ),
-  );
+        AccountsCompanion(
+          id: const Value(_kAccountId),
+          name: const Value('Test Account'),
+          accountCategory: const Value('bank_account'),
+          currencyCode: const Value(_kCurrencyCode),
+          initialBalanceMinor: const Value(0),
+          includeInNetWorth: const Value(true),
+          isProtected: const Value(false),
+          isSystem: const Value(false),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
 
   await db.into(db.accounts).insert(
-    AccountsCompanion(
-      id: const Value(_kDestAccountId),
-      name: const Value('Dest Account'),
-      accountCategory: const Value('bank_account'),
-      currencyCode: const Value(_kCurrencyCode),
-      initialBalanceMinor: const Value(0),
-      includeInNetWorth: const Value(true),
-      isProtected: const Value(false),
-      isSystem: const Value(false),
-      createdAt: Value(now),
-      updatedAt: Value(now),
-    ),
-  );
+        AccountsCompanion(
+          id: const Value(_kDestAccountId),
+          name: const Value('Dest Account'),
+          accountCategory: const Value('bank_account'),
+          currencyCode: const Value(_kCurrencyCode),
+          initialBalanceMinor: const Value(0),
+          includeInNetWorth: const Value(true),
+          isProtected: const Value(false),
+          isSystem: const Value(false),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
 
   // Category
   await db.customStatement(

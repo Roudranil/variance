@@ -436,6 +436,119 @@ final class AppSettingsRepositoryProvider extends $FunctionalProvider<
 String _$appSettingsRepositoryHash() =>
     r'98bbfb8d69b31d2b885a3dcdc27e6cb978b94332';
 
+/// Provides the [IInstallmentPlanRepository] implementation for the lifetime
+/// of the app.
+///
+/// Depends on both [installmentPlanDaoProvider] and
+/// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
+/// cancellation of pending occurrences.
+
+@ProviderFor(installmentPlanRepository)
+final installmentPlanRepositoryProvider = InstallmentPlanRepositoryProvider._();
+
+/// Provides the [IInstallmentPlanRepository] implementation for the lifetime
+/// of the app.
+///
+/// Depends on both [installmentPlanDaoProvider] and
+/// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
+/// cancellation of pending occurrences.
+
+final class InstallmentPlanRepositoryProvider extends $FunctionalProvider<
+        AsyncValue<IInstallmentPlanRepository>,
+        IInstallmentPlanRepository,
+        FutureOr<IInstallmentPlanRepository>>
+    with
+        $FutureModifier<IInstallmentPlanRepository>,
+        $FutureProvider<IInstallmentPlanRepository> {
+  /// Provides the [IInstallmentPlanRepository] implementation for the lifetime
+  /// of the app.
+  ///
+  /// Depends on both [installmentPlanDaoProvider] and
+  /// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
+  /// cancellation of pending occurrences.
+  InstallmentPlanRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'installmentPlanRepositoryProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$installmentPlanRepositoryHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<IInstallmentPlanRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<IInstallmentPlanRepository> create(Ref ref) {
+    return installmentPlanRepository(ref);
+  }
+}
+
+String _$installmentPlanRepositoryHash() =>
+    r'2c94a495136552bdda52d01eef485fbf9601cb0b';
+
+/// Provides the [IInstallmentOccurrenceRepository] implementation for the
+/// lifetime of the app.
+///
+/// Depends on [installmentOccurrenceDaoProvider].
+
+@ProviderFor(installmentOccurrenceRepository)
+final installmentOccurrenceRepositoryProvider =
+    InstallmentOccurrenceRepositoryProvider._();
+
+/// Provides the [IInstallmentOccurrenceRepository] implementation for the
+/// lifetime of the app.
+///
+/// Depends on [installmentOccurrenceDaoProvider].
+
+final class InstallmentOccurrenceRepositoryProvider extends $FunctionalProvider<
+        AsyncValue<IInstallmentOccurrenceRepository>,
+        IInstallmentOccurrenceRepository,
+        FutureOr<IInstallmentOccurrenceRepository>>
+    with
+        $FutureModifier<IInstallmentOccurrenceRepository>,
+        $FutureProvider<IInstallmentOccurrenceRepository> {
+  /// Provides the [IInstallmentOccurrenceRepository] implementation for the
+  /// lifetime of the app.
+  ///
+  /// Depends on [installmentOccurrenceDaoProvider].
+  InstallmentOccurrenceRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'installmentOccurrenceRepositoryProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$installmentOccurrenceRepositoryHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<IInstallmentOccurrenceRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<IInstallmentOccurrenceRepository> create(Ref ref) {
+    return installmentOccurrenceRepository(ref);
+  }
+}
+
+String _$installmentOccurrenceRepositoryHash() =>
+    r'd0f1fb408c608de611667e70ad96fd156238f7b8';
+
 /// Loads all active [Currency] entities from the local database once on app
 /// startup and keeps the result alive for the entire session.
 ///

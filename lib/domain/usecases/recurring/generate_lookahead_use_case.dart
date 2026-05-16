@@ -88,8 +88,7 @@ class GenerateLookaheadUseCase {
     // Only active non-installment templates need lookahead.
     final activeTemplates = allTemplates
         .where(
-          (t) =>
-              t.status == RecurringTemplateStatus.active && !t.isInstallment,
+          (t) => t.status == RecurringTemplateStatus.active && !t.isInstallment,
         )
         .toList();
 
@@ -161,8 +160,7 @@ class GenerateLookaheadUseCase {
         : null;
 
     // The effective window start is max(template.startDate, fromDate).
-    final windowStart =
-        startDt.isAfter(fromDate) ? startDt : fromDate;
+    final windowStart = startDt.isAfter(fromDate) ? startDt : fromDate;
 
     // If the template hasn't started yet or is already ended, skip.
     if (endDt != null && !endDt.isAfter(windowStart)) return [];
@@ -239,7 +237,8 @@ class GenerateLookaheadUseCase {
   }) {
     if (!targetDt.isAfter(startDt)) return 0;
 
-    final elapsedMs = targetDt.millisecondsSinceEpoch - startDt.millisecondsSinceEpoch;
+    final elapsedMs =
+        targetDt.millisecondsSinceEpoch - startDt.millisecondsSinceEpoch;
 
     // Average ms per period for O(1) estimation.
     final avgMsPerPeriod = switch (unit) {
@@ -293,14 +292,12 @@ class GenerateLookaheadUseCase {
           1, // day=1 always valid; we set the day explicitly below
         );
         final lastDay = _lastDayOfMonth(rawTarget.year, rawTarget.month);
-        final clampedDay =
-            startDt.day <= lastDay ? startDt.day : lastDay;
+        final clampedDay = startDt.day <= lastDay ? startDt.day : lastDay;
         return DateTime.utc(rawTarget.year, rawTarget.month, clampedDay);
       case RecurrenceUnit.year:
         final targetYear = startDt.year + totalUnits;
         final lastDay = _lastDayOfMonth(targetYear, startDt.month);
-        final clampedDay =
-            startDt.day <= lastDay ? startDt.day : lastDay;
+        final clampedDay = startDt.day <= lastDay ? startDt.day : lastDay;
         return DateTime.utc(targetYear, startDt.month, clampedDay);
     }
   }
@@ -350,10 +347,8 @@ class GenerateLookaheadUseCase {
           DateTime.utc(result.year, result.month, 1),
         RecurrenceConstraint.endOfMonth =>
           DateTime.utc(result.year, result.month + 1, 0),
-        RecurrenceConstraint.startOfYear =>
-          DateTime.utc(result.year, 1, 1),
-        RecurrenceConstraint.endOfYear =>
-          DateTime.utc(result.year, 12, 31),
+        RecurrenceConstraint.startOfYear => DateTime.utc(result.year, 1, 1),
+        RecurrenceConstraint.endOfYear => DateTime.utc(result.year, 12, 31),
       };
     }
     return result;

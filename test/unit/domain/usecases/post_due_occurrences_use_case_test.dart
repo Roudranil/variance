@@ -27,10 +27,9 @@ import 'package:variance/domain/usecases/recurring/post_due_occurrences_use_case
 // ---------------------------------------------------------------------------
 
 /// Epoch day for a date in the past (always "due").
-final _kPastEpochDay = (DateTime.now()
-        .subtract(const Duration(days: 1))
-        .millisecondsSinceEpoch ~/
-    86400000);
+final _kPastEpochDay =
+    (DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch ~/
+        86400000);
 
 /// Epoch seconds for now.
 final _kNowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -122,7 +121,8 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       throw UnimplementedError();
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) => throw UnimplementedError();
+  Future<Result<void>> pause(String id, {required int pauseUntil}) =>
+      throw UnimplementedError();
 
   @override
   Future<Result<void>> softDelete(String id) => throw UnimplementedError();
@@ -190,8 +190,11 @@ class _FakeTransactionRepository implements ITransactionRepository {
       throw UnimplementedError();
 
   @override
-  Stream<List<Transaction>> watchByMonth(int year, int month,
-          {TransactionFilters? filters,}) =>
+  Stream<List<Transaction>> watchByMonth(
+    int year,
+    int month, {
+    TransactionFilters? filters,
+  }) =>
       throw UnimplementedError();
 
   @override
@@ -225,8 +228,7 @@ class _FakeTransactionRepository implements ITransactionRepository {
   Future<Result<void>> void$(String id) => throw UnimplementedError();
 
   @override
-  Future<Result<void>> bulkVoid(List<String> ids) =>
-      throw UnimplementedError();
+  Future<Result<void>> bulkVoid(List<String> ids) => throw UnimplementedError();
 
   @override
   Future<Result<List<Transaction>>> search(

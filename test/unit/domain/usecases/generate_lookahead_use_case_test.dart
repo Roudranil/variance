@@ -80,7 +80,8 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       throw UnimplementedError();
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) => throw UnimplementedError();
+  Future<Result<void>> pause(String id, {required int pauseUntil}) =>
+      throw UnimplementedError();
 
   @override
   Future<Result<void>> resume(String id) => throw UnimplementedError();
@@ -199,7 +200,8 @@ void main() {
       }
     });
 
-    test('3. end_of_month constraint → occurrences pinned to last day', () async {
+    test('3. end_of_month constraint → occurrences pinned to last day',
+        () async {
       final today = DateTime.utc(2025, 4, 15);
       final startDay = _epochDay(today);
 

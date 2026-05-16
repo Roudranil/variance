@@ -146,7 +146,8 @@ class _DescriptionMaxLengthRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Clamp to valid options in case of an unexpected stored value.
-    final safeValue = const [500, 1000, 2000].contains(maxLength) ? maxLength : 1000;
+    final safeValue =
+        const [500, 1000, 2000].contains(maxLength) ? maxLength : 1000;
     return ListTile(
       title: const Text('Description max length'),
       trailing: DropdownButton<int>(

@@ -17,13 +17,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
-import 'package:variance/domain/entities/category.dart';
-import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/domain/entities/account_detail.dart';
+import 'package:variance/domain/entities/category.dart';
 import 'package:variance/domain/entities/money.dart';
+import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/domain/repositories/i_account_repository.dart';
 import 'package:variance/domain/repositories/i_category_repository.dart';
 import 'package:variance/domain/repositories/i_recurring_template_repository.dart';
@@ -134,7 +133,8 @@ class _MinimalFakeTemplateRepo implements IRecurringTemplateRepository {
   Future<Result<RecurringTemplate>> update(RecurringTemplate t) async => Ok(t);
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) async => const Ok(null);
+  Future<Result<void>> pause(String id, {required int pauseUntil}) async =>
+      const Ok(null);
 
   @override
   Future<Result<void>> resume(String id) async => const Ok(null);
@@ -151,7 +151,7 @@ class _MinimalFakeTemplateRepo implements IRecurringTemplateRepository {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-final _testAccount = Account(
+const _testAccount = Account(
   id: 'acc-001',
   name: 'Bank',
   accountCategory: AccountCategory.bankAccount,
@@ -173,7 +173,7 @@ Widget _buildTestWidget({_FakeCreateUseCase? fakeUseCase}) {
       activeAccountsProvider.overrideWith(
         (_) => Stream.value([_testAccount]),
       ),
-      categoryListProvider.overrideWith(() => _FakeCategoryListNotifier()),
+      categoryListProvider.overrideWith(_FakeCategoryListNotifier.new),
       createRecurringTemplateUseCaseProvider.overrideWith(
         (_) async => useCase,
       ),
@@ -305,7 +305,8 @@ void main() {
     // -------------------------------------------------------------------------
     // 8. Transfer fee panel is hidden for Expense type
     // -------------------------------------------------------------------------
-    testWidgets('Transfer fee panel is hidden for Expense type', (tester) async {
+    testWidgets('Transfer fee panel is hidden for Expense type',
+        (tester) async {
       await tester.pumpWidget(_buildTestWidget());
       await tester.pumpAndSettle();
 

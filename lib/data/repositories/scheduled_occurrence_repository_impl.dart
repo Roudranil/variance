@@ -39,8 +39,7 @@ class ScheduledOccurrenceRepositoryImpl
   ///
   /// Parameters:
   /// - [dt]: The date to convert. Time-of-day component is ignored.
-  static int _toEpochDay(DateTime dt) =>
-      dt.millisecondsSinceEpoch ~/ 86400000;
+  static int _toEpochDay(DateTime dt) => dt.millisecondsSinceEpoch ~/ 86400000;
 
   @override
   Future<List<ScheduledOccurrence>> getPendingDue(DateTime asOf) {

@@ -143,10 +143,8 @@ class _HomeCurrencyName extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currenciesAsync = ref.watch(currenciesProvider);
-    final name = currenciesAsync.value
-        ?.where((c) => c.code == code)
-        .firstOrNull
-        ?.name;
+    final name =
+        currenciesAsync.value?.where((c) => c.code == code).firstOrNull?.name;
     return Text(name ?? code);
   }
 }

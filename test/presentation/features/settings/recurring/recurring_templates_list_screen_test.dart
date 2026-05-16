@@ -46,7 +46,7 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       // Use async* to ensure error emits after subscription is established.
       return () async* {
         await Future<void>.delayed(Duration.zero);
-        throw streamError!;
+        yield* Stream<List<RecurringTemplate>>.error(streamError!);
       }();
     }
     return Stream.value(_templates);
@@ -64,7 +64,8 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       Ok(template);
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) async => const Ok(null);
+  Future<Result<void>> pause(String id, {required int pauseUntil}) async =>
+      const Ok(null);
 
   @override
   Future<Result<void>> resume(String id) async => const Ok(null);
@@ -158,11 +159,13 @@ void main() {
     testWidgets('shows shimmer during loading', (tester) async {
       // Override with an async repository that never completes immediately.
       final neverRepo = _FakeTemplateRepository(
-        templates: [_makeTemplate(
-          id: 'tpl-1',
-          title: 'Test',
-          status: RecurringTemplateStatus.active,
-        )],
+        templates: [
+          _makeTemplate(
+            id: 'tpl-1',
+            title: 'Test',
+            status: RecurringTemplateStatus.active,
+          ),
+        ],
       );
 
       await tester.pumpWidget(
@@ -262,7 +265,7 @@ void main() {
         ProviderScope(
           overrides: [
             recurringTemplateListProvider.overrideWith(
-              () => _ErrorNotifier(),
+              _ErrorNotifier.new,
             ),
           ],
           child: const MaterialApp(home: RecurringTemplatesListScreen()),
@@ -282,7 +285,7 @@ void main() {
         ProviderScope(
           overrides: [
             recurringTemplateListProvider.overrideWith(
-              () => _ErrorNotifier(),
+              _ErrorNotifier.new,
             ),
           ],
           child: const MaterialApp(home: RecurringTemplatesListScreen()),
@@ -301,13 +304,15 @@ void main() {
     testWidgets('long-tap on Active template shows correct menu items',
         (tester) async {
       await tester.pumpWidget(
-        _buildTestWidget(templates: [
-          _makeTemplate(
-            id: 'a1',
-            title: 'Active Template',
-            status: RecurringTemplateStatus.active,
-          ),
-        ]),
+        _buildTestWidget(
+          templates: [
+            _makeTemplate(
+              id: 'a1',
+              title: 'Active Template',
+              status: RecurringTemplateStatus.active,
+            ),
+          ],
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -328,13 +333,15 @@ void main() {
     testWidgets('long-tap on Paused template shows correct menu items',
         (tester) async {
       await tester.pumpWidget(
-        _buildTestWidget(templates: [
-          _makeTemplate(
-            id: 'p1',
-            title: 'Paused Template',
-            status: RecurringTemplateStatus.paused,
-          ),
-        ]),
+        _buildTestWidget(
+          templates: [
+            _makeTemplate(
+              id: 'p1',
+              title: 'Paused Template',
+              status: RecurringTemplateStatus.paused,
+            ),
+          ],
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -355,13 +362,15 @@ void main() {
     testWidgets('long-tap on Archived template shows only View children',
         (tester) async {
       await tester.pumpWidget(
-        _buildTestWidget(templates: [
-          _makeTemplate(
-            id: 'ar1',
-            title: 'Archived Template',
-            status: RecurringTemplateStatus.archived,
-          ),
-        ]),
+        _buildTestWidget(
+          templates: [
+            _makeTemplate(
+              id: 'ar1',
+              title: 'Archived Template',
+              status: RecurringTemplateStatus.archived,
+            ),
+          ],
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -395,14 +404,16 @@ void main() {
     testWidgets('installment templates not shown in Recurring tab',
         (tester) async {
       await tester.pumpWidget(
-        _buildTestWidget(templates: [
-          _makeTemplate(
-            id: 'i1',
-            title: 'Installment Template',
-            status: RecurringTemplateStatus.active,
-            isInstallment: true,
-          ),
-        ]),
+        _buildTestWidget(
+          templates: [
+            _makeTemplate(
+              id: 'i1',
+              title: 'Installment Template',
+              status: RecurringTemplateStatus.active,
+              isInstallment: true,
+            ),
+          ],
+        ),
       );
       await tester.pumpAndSettle();
 

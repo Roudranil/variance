@@ -124,12 +124,11 @@ class FakeAccountRepository implements IAccountRepository {
   Future<List<AccountDetail>> getAccountDetails(String accountId) async => [];
 
   @override
-  Future<List<String>> getDistinctActiveCurrencies() async =>
-      _accounts.values
-          .where((a) => !a.isDeleted && !a.isSystem)
-          .map((a) => a.currencyCode)
-          .toSet()
-          .toList();
+  Future<List<String>> getDistinctActiveCurrencies() async => _accounts.values
+      .where((a) => !a.isDeleted && !a.isSystem)
+      .map((a) => a.currencyCode)
+      .toSet()
+      .toList();
 }
 
 /// Stub [LedgerRepository] that records calls to [insertEntries].
@@ -228,7 +227,8 @@ void main() {
     test('4. name taken by active account returns Err(ValidationFailure)',
         () async {
       fakeRepo.seed(makeAccount(name: 'Savings'));
-      final result = await createUseCase(makeAccount(id: 'acc-2', name: 'Savings'));
+      final result =
+          await createUseCase(makeAccount(id: 'acc-2', name: 'Savings'));
       expect(result, isA<Err<Account>>());
       expect((result as Err).failure, isA<ValidationFailure>());
     });
@@ -248,8 +248,7 @@ void main() {
       expect((failure as ReinstateOfferFailure).softDeletedId, equals('acc-1'));
     });
 
-    test(
-        '6. name taken by soft-deleted different-category allows create',
+    test('6. name taken by soft-deleted different-category allows create',
         () async {
       // Same name, different category — should be treated as a new account.
       final deleted = makeAccount(
@@ -277,8 +276,7 @@ void main() {
       expect(failure, isA<ValidationFailure>());
     });
 
-    test('7. positive initial balance → Ok; ledger entries inserted',
-        () async {
+    test('7. positive initial balance → Ok; ledger entries inserted', () async {
       final account = makeAccount(initialBalance: 50000);
       final result = await createUseCase(
         account,
@@ -289,8 +287,7 @@ void main() {
       expect(fakeLedger.insertCount, greaterThan(0));
     });
 
-    test('8. negative initial balance → Ok; ledger entries inserted',
-        () async {
+    test('8. negative initial balance → Ok; ledger entries inserted', () async {
       final account = makeAccount(initialBalance: -30000);
       final result = await createUseCase(
         account,
@@ -300,8 +297,7 @@ void main() {
       expect(fakeLedger.insertCount, greaterThan(0));
     });
 
-    test('9. non-zero balance without txId → Err(ValidationFailure)',
-        () async {
+    test('9. non-zero balance without txId → Err(ValidationFailure)', () async {
       final result = await createUseCase(makeAccount(initialBalance: 10000));
       expect(result, isA<Err<Account>>());
       expect((result as Err).failure, isA<ValidationFailure>());
@@ -357,7 +353,8 @@ void main() {
       fakeRepo.seed(makeAccount(id: 'acc-2', name: 'TakenName'));
 
       // Try to rename acc-1 to TakenName.
-      final result = await updateUseCase(makeAccount(id: 'acc-1', name: 'TakenName'));
+      final result =
+          await updateUseCase(makeAccount(id: 'acc-1', name: 'TakenName'));
       expect(result, isA<Err<Account>>());
       expect((result as Err).failure, isA<ValidationFailure>());
     });

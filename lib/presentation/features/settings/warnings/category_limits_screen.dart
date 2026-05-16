@@ -59,9 +59,8 @@ class CategoryLimitsScreen extends ConsumerWidget {
           // Exclude BAI/BAE: protected leaf categories (isProtected=true and
           // parentId!=null). Root protected categories (Balance Adjustment
           // parents) are also excluded as they are structural only.
-          final visible = categories
-              .where((c) => !c.isDeleted && !c.isProtected)
-              .toList();
+          final visible =
+              categories.where((c) => !c.isDeleted && !c.isProtected).toList();
 
           if (visible.isEmpty) {
             return const _EmptyState();
@@ -169,9 +168,7 @@ class _CategoryThresholdRowState extends ConsumerState<_CategoryThresholdRow> {
     return ListTile(
       leading: Icon(
         Icons.category_outlined,
-        color: isParent
-            ? colorScheme.onSurface
-            : colorScheme.onSurfaceVariant,
+        color: isParent ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
       ),
       title: Text(
         widget.category.name,
@@ -207,7 +204,8 @@ class _CategoryThresholdRowState extends ConsumerState<_CategoryThresholdRow> {
     }
 
     final minorUnits = (parsed * 100).round();
-    final updated = widget.category.copyWith(largeTxnThresholdMinor: minorUnits);
+    final updated =
+        widget.category.copyWith(largeTxnThresholdMinor: minorUnits);
 
     final repo = await ref.read(categoryRepositoryProvider.future);
     await repo.update(updated);
@@ -266,7 +264,8 @@ class _InlineEditRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               decoration: InputDecoration(
                 labelText: currencyCode,

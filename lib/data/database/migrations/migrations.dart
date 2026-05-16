@@ -19,6 +19,7 @@
 //   - fresh v1 install completes onCreate without error
 //   - v1 → v1 re-open (no-op upgrade) does not throw
 //   - on-disk version > compiled version throws SchemaMismatchException
+//   - v2 → v3 creates installment_occurrences indexes
 
 import 'dart:convert';
 import 'dart:developer' as dev;
@@ -179,6 +180,12 @@ MigrationStrategy buildMigrationStrategy(
       if (from < 2) {
         await _migrateToV2(database);
       }
+
+      // v2 → v3: add performance indexes on installment_occurrences (T-125).
+      // CREATE INDEX IF NOT EXISTS ensures idempotency.
+      if (from < 3) {
+        await _migrateToV3(database);
+      }
     },
 
     // ------------------------------------------------------------------
@@ -228,6 +235,43 @@ Future<void> _migrateToV2(GeneratedDatabase database) async {
   );
 
   dev.log('AppDatabase _migrateToV2: done', name: 'AppDatabase');
+}
+
+// ---------------------------------------------------------------------------
+// v3 migration
+// ---------------------------------------------------------------------------
+
+/// Creates performance indexes on `installment_occurrences` (T-125).
+///
+/// Adds:
+/// - `idx_inst_occ_template_seq` (UNIQUE) on `(template_id, sequence_number)`:
+///   used by [InstallmentOccurrenceDao.watchByPlan] for ordered occurrence list.
+/// - `idx_inst_occ_status_date` on `(status, scheduled_date)`:
+///   used by the scheduler sweep to find pending installments due by date.
+///
+/// Both use `IF NOT EXISTS` for idempotency — safe to run multiple times.
+///
+/// Parameters:
+/// - [database]: The Drift [GeneratedDatabase] whose executor runs the DDL.
+Future<void> _migrateToV3(GeneratedDatabase database) async {
+  dev.log(
+    'AppDatabase _migrateToV3: creating installment_occurrences indexes',
+    name: 'AppDatabase',
+  );
+
+  // UNIQUE index: ordered occurrence list per template.
+  await database.customStatement('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_inst_occ_template_seq
+    ON installment_occurrences (template_id, sequence_number)
+  ''');
+
+  // Non-unique index: scheduler sweep by status + date.
+  await database.customStatement('''
+    CREATE INDEX IF NOT EXISTS idx_inst_occ_status_date
+    ON installment_occurrences (status, scheduled_date)
+  ''');
+
+  dev.log('AppDatabase _migrateToV3: done', name: 'AppDatabase');
 }
 
 // ---------------------------------------------------------------------------

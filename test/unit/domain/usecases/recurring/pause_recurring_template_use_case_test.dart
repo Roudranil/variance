@@ -111,7 +111,7 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-final _baseTemplate = RecurringTemplate(
+const _baseTemplate = RecurringTemplate(
   id: 'tpl-001',
   transactionType: 'expense',
   amountMinor: 10000,
@@ -155,7 +155,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       final result = await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
       );
 
       expect(result, isA<Ok<void>>());
@@ -163,7 +163,7 @@ void main() {
 
       // pause_until should be ~ 1 month from now (within 2-day tolerance).
       final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final approxOneMonth = 30 * 86400;
+      const approxOneMonth = 30 * 86400;
       expect(
         repo.lastPausedUntil! - nowEpoch,
         greaterThan(approxOneMonth - 2 * 86400),
@@ -196,8 +196,7 @@ void main() {
         futureDate.month,
         futureDate.day,
       );
-      final expectedEpoch =
-          expectedMidnight.millisecondsSinceEpoch ~/ 1000;
+      final expectedEpoch = expectedMidnight.millisecondsSinceEpoch ~/ 1000;
       expect(repo.lastPausedUntil, expectedEpoch);
     });
 
@@ -210,7 +209,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       final result = await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 0),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 0),
       );
 
       expect(result, isA<Err<void>>());
@@ -245,8 +244,7 @@ void main() {
       //   - occ1: scheduledDate = today (should be skipped)
       //   - occ2: scheduledDate = today + 5 days (within 30-day pause)
       //   - occ3: scheduledDate = today + 60 days (outside 30-day pause)
-      final todayDays =
-          DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
+      final todayDays = DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
       final occurrences = [
         _makeOcc('occ-1', todayDays),
         _makeOcc('occ-2', todayDays + 5),
@@ -257,7 +255,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
       );
 
       // occ-1 and occ-2 should be skipped (within ~30 days); occ-3 should not.
@@ -271,18 +269,20 @@ void main() {
     // -------------------------------------------------------------------------
     test('already-posted occurrences are not skipped', () async {
       final repo = _FakeTemplateRepository(stored: _baseTemplate);
-      final todayDays =
-          DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
+      final todayDays = DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
       final occurrences = [
-        _makeOcc('occ-posted', todayDays,
-            status: ScheduledOccurrenceStatus.posted),
+        _makeOcc(
+          'occ-posted',
+          todayDays,
+          status: ScheduledOccurrenceStatus.posted,
+        ),
       ];
 
       final occRepo = _FakeOccurrenceRepository(occurrences: occurrences);
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
       );
 
       // Posted occurrence should NOT be skipped.
@@ -298,7 +298,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       final result = await useCase(
-        PauseInput.byUnits(templateId: 'tpl-999', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-999', durationN: 1),
       );
 
       expect(result, isA<Err<void>>());

@@ -63,10 +63,10 @@ class MoneyFormatter {
     required AppSettings settings,
     bool isNegative = false,
   }) {
-    final decimalSep =
-        _decimalSeparator(settings.numberDecimalSeparator);
+    final decimalSep = _decimalSeparator(settings.numberDecimalSeparator);
     final groupSep = _groupingSeparator(settings.numberDecimalSeparator);
-    final grouping = settings.numberThousandsGrouping ?? ThousandsGrouping.standard;
+    final grouping =
+        settings.numberThousandsGrouping ?? ThousandsGrouping.standard;
     final placement =
         settings.currencySymbolPlacement ?? CurrencySymbolPlacement.prefix;
     final spacing =
@@ -75,8 +75,7 @@ class MoneyFormatter {
     // Split amount into integer and fractional parts.
     final absMinor = amountMinor.abs();
     final intPart = absMinor ~/ _pow10(minorUnits);
-    final fracPart =
-        minorUnits > 0 ? absMinor % _pow10(minorUnits) : null;
+    final fracPart = minorUnits > 0 ? absMinor % _pow10(minorUnits) : null;
 
     // Format integer part with grouping.
     final intFormatted = _applyGrouping(intPart, grouping, groupSep);
@@ -91,10 +90,8 @@ class MoneyFormatter {
     final sign = isNegative ? '-' : '';
 
     return switch (placement) {
-      CurrencySymbolPlacement.prefix =>
-        '$sign$currencyLabel$space$numericStr',
-      CurrencySymbolPlacement.suffix =>
-        '$sign$numericStr$space$currencyLabel',
+      CurrencySymbolPlacement.prefix => '$sign$currencyLabel$space$numericStr',
+      CurrencySymbolPlacement.suffix => '$sign$numericStr$space$currencyLabel',
     };
   }
 
