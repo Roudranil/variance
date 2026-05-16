@@ -28,6 +28,8 @@ import 'package:variance/domain/usecases/category/delete_category_use_case.dart'
 import 'package:variance/domain/usecases/category/update_category_use_case.dart';
 import 'package:variance/domain/usecases/currency/get_exchange_rate_use_case.dart';
 import 'package:variance/domain/usecases/currency/refresh_exchange_rates_use_case.dart';
+import 'package:variance/domain/services/period_calculator.dart';
+import 'package:variance/domain/usecases/installment/create_installment_plan_use_case.dart';
 import 'package:variance/domain/usecases/recurring/create_recurring_template_use_case.dart';
 import 'package:variance/domain/usecases/recurring/pause_recurring_template_use_case.dart';
 import 'package:variance/domain/usecases/recurring/skip_occurrence_use_case.dart';
@@ -153,6 +155,23 @@ Future<UpdateCategoryUseCase> updateCategoryUseCase(Ref ref) async {
 Future<DeleteCategoryUseCase> deleteCategoryUseCase(Ref ref) async {
   final repo = await ref.watch(categoryRepositoryProvider.future);
   return DeleteCategoryUseCase(repo);
+}
+
+// ---------------------------------------------------------------------------
+// Installment use cases (T-130, T-131)
+// ---------------------------------------------------------------------------
+
+/// Provides a [CreateInstallmentPlanUseCase] bound to the installment plan
+/// repository and [PeriodCalculator].
+@riverpod
+Future<CreateInstallmentPlanUseCase> createInstallmentPlanUseCase(
+  Ref ref,
+) async {
+  final repo = await ref.watch(installmentPlanRepositoryProvider.future);
+  return CreateInstallmentPlanUseCase(
+    planRepository: repo,
+    periodCalculator: const PeriodCalculator(),
+  );
 }
 
 // ---------------------------------------------------------------------------
