@@ -69,7 +69,7 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
 // Test fixtures
 // ---------------------------------------------------------------------------
 
-final _baseTemplate = RecurringTemplate(
+const _baseTemplate = RecurringTemplate(
   id: 'tpl-001',
   transactionType: 'expense',
   amountMinor: 10000,

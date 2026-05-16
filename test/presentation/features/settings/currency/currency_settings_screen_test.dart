@@ -95,9 +95,9 @@ Widget _buildScreen({
 void main() {
   group('CurrencySettingsScreen', () {
     testWidgets('1. loaded state renders home currency code', (tester) async {
-      final state = CurrencySettingsState(
+      const state = CurrencySettingsState(
         homeCurrency: 'INR',
-        secondaryCurrencies: const [],
+        secondaryCurrencies: [],
       );
       await tester.pumpWidget(
         _buildScreen(state: state, allCurrencies: [_currency('INR', 'Indian Rupee')]),

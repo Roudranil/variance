@@ -46,7 +46,7 @@ class _FakeTemplateRepository implements IRecurringTemplateRepository {
       // Use async* to ensure error emits after subscription is established.
       return () async* {
         await Future<void>.delayed(Duration.zero);
-        throw streamError!;
+        yield* Stream<List<RecurringTemplate>>.error(streamError!);
       }();
     }
     return Stream.value(_templates);
@@ -162,7 +162,7 @@ void main() {
           id: 'tpl-1',
           title: 'Test',
           status: RecurringTemplateStatus.active,
-        )],
+        ),],
       );
 
       await tester.pumpWidget(
@@ -262,7 +262,7 @@ void main() {
         ProviderScope(
           overrides: [
             recurringTemplateListProvider.overrideWith(
-              () => _ErrorNotifier(),
+              _ErrorNotifier.new,
             ),
           ],
           child: const MaterialApp(home: RecurringTemplatesListScreen()),
@@ -282,7 +282,7 @@ void main() {
         ProviderScope(
           overrides: [
             recurringTemplateListProvider.overrideWith(
-              () => _ErrorNotifier(),
+              _ErrorNotifier.new,
             ),
           ],
           child: const MaterialApp(home: RecurringTemplatesListScreen()),
@@ -307,7 +307,7 @@ void main() {
             title: 'Active Template',
             status: RecurringTemplateStatus.active,
           ),
-        ]),
+        ],),
       );
       await tester.pumpAndSettle();
 
@@ -334,7 +334,7 @@ void main() {
             title: 'Paused Template',
             status: RecurringTemplateStatus.paused,
           ),
-        ]),
+        ],),
       );
       await tester.pumpAndSettle();
 
@@ -361,7 +361,7 @@ void main() {
             title: 'Archived Template',
             status: RecurringTemplateStatus.archived,
           ),
-        ]),
+        ],),
       );
       await tester.pumpAndSettle();
 
@@ -402,7 +402,7 @@ void main() {
             status: RecurringTemplateStatus.active,
             isInstallment: true,
           ),
-        ]),
+        ],),
       );
       await tester.pumpAndSettle();
 

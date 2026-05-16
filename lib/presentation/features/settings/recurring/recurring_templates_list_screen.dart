@@ -34,14 +34,19 @@
 //   2. Golden: populated state (Active + Paused + Archived groups).
 //   3. Golden: error state.
 
+import 'dart:developer' as dev;
+
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/presentation/features/settings/recurring/recurring_template_list_notifier.dart';
 import 'package:variance/presentation/navigation/app_router.dart';
+import 'package:variance/presentation/providers/repository_providers.dart';
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -352,7 +357,11 @@ enum _TemplateAction {
 }
 
 /// Bottom-sheet context menu for a recurring template.
-class _TemplateContextMenu extends StatelessWidget {
+///
+/// Handles [_TemplateAction.unpause] by calling
+/// [IRecurringTemplateRepository.resume] (T-114). Other actions are
+/// TODO for their respective tasks.
+class _TemplateContextMenu extends ConsumerWidget {
   const _TemplateContextMenu({
     required this.template,
     required this.actions,
@@ -362,7 +371,7 @@ class _TemplateContextMenu extends StatelessWidget {
   final List<_TemplateAction> actions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -371,7 +380,7 @@ class _TemplateContextMenu extends StatelessWidget {
             _TemplateAction.edit => ('Edit template', Icons.edit_outlined),
             _TemplateAction.delete => (
                 'Delete template',
-                Icons.delete_outlined
+                Icons.delete_outlined,
               ),
             _TemplateAction.pause => ('Pause', Icons.pause_outlined),
             _TemplateAction.unpause => ('Unpause', Icons.play_arrow_outlined),
@@ -383,14 +392,55 @@ class _TemplateContextMenu extends StatelessWidget {
           return ListTile(
             leading: Icon(icon),
             title: Text(label),
-            onTap: () {
+            onTap: () async {
               Navigator.of(context).pop();
-              // TODO(T-108): wire actions to use cases and navigation routes.
+              switch (action) {
+                case _TemplateAction.unpause:
+                  await _handleUnpause(context, ref);
+                case _TemplateAction.edit:
+                case _TemplateAction.delete:
+                case _TemplateAction.pause:
+                case _TemplateAction.viewChildren:
+                  // TODO(T-108/T-109): wire remaining actions.
+                  break;
+              }
             },
           );
         }).toList(),
       ),
     );
+  }
+
+  /// Calls [IRecurringTemplateRepository.resume] for this template and shows
+  /// a [SnackBar] confirming the result.
+  ///
+  /// Shows "Template resumed." on success or "Failed to resume template." on
+  /// error. Guards with [BuildContext.mounted] after the async gap.
+  Future<void> _handleUnpause(BuildContext context, WidgetRef ref) async {
+    try {
+      final repo = await ref.read(recurringTemplateRepositoryProvider.future);
+      final result = await repo.resume(template.id);
+      if (!context.mounted) return;
+      switch (result) {
+        case Ok():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Template resumed.')),
+          );
+        case Err():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to resume template.')),
+          );
+      }
+    } on Object catch (e) {
+      dev.log(
+        '_TemplateContextMenu._handleUnpause: $e',
+        name: '_TemplateContextMenu',
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to resume template.')),
+      );
+    }
   }
 }
 

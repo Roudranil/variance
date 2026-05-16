@@ -111,7 +111,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'ZZZNOTFOUND');
       await tester.pumpAndSettle();
 
-      expect(find.textContaining("No currencies match"), findsOneWidget);
+      expect(find.textContaining('No currencies match'), findsOneWidget);
     });
   });
 }

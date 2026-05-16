@@ -17,13 +17,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
-import 'package:variance/domain/entities/category.dart';
-import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/domain/entities/account_detail.dart';
+import 'package:variance/domain/entities/category.dart';
 import 'package:variance/domain/entities/money.dart';
+import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/domain/repositories/i_account_repository.dart';
 import 'package:variance/domain/repositories/i_category_repository.dart';
 import 'package:variance/domain/repositories/i_recurring_template_repository.dart';
@@ -151,7 +150,7 @@ class _MinimalFakeTemplateRepo implements IRecurringTemplateRepository {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-final _testAccount = Account(
+const _testAccount = Account(
   id: 'acc-001',
   name: 'Bank',
   accountCategory: AccountCategory.bankAccount,
@@ -173,7 +172,7 @@ Widget _buildTestWidget({_FakeCreateUseCase? fakeUseCase}) {
       activeAccountsProvider.overrideWith(
         (_) => Stream.value([_testAccount]),
       ),
-      categoryListProvider.overrideWith(() => _FakeCategoryListNotifier()),
+      categoryListProvider.overrideWith(_FakeCategoryListNotifier.new),
       createRecurringTemplateUseCaseProvider.overrideWith(
         (_) async => useCase,
       ),

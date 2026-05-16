@@ -242,7 +242,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              appSettingsProvider.overrideWith(() => _SlowNotifier()),
+              appSettingsProvider.overrideWith(_SlowNotifier.new),
             ],
             child: const MaterialApp(home: ProfileSettingsScreen()),
           ),
@@ -259,7 +259,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              appSettingsProvider.overrideWith(() => _ErrorNotifier()),
+              appSettingsProvider.overrideWith(_ErrorNotifier.new),
             ],
             child: const MaterialApp(home: ProfileSettingsScreen()),
           ),

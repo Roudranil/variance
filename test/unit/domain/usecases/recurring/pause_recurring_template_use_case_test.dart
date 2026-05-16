@@ -111,7 +111,7 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-final _baseTemplate = RecurringTemplate(
+const _baseTemplate = RecurringTemplate(
   id: 'tpl-001',
   transactionType: 'expense',
   amountMinor: 10000,
@@ -155,7 +155,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       final result = await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
       );
 
       expect(result, isA<Ok<void>>());
@@ -163,7 +163,7 @@ void main() {
 
       // pause_until should be ~ 1 month from now (within 2-day tolerance).
       final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final approxOneMonth = 30 * 86400;
+      const approxOneMonth = 30 * 86400;
       expect(
         repo.lastPausedUntil! - nowEpoch,
         greaterThan(approxOneMonth - 2 * 86400),
@@ -210,7 +210,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       final result = await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 0),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 0),
       );
 
       expect(result, isA<Err<void>>());
@@ -257,7 +257,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
       );
 
       // occ-1 and occ-2 should be skipped (within ~30 days); occ-3 should not.
@@ -275,14 +275,14 @@ void main() {
           DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
       final occurrences = [
         _makeOcc('occ-posted', todayDays,
-            status: ScheduledOccurrenceStatus.posted),
+            status: ScheduledOccurrenceStatus.posted,),
       ];
 
       final occRepo = _FakeOccurrenceRepository(occurrences: occurrences);
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       await useCase(
-        PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-001', durationN: 1),
       );
 
       // Posted occurrence should NOT be skipped.
@@ -298,7 +298,7 @@ void main() {
       final useCase = PauseRecurringTemplateUseCase(repo, occRepo);
 
       final result = await useCase(
-        PauseInput.byUnits(templateId: 'tpl-999', durationN: 1),
+        const PauseInput.byUnits(templateId: 'tpl-999', durationN: 1),
       );
 
       expect(result, isA<Err<void>>());

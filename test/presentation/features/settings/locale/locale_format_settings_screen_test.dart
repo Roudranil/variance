@@ -157,7 +157,7 @@ void main() {
         await tester.pump();
 
         expect(notifier.savedPatches.last.numberDecimalSeparator,
-            equals(DecimalSeparator.period));
+            equals(DecimalSeparator.period),);
       },
     );
 
@@ -183,7 +183,7 @@ void main() {
         await tester.pump();
 
         expect(notifier.savedPatches.last.numberThousandsGrouping,
-            equals(ThousandsGrouping.indian));
+            equals(ThousandsGrouping.indian),);
       },
     );
 
@@ -209,7 +209,7 @@ void main() {
         await tester.pump();
 
         expect(notifier.savedPatches.last.currencySymbolPlacement,
-            equals(CurrencySymbolPlacement.suffix));
+            equals(CurrencySymbolPlacement.suffix),);
       },
     );
 
@@ -360,8 +360,8 @@ void main() {
             overrides: [
               appSettingsProvider.overrideWith(() => notifier),
             ],
-            child: MaterialApp(
-              home: const LocaleFormatSettingsScreen(),
+            child: const MaterialApp(
+              home: LocaleFormatSettingsScreen(),
             ),
           ),
         );

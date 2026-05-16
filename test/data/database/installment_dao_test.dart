@@ -28,8 +28,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:variance/data/database/app_database.dart';
-import 'package:variance/domain/entities/installment_occurrence.dart'
-    as domain;
+import 'package:variance/domain/entities/installment_occurrence.dart' as domain;
 import 'package:variance/domain/entities/installment_plan.dart' as domain;
 
 // ---------------------------------------------------------------------------
@@ -59,7 +58,7 @@ Future<void> _insertParentTemplate(AppDatabase db, String id) async {
       1, 0,
       ?, ?
     )
-  ''', [id, nowEpoch, nowEpoch]);
+  ''', [id, nowEpoch, nowEpoch],);
 }
 
 /// Builds a minimal [domain.InstallmentPlan] for tests.
@@ -129,16 +128,14 @@ void main() {
 
     test('2. watchById() emits null before insert; emits plan after', () async {
       // Before insert: should emit null.
-      final before =
-          await db.installmentPlanDao.watchById('plan-watch').first;
+      final before = await db.installmentPlanDao.watchById('plan-watch').first;
       expect(before, isNull);
 
       await _insertParentTemplate(db, 'plan-watch');
       final plan = _makePlan(templateId: 'plan-watch');
       await db.installmentPlanDao.insertPlan(plan);
 
-      final after =
-          await db.installmentPlanDao.watchById('plan-watch').first;
+      final after = await db.installmentPlanDao.watchById('plan-watch').first;
       expect(after, isNotNull);
       expect(after!.templateId, 'plan-watch');
     });
@@ -155,8 +152,7 @@ void main() {
       expect(returned.totalConfiguredMinor, 500000);
       expect(returned.numberOfInstallments, 5);
 
-      final fromDb =
-          await db.installmentPlanDao.watchById('plan-insert').first;
+      final fromDb = await db.installmentPlanDao.watchById('plan-insert').first;
       expect(fromDb, isNotNull);
       expect(fromDb!.totalConfiguredMinor, 500000);
     });
@@ -169,8 +165,7 @@ void main() {
       final updated = plan.copyWith(numberOfInstallments: 6);
       await db.installmentPlanDao.updatePlan(updated);
 
-      final fromDb =
-          await db.installmentPlanDao.watchById('plan-update').first;
+      final fromDb = await db.installmentPlanDao.watchById('plan-update').first;
       expect(fromDb!.numberOfInstallments, 6);
     });
 
@@ -181,8 +176,7 @@ void main() {
 
       await db.installmentPlanDao.deletePlan('plan-delete');
 
-      final fromDb =
-          await db.installmentPlanDao.watchById('plan-delete').first;
+      final fromDb = await db.installmentPlanDao.watchById('plan-delete').first;
       expect(fromDb, isNull);
     });
   });
@@ -277,7 +271,7 @@ void main() {
           ?, 100000, 'INR',
           ?, ?
         )
-      ''', [nowEpoch, nowEpoch, nowEpoch]);
+      ''', [nowEpoch, nowEpoch, nowEpoch],);
       await db.customStatement('PRAGMA foreign_keys = ON');
 
       await db.installmentOccurrenceDao.markPosted('post-occ', 'tx-123');

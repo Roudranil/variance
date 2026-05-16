@@ -20,10 +20,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:variance/domain/entities/app_settings.dart'
-    as variance_app_settings;
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/entities/app_settings.dart'
+    as variance_app_settings;
 import 'package:variance/domain/entities/category.dart';
 import 'package:variance/domain/entities/entry.dart';
 import 'package:variance/domain/entities/exchange_rate.dart';
