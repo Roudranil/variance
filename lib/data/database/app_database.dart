@@ -9,7 +9,7 @@
 //   - Version-guard: throws SchemaMismatchException if on-disk version >
 //     compiled version
 //   - Registers all 19 tables (18 regular + 1 FTS virtual)
-//   - Exposes all 7 DAOs
+//   - Exposes all 9 DAOs (including InstallmentPlanDao, InstallmentOccurrenceDao)
 //
 // Database file: getApplicationDocumentsDirectory()/variance.db
 // Encryption key: 32 random bytes stored in flutter_secure_storage under
@@ -39,6 +39,7 @@ import 'package:variance/data/database/daos/app_settings_dao.dart';
 import 'package:variance/data/database/daos/category_dao.dart';
 import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
+import 'package:variance/data/database/daos/installment_dao.dart';
 import 'package:variance/data/database/daos/scheduled_occurrence_dao.dart';
 import 'package:variance/data/database/daos/template_dao.dart';
 import 'package:variance/data/database/daos/transaction_dao.dart';
@@ -88,6 +89,10 @@ const _kEncryptionKeyBytes = 32;
 /// encryption key is generated on first open and stored in the Android
 /// Keystore via [FlutterSecureStorage].
 ///
+/// DAOs: [TransactionDao], [AccountDao], [CategoryDao], [TemplateDao],
+/// [InstallmentPlanDao], [InstallmentOccurrenceDao], [ExchangeRateDao],
+/// [CurrencyDao], [AppSettingsDao], [ScheduledOccurrenceDao].
+///
 /// Use [AppDatabase.open] to create the production singleton.
 /// Use [AppDatabase.forTesting] to create an in-memory instance in tests.
 @DriftDatabase(
@@ -124,6 +129,8 @@ const _kEncryptionKeyBytes = 32;
     AccountDao,
     CategoryDao,
     TemplateDao,
+    InstallmentPlanDao,
+    InstallmentOccurrenceDao,
     ExchangeRateDao,
     CurrencyDao,
     AppSettingsDao,
@@ -149,8 +156,9 @@ class AppDatabase extends _$AppDatabase {
   /// v1 — initial schema.
   /// v2 — add large_txn_threshold_minor to accounts and categories tables
   ///       (T-181, T-182, TC-047).
+  /// v3 — add installment_occurrences performance indexes (T-125).
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   // -----------------------------------------------------------------------
   // Migration strategy

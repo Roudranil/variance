@@ -9867,6 +9867,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final AccountDao accountDao = AccountDao(this as AppDatabase);
   late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
   late final TemplateDao templateDao = TemplateDao(this as AppDatabase);
+  late final InstallmentPlanDao installmentPlanDao =
+      InstallmentPlanDao(this as AppDatabase);
+  late final InstallmentOccurrenceDao installmentOccurrenceDao =
+      InstallmentOccurrenceDao(this as AppDatabase);
   late final ExchangeRateDao exchangeRateDao =
       ExchangeRateDao(this as AppDatabase);
   late final CurrencyDao currencyDao = CurrencyDao(this as AppDatabase);
