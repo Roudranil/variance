@@ -65,6 +65,7 @@ import 'package:variance/presentation/features/settings/hub/settings_hub_screen.
 import 'package:variance/presentation/features/settings/locale/locale_format_settings_screen.dart';
 import 'package:variance/presentation/features/settings/profile/profile_settings_screen.dart';
 import 'package:variance/presentation/features/settings/recurring/create_recurring_template_screen.dart';
+import 'package:variance/presentation/features/settings/recurring/recurring_template_detail_screen.dart';
 import 'package:variance/presentation/features/settings/recurring/recurring_templates_list_screen.dart';
 import 'package:variance/presentation/features/settings/security/pin_setup_screen.dart';
 import 'package:variance/presentation/features/settings/security/security_settings_screen.dart';
@@ -166,6 +167,13 @@ abstract final class AppRoutes {
 
   /// Create recurring template form (in-tab push on Tab 2).
   static const settingsRecurringNew = '/settings/recurring/new';
+
+  /// Recurring template detail / edit (in-tab push on Tab 2).
+  static const settingsRecurringDetail = '/settings/recurring/:id';
+
+  /// Builds the recurring template detail path for [id].
+  static String settingsRecurringDetailPath(String id) =>
+      '/settings/recurring/$id';
 
   /// Drafts settings (in-tab push on Tab 2).
   static const settingsDrafts = '/settings/drafts';
@@ -433,7 +441,8 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       // /settings/warnings/accounts — Per-Account Limits (T-181)
                       GoRoute(
                         path: 'accounts',
-                        builder: (context, state) => const AccountLimitsScreen(),
+                        builder: (context, state) =>
+                            const AccountLimitsScreen(),
                       ),
                       // /settings/warnings/categories — Per-Category Limits (T-182)
                       GoRoute(
@@ -451,8 +460,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                   // /settings/security — Security settings (T-184)
                   GoRoute(
                     path: 'security',
-                    builder: (context, state) =>
-                        const SecuritySettingsScreen(),
+                    builder: (context, state) => const SecuritySettingsScreen(),
                     routes: [
                       // /settings/security/pin-setup — PIN setup (T-185)
                       GoRoute(
@@ -471,8 +479,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
                   // /settings/currency — currency settings (T-96)
                   GoRoute(
                     path: 'currency',
-                    builder: (context, state) =>
-                        const CurrencySettingsScreen(),
+                    builder: (context, state) => const CurrencySettingsScreen(),
                   ),
                   // /settings/categories — category management
                   GoRoute(
@@ -538,6 +545,19 @@ GoRouter makeAppRouter(WidgetRef ref) {
                         path: 'new',
                         builder: (context, state) =>
                             const CreateRecurringTemplateScreen(),
+                      ),
+                      // /settings/recurring/:id — Detail / edit (T-109)
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id'];
+                          if (id == null || id.isEmpty) {
+                            return const RouteErrorScreen(
+                              errorMessage: 'Template ID is missing.',
+                            );
+                          }
+                          return RecurringTemplateDetailScreen(templateId: id);
+                        },
                       ),
                     ],
                   ),
@@ -615,8 +635,7 @@ GoRouter makeAppRouter(WidgetRef ref) {
       GoRoute(
         path: AppRoutes.exchangeRateDetail,
         builder: (context, state) => ExchangeRateDetailScreen(
-          fromCurrency:
-              state.uri.queryParameters['from'] ?? '',
+          fromCurrency: state.uri.queryParameters['from'] ?? '',
           toCurrency: state.uri.queryParameters['to'] ?? '',
         ),
       ),
