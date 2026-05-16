@@ -439,9 +439,9 @@ String _$appSettingsRepositoryHash() =>
 /// Provides the [IInstallmentPlanRepository] implementation for the lifetime
 /// of the app.
 ///
-/// Depends on both [installmentPlanDaoProvider] and
-/// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
-/// cancellation of pending occurrences.
+/// Depends on [installmentPlanDaoProvider], [installmentOccurrenceDaoProvider],
+/// [templateDaoProvider], and [appDatabaseProvider] — the latter two are
+/// needed for the atomic create operation (createAtomic).
 
 @ProviderFor(installmentPlanRepository)
 final installmentPlanRepositoryProvider = InstallmentPlanRepositoryProvider._();
@@ -449,9 +449,9 @@ final installmentPlanRepositoryProvider = InstallmentPlanRepositoryProvider._();
 /// Provides the [IInstallmentPlanRepository] implementation for the lifetime
 /// of the app.
 ///
-/// Depends on both [installmentPlanDaoProvider] and
-/// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
-/// cancellation of pending occurrences.
+/// Depends on [installmentPlanDaoProvider], [installmentOccurrenceDaoProvider],
+/// [templateDaoProvider], and [appDatabaseProvider] — the latter two are
+/// needed for the atomic create operation (createAtomic).
 
 final class InstallmentPlanRepositoryProvider extends $FunctionalProvider<
         AsyncValue<IInstallmentPlanRepository>,
@@ -463,9 +463,9 @@ final class InstallmentPlanRepositoryProvider extends $FunctionalProvider<
   /// Provides the [IInstallmentPlanRepository] implementation for the lifetime
   /// of the app.
   ///
-  /// Depends on both [installmentPlanDaoProvider] and
-  /// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
-  /// cancellation of pending occurrences.
+  /// Depends on [installmentPlanDaoProvider], [installmentOccurrenceDaoProvider],
+  /// [templateDaoProvider], and [appDatabaseProvider] — the latter two are
+  /// needed for the atomic create operation (createAtomic).
   InstallmentPlanRepositoryProvider._()
       : super(
           from: null,
@@ -493,7 +493,7 @@ final class InstallmentPlanRepositoryProvider extends $FunctionalProvider<
 }
 
 String _$installmentPlanRepositoryHash() =>
-    r'2c94a495136552bdda52d01eef485fbf9601cb0b';
+    r'a2907fa32a10981b07bbb19ef2dad04e508222ae';
 
 /// Provides the [IInstallmentOccurrenceRepository] implementation for the
 /// lifetime of the app.
