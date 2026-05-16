@@ -19,6 +19,7 @@ import 'package:variance/data/database/daos/installment_dao.dart';
 import 'package:variance/domain/core/failure.dart';
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/installment_occurrence.dart';
+import 'package:variance/domain/entities/installment_tracking_amounts.dart';
 import 'package:variance/domain/repositories/i_installment_occurrence_repository.dart';
 
 /// Drift-backed implementation of [IInstallmentOccurrenceRepository].
@@ -55,5 +56,13 @@ class InstallmentOccurrenceRepositoryImpl
         DatabaseFailure('Failed to mark installment occurrence as posted: $e'),
       );
     }
+  }
+
+  @override
+  Stream<InstallmentTrackingAmounts> watchTrackingAmounts(
+    String templateId,
+    int totalConfiguredMinor,
+  ) {
+    return _dao.watchTrackingAmounts(templateId, totalConfiguredMinor);
   }
 }

@@ -142,14 +142,16 @@ Future<IAppSettingsRepository> appSettingsRepository(Ref ref) async {
 /// Provides the [IInstallmentPlanRepository] implementation for the lifetime
 /// of the app.
 ///
-/// Depends on both [installmentPlanDaoProvider] and
-/// [installmentOccurrenceDaoProvider] — the latter is needed for early-close
-/// cancellation of pending occurrences.
+/// Depends on [installmentPlanDaoProvider], [installmentOccurrenceDaoProvider],
+/// [templateDaoProvider], and [appDatabaseProvider] — the latter two are
+/// needed for the atomic create operation (createAtomic).
 @Riverpod(keepAlive: true)
 Future<IInstallmentPlanRepository> installmentPlanRepository(Ref ref) async {
   final planDao = await ref.watch(installmentPlanDaoProvider.future);
   final occDao = await ref.watch(installmentOccurrenceDaoProvider.future);
-  return InstallmentPlanRepositoryImpl(planDao, occDao);
+  final templateDao = await ref.watch(templateDaoProvider.future);
+  final db = await ref.watch(appDatabaseProvider.future);
+  return InstallmentPlanRepositoryImpl(planDao, occDao, templateDao, db);
 }
 
 /// Provides the [IInstallmentOccurrenceRepository] implementation for the

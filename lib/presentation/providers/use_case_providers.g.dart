@@ -550,6 +550,54 @@ final class DeleteCategoryUseCaseProvider extends $FunctionalProvider<
 String _$deleteCategoryUseCaseHash() =>
     r'0c81dc0b385b23806019075fd973d9116b2f4369';
 
+/// Provides a [CreateInstallmentPlanUseCase] bound to the installment plan
+/// repository and [PeriodCalculator].
+
+@ProviderFor(createInstallmentPlanUseCase)
+final createInstallmentPlanUseCaseProvider =
+    CreateInstallmentPlanUseCaseProvider._();
+
+/// Provides a [CreateInstallmentPlanUseCase] bound to the installment plan
+/// repository and [PeriodCalculator].
+
+final class CreateInstallmentPlanUseCaseProvider extends $FunctionalProvider<
+        AsyncValue<CreateInstallmentPlanUseCase>,
+        CreateInstallmentPlanUseCase,
+        FutureOr<CreateInstallmentPlanUseCase>>
+    with
+        $FutureModifier<CreateInstallmentPlanUseCase>,
+        $FutureProvider<CreateInstallmentPlanUseCase> {
+  /// Provides a [CreateInstallmentPlanUseCase] bound to the installment plan
+  /// repository and [PeriodCalculator].
+  CreateInstallmentPlanUseCaseProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'createInstallmentPlanUseCaseProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$createInstallmentPlanUseCaseHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<CreateInstallmentPlanUseCase> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CreateInstallmentPlanUseCase> create(Ref ref) {
+    return createInstallmentPlanUseCase(ref);
+  }
+}
+
+String _$createInstallmentPlanUseCaseHash() =>
+    r'0111b06c782503936e02c4e469f6b9eafdbdcbee';
+
 /// Provides a [CreateRecurringTemplateUseCase] bound to the template
 /// repository.
 

@@ -11,6 +11,7 @@ import 'package:drift/drift.dart';
 import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/tables/installment_plans_table.dart';
 import 'package:variance/data/database/tables/recurring_templates_table.dart';
+import 'package:variance/domain/entities/recurring_template.dart' as domain;
 
 part 'template_dao.g.dart';
 
@@ -59,5 +60,63 @@ class TemplateDao extends DatabaseAccessor<AppDatabase>
   /// - [template]: The companion carrying the column values to insert.
   Future<int> insertTemplate(RecurringTemplatesCompanion template) {
     return into(recurringTemplates).insert(template);
+  }
+
+  /// Inserts a recurring template row from a domain entity.
+  ///
+  /// Maps all [domain.RecurringTemplate] fields to the DB companion.
+  ///
+  /// Parameters:
+  /// - [template]: Domain entity to persist.
+  Future<void> insertFromEntity(
+    domain.RecurringTemplate template,
+  ) async {
+    await into(recurringTemplates).insert(
+      RecurringTemplatesCompanion.insert(
+        id: template.id,
+        transactionType: template.transactionType,
+        status: Value(template.status.name),
+        amountMinor: template.amountMinor,
+        currencyCode: template.currencyCode,
+        accountSourceId: Value(template.accountSourceId),
+        accountDestinationId: Value(template.accountDestinationId),
+        categoryId: Value(template.categoryId),
+        subcategoryId: Value(template.subcategoryId),
+        payeeId: Value(template.payeeId),
+        title: Value(template.title),
+        description: Value(template.description),
+        recurrenceN: template.recurrenceN,
+        recurrenceUnit: template.recurrenceUnit.name,
+        recurrenceConstraints: Value(_encodeConstraints(template.recurrenceConstraints)),
+        startDate: template.startDate,
+        endDate: Value(template.endDate),
+        postingBehaviour: Value(_encodePostingBehaviour(template.postingBehaviour)),
+        feeMode: Value(template.feeMode?.name),
+        feeAmountMinor: Value(template.feeAmountMinor),
+        feePercentageMicro: Value(template.feePercentageMicro),
+        feeCategoryId: Value(template.feeCategoryId),
+        isInstallment: Value(template.isInstallment),
+        isDeleted: Value(template.isDeleted),
+        createdAt: template.createdAt,
+        updatedAt: template.updatedAt,
+        metadata: Value(template.metadata),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Encoding helpers
+  // ---------------------------------------------------------------------------
+
+  String? _encodeConstraints(List<domain.RecurrenceConstraint>? constraints) {
+    if (constraints == null || constraints.isEmpty) return null;
+    return '[${constraints.map((c) => '"${c.name}"').join(',')}]';
+  }
+
+  String _encodePostingBehaviour(domain.PostingBehaviour behaviour) {
+    return switch (behaviour) {
+      domain.PostingBehaviour.autoPost => 'auto_post',
+      domain.PostingBehaviour.remindAndConfirm => 'remind_and_confirm',
+    };
   }
 }
