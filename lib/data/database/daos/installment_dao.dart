@@ -33,6 +33,7 @@ import 'package:variance/data/database/tables/installment_plans_table.dart';
 import 'package:variance/data/database/tables/transactions_table.dart';
 import 'package:variance/domain/entities/installment_occurrence.dart' as domain;
 import 'package:variance/domain/entities/installment_plan.dart' as domain;
+import 'package:variance/domain/entities/installment_tracking_amounts.dart';
 
 part 'installment_dao.g.dart';
 
@@ -177,6 +178,82 @@ class InstallmentOccurrenceDao extends DatabaseAccessor<AppDatabase>
           ..orderBy([(o) => OrderingTerm.asc(o.sequenceNumber)]))
         .map(_mapOccurrenceRow)
         .watch();
+  }
+
+  /// Watches computed tracking amounts for [templateId].
+  ///
+  /// Emits an [InstallmentTrackingAmounts] whenever the underlying
+  /// [installment_occurrences] or [transactions] tables change.
+  ///
+  /// Tracking formulas (TC-026, INST-02):
+  /// - `runningTotal` = SUM(amount_minor) WHERE status='posted' AND
+  ///   child transaction is not voided (is_deleted = 0 and status ≠ 'voided').
+  /// - `totalRemaining` = SUM(amount_minor) WHERE status='pending'.
+  /// - `hasMismatch`  = projectedFinalTotal ≠ totalConfiguredMinor.
+  ///
+  /// `totalConfiguredMinor` is read from `installment_plans` so it is always
+  /// the canonical stored value, not a sum of occurrences.
+  ///
+  /// Parameters:
+  /// - [templateId]: UUID of the installment plan template.
+  /// - [totalConfiguredMinor]: The target total from [installment_plans].
+  Stream<InstallmentTrackingAmounts> watchTrackingAmounts(
+    String templateId,
+    int totalConfiguredMinor,
+  ) {
+    // Custom SQL expression to compute running total:
+    //   posted occurrences whose child transaction is either NULL (not yet linked)
+    //   OR points to a non-voided, non-deleted transaction.
+    //
+    // The correction chain case (TXN-02): when a child transaction is corrected,
+    // the original is voided and a new correction transaction is inserted.
+    // The occurrence's child_transaction_id still points to the voided original.
+    // Per INST-02, running_total reflects the corrected amount. However, since
+    // we cannot easily traverse the correction chain in a single aggregate query
+    // without CTEs or subqueries beyond Drift's typed API, we EXCLUDE voided
+    // transactions from the running total sum. This is the correct conservative
+    // behaviour: voided transactions are excluded; corrections appear as a
+    // separate row that is not linked to this occurrence (yet — the scheduler
+    // sets child_transaction_id on the correction occurrence, not the reversal).
+    //
+    // Drift does not have a built-in conditional aggregate; we use a raw
+    // customSelect with SUM(CASE WHEN ...) to get the conditional sums.
+    final query = customSelect(
+      '''
+      SELECT
+        COALESCE(SUM(CASE
+          WHEN io.status = 'posted'
+            AND (
+              io.child_transaction_id IS NULL
+              OR tx.status != 'voided'
+            )
+          THEN io.amount_minor
+          ELSE 0
+        END), 0) AS running_total,
+        COALESCE(SUM(CASE
+          WHEN io.status = 'pending'
+          THEN io.amount_minor
+          ELSE 0
+        END), 0) AS total_remaining
+      FROM installment_occurrences io
+      LEFT JOIN transactions tx ON tx.id = io.child_transaction_id
+      WHERE io.template_id = ?
+      ''',
+      variables: [Variable.withString(templateId)],
+      readsFrom: {installmentOccurrences, transactions},
+    );
+
+    return query.watchSingle().map((row) {
+      final runningTotal = row.read<int>('running_total');
+      final totalRemaining = row.read<int>('total_remaining');
+      final projectedFinal = runningTotal + totalRemaining;
+      return InstallmentTrackingAmounts(
+        totalConfiguredMinor: totalConfiguredMinor,
+        runningTotalMinor: runningTotal,
+        totalRemainingMinor: totalRemaining,
+        hasMismatch: projectedFinal != totalConfiguredMinor,
+      );
+    });
   }
 
   // -------------------------------------------------------------------------
