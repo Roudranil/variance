@@ -196,8 +196,7 @@ void main() {
         futureDate.month,
         futureDate.day,
       );
-      final expectedEpoch =
-          expectedMidnight.millisecondsSinceEpoch ~/ 1000;
+      final expectedEpoch = expectedMidnight.millisecondsSinceEpoch ~/ 1000;
       expect(repo.lastPausedUntil, expectedEpoch);
     });
 
@@ -245,8 +244,7 @@ void main() {
       //   - occ1: scheduledDate = today (should be skipped)
       //   - occ2: scheduledDate = today + 5 days (within 30-day pause)
       //   - occ3: scheduledDate = today + 60 days (outside 30-day pause)
-      final todayDays =
-          DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
+      final todayDays = DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
       final occurrences = [
         _makeOcc('occ-1', todayDays),
         _makeOcc('occ-2', todayDays + 5),
@@ -271,11 +269,13 @@ void main() {
     // -------------------------------------------------------------------------
     test('already-posted occurrences are not skipped', () async {
       final repo = _FakeTemplateRepository(stored: _baseTemplate);
-      final todayDays =
-          DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
+      final todayDays = DateTime.now().millisecondsSinceEpoch ~/ (86400 * 1000);
       final occurrences = [
-        _makeOcc('occ-posted', todayDays,
-            status: ScheduledOccurrenceStatus.posted,),
+        _makeOcc(
+          'occ-posted',
+          todayDays,
+          status: ScheduledOccurrenceStatus.posted,
+        ),
       ];
 
       final occRepo = _FakeOccurrenceRepository(occurrences: occurrences);

@@ -154,7 +154,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // No change — Save should be disabled (null onPressed).
-        final saveBtn = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
+        final saveBtn =
+            tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
         expect(saveBtn.onPressed, isNull);
       },
     );
@@ -169,7 +170,8 @@ void main() {
         await tester.enterText(find.byType(TextField), 'Bob');
         await tester.pump();
 
-        final saveBtn = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
+        final saveBtn =
+            tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
         expect(saveBtn.onPressed, isNotNull);
       },
     );
@@ -179,7 +181,8 @@ void main() {
       (tester) async {
         const settings = AppSettings(displayName: 'Alice');
         final notifier = _FakeAppSettingsNotifier(settings);
-        await tester.pumpWidget(_buildProfileWidget(notifier: notifier, settings: settings));
+        await tester.pumpWidget(
+            _buildProfileWidget(notifier: notifier, settings: settings));
         await tester.pumpAndSettle();
 
         await tester.enterText(find.byType(TextField), 'Bob');
@@ -198,7 +201,8 @@ void main() {
       (tester) async {
         const settings = AppSettings(displayName: 'Alice');
         final notifier = _FakeAppSettingsNotifier(settings);
-        await tester.pumpWidget(_buildProfileWidget(notifier: notifier, settings: settings));
+        await tester.pumpWidget(
+            _buildProfileWidget(notifier: notifier, settings: settings));
         await tester.pumpAndSettle();
 
         await tester.enterText(find.byType(TextField), 'Bob');
@@ -221,7 +225,8 @@ void main() {
         await tester.enterText(find.byType(TextField), '');
         await tester.pump();
 
-        final saveBtn = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
+        final saveBtn =
+            tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
         expect(saveBtn.onPressed, isNotNull);
       },
     );
@@ -229,7 +234,8 @@ void main() {
     testWidgets(
       '9. screen shows local-only info text',
       (tester) async {
-        await tester.pumpWidget(_buildProfileWidget(settings: const AppSettings()));
+        await tester
+            .pumpWidget(_buildProfileWidget(settings: const AppSettings()));
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Stored on-device only'), findsOneWidget);

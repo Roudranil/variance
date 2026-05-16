@@ -78,8 +78,7 @@ class _AccountDetailView extends ConsumerWidget {
       accountBalanceProvider(account.id, account.currencyCode),
     );
     final isDeleted = account.isDeleted;
-    final isCreditCard =
-        account.accountCategory == AccountCategory.creditCard;
+    final isCreditCard = account.accountCategory == AccountCategory.creditCard;
 
     return Scaffold(
       appBar: AppBar(
@@ -95,8 +94,7 @@ class _AccountDetailView extends ConsumerWidget {
               ),
             ),
             PopupMenuButton<_AccountAction>(
-              onSelected: (action) =>
-                  _handleAction(context, ref, action),
+              onSelected: (action) => _handleAction(context, ref, action),
               itemBuilder: (_) => [
                 const PopupMenuItem(
                   value: _AccountAction.reconcile,
@@ -141,9 +139,8 @@ class _AccountDetailView extends ConsumerWidget {
         ],
       ),
       // Pay FAB — credit cards only, always visible
-      floatingActionButton: isCreditCard && !isDeleted
-          ? _PayFab(account: account)
-          : null,
+      floatingActionButton:
+          isCreditCard && !isDeleted ? _PayFab(account: account) : null,
     );
   }
 
@@ -165,9 +162,8 @@ class _AccountDetailView extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete account?'),
-        content:
-            const Text('This will soft-delete the account. This cannot '
-                'be undone easily.'),
+        content: const Text('This will soft-delete the account. This cannot '
+            'be undone easily.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),

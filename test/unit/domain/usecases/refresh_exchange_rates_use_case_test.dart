@@ -49,11 +49,15 @@ class _FakeAccountRepository implements IAccountRepository {
   Future<bool> isNameTaken(String name) => throw UnimplementedError();
   @override
   Future<Account?> findSoftDeletedByNameAndCategory(
-          String name, AccountCategory category,) =>
+    String name,
+    AccountCategory category,
+  ) =>
       throw UnimplementedError();
   @override
   Future<Result<void>> saveAccountDetails(
-          String accountId, List<AccountDetail> details,) =>
+    String accountId,
+    List<AccountDetail> details,
+  ) =>
       throw UnimplementedError();
   @override
   Future<List<AccountDetail>> getAccountDetails(String accountId) =>

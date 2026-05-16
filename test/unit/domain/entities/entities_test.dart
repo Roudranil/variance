@@ -195,8 +195,7 @@ void main() {
 
     test('T-80.2. isStale: false within 14 days', () {
       // fetchedAt = 7 days ago → still fresh
-      final sevenDaysAgoEpoch =
-          DateTime.now()
+      final sevenDaysAgoEpoch = DateTime.now()
               .subtract(const Duration(days: 7))
               .millisecondsSinceEpoch ~/
           1000;
@@ -213,8 +212,7 @@ void main() {
 
     test('T-80.3. isStale: true beyond 14 days', () {
       // fetchedAt = 15 days ago → stale
-      final fifteenDaysAgoEpoch =
-          DateTime.now()
+      final fifteenDaysAgoEpoch = DateTime.now()
               .subtract(const Duration(days: 15))
               .millisecondsSinceEpoch ~/
           1000;

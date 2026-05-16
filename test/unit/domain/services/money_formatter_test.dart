@@ -179,9 +179,7 @@ void main() {
   //   calling format() twice with different currencyLabel produces different
   //   output (i.e. it reads from parameters, not a shared store).
   // -------------------------------------------------------------------------
-  test(
-      '8. home currency change is display-only — formatter is stateless',
-      () {
+  test('8. home currency change is display-only — formatter is stateless', () {
     const settings = AppSettings();
 
     final resultInr = formatter.format(

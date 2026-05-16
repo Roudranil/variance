@@ -95,8 +95,7 @@ class ScheduledOccurrenceDao extends DatabaseAccessor<AppDatabase>
     String? childTransactionId,
   }) async {
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    await (update(scheduledOccurrences)..where((t) => t.id.equals(id)))
-        .write(
+    await (update(scheduledOccurrences)..where((t) => t.id.equals(id))).write(
       ScheduledOccurrencesCompanion(
         status: Value(newStatus),
         childTransactionId: childTransactionId != null
@@ -157,8 +156,7 @@ class ScheduledOccurrenceDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  domain.ScheduledOccurrenceStatus _mapStatus(String raw) =>
-      switch (raw) {
+  domain.ScheduledOccurrenceStatus _mapStatus(String raw) => switch (raw) {
         'posted' => domain.ScheduledOccurrenceStatus.posted,
         'skipped' => domain.ScheduledOccurrenceStatus.skipped,
         'cancelled' => domain.ScheduledOccurrenceStatus.cancelled,

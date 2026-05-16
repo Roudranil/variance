@@ -81,8 +81,10 @@ void main() {
 
     // Verify there's exactly one row for this pair
     final all = await db.select(db.exchangeRates).get();
-    expect(all.where((r) => r.fromCurrency == _kFrom && r.toCurrency == _kTo),
-        hasLength(1),);
+    expect(
+      all.where((r) => r.fromCurrency == _kFrom && r.toCurrency == _kTo),
+      hasLength(1),
+    );
   });
 
   // T-84.3. getRate returns null for unknown pair
@@ -123,28 +125,34 @@ void main() {
 
     final rows = await dao.watchAllRates().first;
     expect(rows, hasLength(greaterThanOrEqualTo(1)));
-    expect(rows.any((r) => r.fromCurrency == _kFrom && r.toCurrency == _kTo),
-        isTrue,);
+    expect(
+      rows.any((r) => r.fromCurrency == _kFrom && r.toCurrency == _kTo),
+      isTrue,
+    );
   });
 
   // T-84.6. getStaleRates returns rows with fetchedAt before threshold
   test('T-84.6 getStaleRates returns rows fetched before threshold', () async {
     // Old rate
-    await dao.upsertRate(const ExchangeRatesCompanion(
-      fromCurrency: Value(_kFrom),
-      toCurrency: Value(_kTo),
-      rateMicro: Value(80000000),
-      fetchedAt: Value(1000000),
-      rateDate: Value('2025-01-01'),
-    ),);
+    await dao.upsertRate(
+      const ExchangeRatesCompanion(
+        fromCurrency: Value(_kFrom),
+        toCurrency: Value(_kTo),
+        rateMicro: Value(80000000),
+        fetchedAt: Value(1000000),
+        rateDate: Value('2025-01-01'),
+      ),
+    );
     // Recent rate (different pair)
-    await dao.upsertRate(const ExchangeRatesCompanion(
-      fromCurrency: Value('EUR'),
-      toCurrency: Value(_kTo),
-      rateMicro: Value(1100000),
-      fetchedAt: Value(9999999),
-      rateDate: Value('2025-05-01'),
-    ),);
+    await dao.upsertRate(
+      const ExchangeRatesCompanion(
+        fromCurrency: Value('EUR'),
+        toCurrency: Value(_kTo),
+        rateMicro: Value(1100000),
+        fetchedAt: Value(9999999),
+        rateDate: Value('2025-05-01'),
+      ),
+    );
 
     // Threshold: anything before epoch 2000000 is stale
     final stale = await dao.getStaleRates(2000000);

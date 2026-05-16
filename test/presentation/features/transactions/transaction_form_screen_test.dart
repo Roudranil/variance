@@ -115,11 +115,16 @@ class _FakeTransactionRepository implements ITransactionRepository {
   Future<Result<Transaction>> create(Transaction draft) async => Ok(draft);
   @override
   Future<Result<Transaction>> createWithEntries(
-          Transaction draft, List<Entry> entries,) async =>
+    Transaction draft,
+    List<Entry> entries,
+  ) async =>
       Ok(draft);
   @override
-  Stream<List<Transaction>> watchByMonth(int year, int month,
-          {TransactionFilters? filters,}) =>
+  Stream<List<Transaction>> watchByMonth(
+    int year,
+    int month, {
+    TransactionFilters? filters,
+  }) =>
       Stream.value([]);
   @override
   Stream<Transaction?> watchById(String id) => Stream.value(null);
@@ -137,16 +142,19 @@ class _FakeTransactionRepository implements ITransactionRepository {
       throw UnimplementedError();
   @override
   Future<Result<Transaction>> updateNonFinancial(
-          String id, TransactionNonFinancialPatch patch,) =>
+    String id,
+    TransactionNonFinancialPatch patch,
+  ) =>
       throw UnimplementedError();
   @override
   Future<Result<void>> void$(String id) => throw UnimplementedError();
   @override
-  Future<Result<void>> bulkVoid(List<String> ids) =>
-      throw UnimplementedError();
+  Future<Result<void>> bulkVoid(List<String> ids) => throw UnimplementedError();
   @override
-  Future<Result<List<Transaction>>> search(String query,
-          {TransactionFilters? filters,}) =>
+  Future<Result<List<Transaction>>> search(
+    String query, {
+    TransactionFilters? filters,
+  }) =>
       throw UnimplementedError();
   @override
   Future<List<Transaction>> getDuePendingTransactions(int nowEpoch) =>
@@ -178,7 +186,8 @@ Widget _buildForm({
 }) {
   final accts = accounts ??
       [
-        _makeAccount(id: 'acc-1', name: 'Bank', category: AccountCategory.bankAccount),
+        _makeAccount(
+            id: 'acc-1', name: 'Bank', category: AccountCategory.bankAccount),
         _makeAccount(id: 'acc-2', name: 'Cash', category: AccountCategory.cash),
       ];
   final cats = categories ?? [_makeCategory()];
@@ -389,8 +398,7 @@ void main() {
   // T-95: exchange rate estimate wiring
   // ---------------------------------------------------------------------------
 
-  testWidgets(
-      '10. account currency = home currency → no estimate widget shown',
+  testWidgets('10. account currency = home currency → no estimate widget shown',
       (tester) async {
     // Both accounts are INR (home = INR), so no estimate should appear.
     final accounts = [
@@ -409,8 +417,7 @@ void main() {
     expect(find.byType(ExchangeRateEstimateWidget), findsNothing);
   });
 
-  testWidgets(
-      '11. account currency ≠ home currency → estimate widget shown',
+  testWidgets('11. account currency ≠ home currency → estimate widget shown',
       (tester) async {
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     // Fresh rate: USD → INR @ 83

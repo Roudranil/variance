@@ -31,8 +31,7 @@ import 'package:drift/drift.dart';
 import 'package:variance/data/database/app_database.dart';
 import 'package:variance/data/database/tables/installment_plans_table.dart';
 import 'package:variance/data/database/tables/transactions_table.dart';
-import 'package:variance/domain/entities/installment_occurrence.dart'
-    as domain;
+import 'package:variance/domain/entities/installment_occurrence.dart' as domain;
 import 'package:variance/domain/entities/installment_plan.dart' as domain;
 
 part 'installment_dao.g.dart';
@@ -125,8 +124,7 @@ class InstallmentPlanDao extends DatabaseAccessor<AppDatabase>
   /// Parameters:
   /// - [id]: UUID of the parent recurring template.
   Future<void> deletePlan(String id) async {
-    await (delete(installmentPlans)
-          ..where((p) => p.templateId.equals(id)))
+    await (delete(installmentPlans)..where((p) => p.templateId.equals(id)))
         .go();
   }
 
@@ -224,8 +222,7 @@ class InstallmentOccurrenceDao extends DatabaseAccessor<AppDatabase>
   /// - [occ]: Domain occurrence with new field values; [occ.id] is the PK.
   Future<void> updateOccurrence(domain.InstallmentOccurrence occ) async {
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    await (update(installmentOccurrences)
-          ..where((o) => o.id.equals(occ.id)))
+    await (update(installmentOccurrences)..where((o) => o.id.equals(occ.id)))
         .write(
       InstallmentOccurrencesCompanion(
         scheduledDate: Value(occ.scheduledDate),
@@ -242,9 +239,7 @@ class InstallmentOccurrenceDao extends DatabaseAccessor<AppDatabase>
   /// Parameters:
   /// - [id]: UUID of the installment occurrence to delete.
   Future<void> deleteOccurrence(String id) async {
-    await (delete(installmentOccurrences)
-          ..where((o) => o.id.equals(id)))
-        .go();
+    await (delete(installmentOccurrences)..where((o) => o.id.equals(id))).go();
   }
 
   /// Transitions a pending occurrence to `posted` and records [transactionId].
@@ -257,9 +252,7 @@ class InstallmentOccurrenceDao extends DatabaseAccessor<AppDatabase>
   /// - [transactionId]: UUID of the posted transaction child.
   Future<void> markPosted(String id, String transactionId) async {
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    await (update(installmentOccurrences)
-          ..where((o) => o.id.equals(id)))
-        .write(
+    await (update(installmentOccurrences)..where((o) => o.id.equals(id))).write(
       InstallmentOccurrencesCompanion(
         status: const Value('posted'),
         childTransactionId: Value(transactionId),
@@ -279,9 +272,7 @@ class InstallmentOccurrenceDao extends DatabaseAccessor<AppDatabase>
     final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     await (update(installmentOccurrences)
           ..where(
-            (o) =>
-                o.templateId.equals(templateId) &
-                o.status.equals('pending'),
+            (o) => o.templateId.equals(templateId) & o.status.equals('pending'),
           ))
         .write(
       InstallmentOccurrencesCompanion(

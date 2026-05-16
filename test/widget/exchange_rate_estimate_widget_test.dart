@@ -65,8 +65,7 @@ void main() {
       expect(find.byType(Text), findsNothing);
     });
 
-    testWidgets(
-        '2. exchangeRate null → renders unavailable note',
+    testWidgets('2. exchangeRate null → renders unavailable note',
         (tester) async {
       await tester.pumpWidget(
         _wrap(
@@ -83,8 +82,7 @@ void main() {
       expect(find.text('Rate may be outdated'), findsNothing);
     });
 
-    testWidgets(
-        '3. rate stale → renders estimate + staleness warning',
+    testWidgets('3. rate stale → renders estimate + staleness warning',
         (tester) async {
       await tester.pumpWidget(
         _wrap(
@@ -104,8 +102,7 @@ void main() {
       expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
     });
 
-    testWidgets(
-        '4. rate fresh → renders estimate without staleness warning',
+    testWidgets('4. rate fresh → renders estimate without staleness warning',
         (tester) async {
       await tester.pumpWidget(
         _wrap(

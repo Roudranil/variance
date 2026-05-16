@@ -45,13 +45,11 @@ Widget _buildScreen(Account? account) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) =>
-            const AccountDetailScreen(accountId: 'acc-1'),
+        builder: (_, __) => const AccountDetailScreen(accountId: 'acc-1'),
       ),
       GoRoute(
         path: '/transaction/new',
-        builder: (_, __) =>
-            const Scaffold(body: Text('TransactionForm')),
+        builder: (_, __) => const Scaffold(body: Text('TransactionForm')),
       ),
       GoRoute(
         path: '/accounts/acc-1/edit',
@@ -59,8 +57,7 @@ Widget _buildScreen(Account? account) {
       ),
       GoRoute(
         path: '/accounts/acc-1/reconcile',
-        builder: (_, __) =>
-            const Scaffold(body: Text('ReconcileScreen')),
+        builder: (_, __) => const Scaffold(body: Text('ReconcileScreen')),
       ),
     ],
   );

@@ -42,7 +42,8 @@ import 'package:variance/domain/entities/installment_plan.dart' as domain;
 /// installment data can be inserted.
 Future<void> _insertParentTemplate(AppDatabase db, String id) async {
   final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  await db.customStatement('''
+  await db.customStatement(
+    '''
     INSERT INTO recurring_templates (
       id, transaction_type, status,
       amount_minor, currency_code,
@@ -58,7 +59,9 @@ Future<void> _insertParentTemplate(AppDatabase db, String id) async {
       1, 0,
       ?, ?
     )
-  ''', [id, nowEpoch, nowEpoch],);
+  ''',
+    [id, nowEpoch, nowEpoch],
+  );
 }
 
 /// Builds a minimal [domain.InstallmentPlan] for tests.
@@ -261,7 +264,8 @@ void main() {
       // referencing a currency without inserting the currency first.
       // Re-enabled after the insert to maintain test isolation.
       await db.customStatement('PRAGMA foreign_keys = OFF');
-      await db.customStatement('''
+      await db.customStatement(
+        '''
         INSERT INTO transactions (
           id, type, status, purpose,
           transaction_date, amount_minor, currency_code,
@@ -271,7 +275,9 @@ void main() {
           ?, 100000, 'INR',
           ?, ?
         )
-      ''', [nowEpoch, nowEpoch, nowEpoch],);
+      ''',
+        [nowEpoch, nowEpoch, nowEpoch],
+      );
       await db.customStatement('PRAGMA foreign_keys = ON');
 
       await db.installmentOccurrenceDao.markPosted('post-occ', 'tx-123');

@@ -49,7 +49,6 @@ import 'package:variance/domain/services/posting_case_selector.dart';
 // ignore: prefer_const_constructors — Uuid() must not be const
 final _uuid = Uuid();
 
-
 /// Corrects an existing posted transaction following the immutability model.
 ///
 /// Branches on whether changed fields are financial (correction chain) or

@@ -108,8 +108,7 @@ Widget _buildTestWidget({
           GoRoute(
             path: '/accounts/:id',
             builder: (ctx, st) => Scaffold(
-              body:
-                  Center(child: Text('Detail:${st.pathParameters['id']}')),
+              body: Center(child: Text('Detail:${st.pathParameters['id']}')),
             ),
           ),
         ],
@@ -127,8 +126,7 @@ Widget _buildTestWidget({
       netWorthProvider.overrideWith((_) => Stream.value(netWorth)),
 
       // currency symbol labels (CURR-02, T-91)
-      currencySymbolLabelsProvider
-          .overrideWith((_) => Stream.value(labels)),
+      currencySymbolLabelsProvider.overrideWith((_) => Stream.value(labels)),
 
       // account balance per id
       for (final acc in accounts)
@@ -343,8 +341,7 @@ void main() {
     // T-91: currency symbol disambiguation in account rows
     // -------------------------------------------------------------------------
 
-    testWidgets(
-        '10. two-currency scenario renders ISO-suffixed labels in rows',
+    testWidgets('10. two-currency scenario renders ISO-suffixed labels in rows',
         (tester) async {
       final usdAcc = _makeAccount(
         id: 'u1',
@@ -374,8 +371,7 @@ void main() {
       expect(find.textContaining(r'$CAD'), findsWidgets);
     });
 
-    testWidgets(
-        '11. single-currency scenario renders plain symbol in row',
+    testWidgets('11. single-currency scenario renders plain symbol in row',
         (tester) async {
       final inrAcc = _makeAccount(
         id: 'i1',

@@ -198,8 +198,7 @@ class VarianceTypography extends ThemeExtension<VarianceTypography> {
     );
   }
 
-  static double _lerpDouble(double a, double b, double t) =>
-      a + (b - a) * t;
+  static double _lerpDouble(double a, double b, double t) => a + (b - a) * t;
 
   @override
   bool operator ==(Object other) {

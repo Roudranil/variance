@@ -62,7 +62,6 @@ class _FakeAppSettingsNotifier extends AppSettingsNotifier {
   Future<void> save(patch) async {}
 }
 
-
 // ---------------------------------------------------------------------------
 // Sample data
 // ---------------------------------------------------------------------------
@@ -269,7 +268,8 @@ void main() {
       expect(find.text('Wallet'), findsOneWidget);
     });
 
-    testWidgets('7. account row shows "Not set" when no threshold', (tester) async {
+    testWidgets('7. account row shows "Not set" when no threshold',
+        (tester) async {
       final accounts = [
         _makeAccount(
           id: 'a1',
@@ -427,7 +427,8 @@ void main() {
       '16. protected categories (isProtected=true) are excluded',
       (tester) async {
         final cats = [
-          _makeCategory(id: 'bai', name: 'Balance Adjustment', isProtected: true),
+          _makeCategory(
+              id: 'bai', name: 'Balance Adjustment', isProtected: true),
           _makeCategory(id: 'c1', name: 'Food'),
         ];
         await tester.pumpWidget(_buildCategoryWidget(cats));
@@ -469,7 +470,8 @@ void main() {
       '19. inline field shows home currency code as label',
       (tester) async {
         final cats = [_makeCategory(id: 'c1', name: 'Food')];
-        await tester.pumpWidget(_buildCategoryWidget(cats, homeCurrency: 'EUR'));
+        await tester
+            .pumpWidget(_buildCategoryWidget(cats, homeCurrency: 'EUR'));
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Food'));

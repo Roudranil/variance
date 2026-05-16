@@ -49,9 +49,8 @@ class AccountLimitsScreen extends ConsumerWidget {
           child: Text('Failed to load accounts.'),
         ),
         data: (accounts) {
-          final visible = accounts
-              .where((a) => !a.isSystem && !a.isDeleted)
-              .toList();
+          final visible =
+              accounts.where((a) => !a.isSystem && !a.isDeleted).toList();
           if (visible.isEmpty) {
             return const _EmptyState();
           }
@@ -233,7 +232,8 @@ class _InlineEditRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               decoration: InputDecoration(
                 labelText: currencyCode,

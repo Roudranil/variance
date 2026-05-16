@@ -69,8 +69,7 @@ Widget _buildScreen({
       ),
       GoRoute(
         path: AppRoutes.currencyPicker,
-        builder: (_, __) =>
-            const Scaffold(body: Center(child: Text('Picker'))),
+        builder: (_, __) => const Scaffold(body: Center(child: Text('Picker'))),
       ),
     ],
   );
@@ -100,15 +99,15 @@ void main() {
         secondaryCurrencies: [],
       );
       await tester.pumpWidget(
-        _buildScreen(state: state, allCurrencies: [_currency('INR', 'Indian Rupee')]),
+        _buildScreen(
+            state: state, allCurrencies: [_currency('INR', 'Indian Rupee')]),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('INR'), findsOneWidget);
     });
 
-    testWidgets(
-        '2. stale secondary currency shows Outdated label',
+    testWidgets('2. stale secondary currency shows Outdated label',
         (tester) async {
       final usdEntry = SecondaryCurrencyEntry(
         currency: _currency('USD', 'US Dollar'),

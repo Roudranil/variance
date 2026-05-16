@@ -118,7 +118,8 @@ void main() {
       expect(find.textContaining('may be inaccurate'), findsNothing);
     });
 
-    testWidgets('3. stale cached rate — shows staleness warning', (tester) async {
+    testWidgets('3. stale cached rate — shows staleness warning',
+        (tester) async {
       await tester.pumpWidget(_buildScreen(cachedRate: _staleRate()));
       await tester.pumpAndSettle();
 

@@ -58,8 +58,10 @@ void main() {
     final result = await service.fetchRatesForBase('INR');
 
     expect(result, isA<Err<ExchangeRateFetchResult>>());
-    expect((result as Err<ExchangeRateFetchResult>).failure,
-        isA<NetworkFailure>(),);
+    expect(
+      (result as Err<ExchangeRateFetchResult>).failure,
+      isA<NetworkFailure>(),
+    );
   });
 
   // T-86.3. HTTP 500 path
@@ -87,14 +89,18 @@ void main() {
     final result = await service.fetchRatesForBase('INR');
 
     expect(result, isA<Err<ExchangeRateFetchResult>>());
-    expect((result as Err<ExchangeRateFetchResult>).failure,
-        isA<NetworkFailure>(),);
+    expect(
+      (result as Err<ExchangeRateFetchResult>).failure,
+      isA<NetworkFailure>(),
+    );
   });
 
   // T-86.5. Missing date field
   test('T-86.5 returns Err(NetworkFailure) when date field absent', () async {
     final mockClient = MockClient((request) async {
-      final body = jsonEncode({'inr': {'usd': 0.012}});
+      final body = jsonEncode({
+        'inr': {'usd': 0.012}
+      });
       return http.Response(body, 200);
     });
 
@@ -102,7 +108,9 @@ void main() {
     final result = await service.fetchRatesForBase('INR');
 
     expect(result, isA<Err<ExchangeRateFetchResult>>());
-    expect((result as Err<ExchangeRateFetchResult>).failure,
-        isA<NetworkFailure>(),);
+    expect(
+      (result as Err<ExchangeRateFetchResult>).failure,
+      isA<NetworkFailure>(),
+    );
   });
 }

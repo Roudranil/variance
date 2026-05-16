@@ -201,8 +201,7 @@ class _NetWorthCard extends ConsumerWidget {
         VarianceTypography.defaults;
 
     // Resolve home-currency display label (CURR-02, T-92).
-    final symbolLabels =
-        ref.watch(currencySymbolLabelsProvider).value ?? {};
+    final symbolLabels = ref.watch(currencySymbolLabelsProvider).value ?? {};
     final currencyLabel = symbolLabels[homeCurrency] ?? homeCurrency;
 
     return Card.filled(

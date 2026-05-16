@@ -63,9 +63,7 @@ class WatchNetWorthUseCase {
   /// The stream does not complete unless an error occurs.
   Stream<NetWorthResult> call() {
     // Watch the account list; switchMap so inner streams reset on each change.
-    return _accountRepository
-        .watchAll()
-        .asyncMap(_computeNetWorth);
+    return _accountRepository.watchAll().asyncMap(_computeNetWorth);
   }
 
   // -------------------------------------------------------------------------
@@ -87,9 +85,8 @@ class WatchNetWorthUseCase {
 
     // --- 1. Fetch all balances concurrently ---
     final balanceFutures = accounts.map((acc) async {
-      final balance = await _accountRepository
-          .watchBalance(acc.id, acc.currencyCode)
-          .first;
+      final balance =
+          await _accountRepository.watchBalance(acc.id, acc.currencyCode).first;
       return MapEntry(acc.id, balance.amountMinor);
     });
     final balanceEntries = await Future.wait(balanceFutures);

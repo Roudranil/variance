@@ -61,8 +61,7 @@ class _FakeTransactionRepository implements ITransactionRepository {
       Map.unmodifiable(_nonFinancialPatches);
 
   @override
-  Stream<Transaction?> watchById(String id) =>
-      Stream.value(_transactions[id]);
+  Stream<Transaction?> watchById(String id) => Stream.value(_transactions[id]);
 
   @override
   Future<Result<Transaction>> correctFinancialChain({
@@ -111,25 +110,31 @@ class _FakeTransactionRepository implements ITransactionRepository {
 
   // --- Unused stubs ---
   @override
-  Stream<List<Transaction>> watchByMonth(int year, int month,
-          {TransactionFilters? filters,}) =>
+  Stream<List<Transaction>> watchByMonth(
+    int year,
+    int month, {
+    TransactionFilters? filters,
+  }) =>
       throw UnimplementedError();
   @override
   Future<Result<Transaction>> create(Transaction draft) =>
       throw UnimplementedError();
   @override
   Future<Result<Transaction>> createWithEntries(
-          Transaction draft, List<Entry> entries,) =>
+    Transaction draft,
+    List<Entry> entries,
+  ) =>
       throw UnimplementedError();
   @override
   Future<Result<Transaction>> correctFinancial(String id, Transaction draft) =>
       throw UnimplementedError();
   @override
-  Future<Result<void>> bulkVoid(List<String> ids) =>
-      throw UnimplementedError();
+  Future<Result<void>> bulkVoid(List<String> ids) => throw UnimplementedError();
   @override
-  Future<Result<List<Transaction>>> search(String query,
-          {TransactionFilters? filters,}) =>
+  Future<Result<List<Transaction>>> search(
+    String query, {
+    TransactionFilters? filters,
+  }) =>
       throw UnimplementedError();
   @override
   Future<List<Transaction>> getDuePendingTransactions(int nowEpoch) =>
@@ -203,8 +208,10 @@ void main() {
     expect(repo.correctionChainCalls, hasLength(1));
     final call = repo.correctionChainCalls.first;
     expect(call['originalId'], original.id);
-    expect((call['correction'] as Transaction).correctsTransactionId,
-        original.id,);
+    expect(
+      (call['correction'] as Transaction).correctsTransactionId,
+      original.id,
+    );
     expect(
       (call['reversal'] as Transaction).purpose,
       TransactionPurpose.reversal,
@@ -247,7 +254,8 @@ void main() {
   });
 
   // T-53.4. Correction-of-correction — chain points to previous correction
-  test('T-53.4 correction-of-correction: correctsTransactionId points to previous',
+  test(
+      'T-53.4 correction-of-correction: correctsTransactionId points to previous',
       () async {
     // The "original" here is itself a correction from a previous chain.
     final prevCorrection = _makePostedExpense().copyWith(
@@ -271,7 +279,9 @@ void main() {
     final call = repo.correctionChainCalls.first;
     // corrects_transaction_id must point to the immediate predecessor
     // (prevCorrection), not an earlier ancestor.
-    expect((call['correction'] as Transaction).correctsTransactionId,
-        prevCorrection.id,);
+    expect(
+      (call['correction'] as Transaction).correctsTransactionId,
+      prevCorrection.id,
+    );
   });
 }

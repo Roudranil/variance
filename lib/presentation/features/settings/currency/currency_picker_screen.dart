@@ -51,8 +51,7 @@ class CurrencyPickerScreen extends ConsumerStatefulWidget {
       _CurrencyPickerScreenState();
 }
 
-class _CurrencyPickerScreenState
-    extends ConsumerState<CurrencyPickerScreen> {
+class _CurrencyPickerScreenState extends ConsumerState<CurrencyPickerScreen> {
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -137,13 +136,13 @@ class _CurrencyList extends StatelessWidget {
     }
 
     // Split into popular and remainder.
-    final popular = filtered
-        .where((c) => _kPopularCodes.contains(c.code))
-        .toList()
-      ..sort(
-        (a, b) => _kPopularCodes.indexOf(a.code)
-            .compareTo(_kPopularCodes.indexOf(b.code)),
-      );
+    final popular =
+        filtered.where((c) => _kPopularCodes.contains(c.code)).toList()
+          ..sort(
+            (a, b) => _kPopularCodes
+                .indexOf(a.code)
+                .compareTo(_kPopularCodes.indexOf(b.code)),
+          );
     final remainder = filtered
         .where((c) => !_kPopularCodes.contains(c.code))
         .toList()
@@ -156,11 +155,14 @@ class _CurrencyList extends StatelessWidget {
     items.addAll(remainder);
 
     return ListView.builder(
-      itemCount: items.length + (popular.isNotEmpty && remainder.isNotEmpty ? 1 : 0),
+      itemCount:
+          items.length + (popular.isNotEmpty && remainder.isNotEmpty ? 1 : 0),
       itemBuilder: (context, index) {
         // Insert divider between popular and remainder sections.
         final dividerIndex = popular.length;
-        if (popular.isNotEmpty && remainder.isNotEmpty && index == dividerIndex) {
+        if (popular.isNotEmpty &&
+            remainder.isNotEmpty &&
+            index == dividerIndex) {
           return const Divider(height: 1);
         }
         final adjustedIndex =
@@ -214,9 +216,8 @@ class _CurrencyTile extends StatelessWidget {
       ),
       title: Text(currency.code),
       subtitle: Text(currency.name),
-      trailing: isSelected
-          ? Icon(Icons.check, color: colorScheme.primary)
-          : null,
+      trailing:
+          isSelected ? Icon(Icons.check, color: colorScheme.primary) : null,
       onTap: onTap,
     );
   }

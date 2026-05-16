@@ -235,7 +235,8 @@ class _PinEntryScreenState extends State<PinEntryScreen>
     await _storage.delete(key: _kPinHashKey);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PIN cleared. Set a new PIN in Security settings.')),
+      const SnackBar(
+          content: Text('PIN cleared. Set a new PIN in Security settings.')),
     );
     Navigator.of(context).pop();
   }
@@ -337,9 +338,8 @@ class _PinDotIndicator extends StatelessWidget {
               shape: BoxShape.circle,
               color: isFilled ? colorScheme.primary : Colors.transparent,
               border: Border.all(
-                color: isFilled
-                    ? colorScheme.primary
-                    : colorScheme.outlineVariant,
+                color:
+                    isFilled ? colorScheme.primary : colorScheme.outlineVariant,
                 width: 1.5,
               ),
             ),

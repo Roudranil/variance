@@ -133,7 +133,8 @@ class _MinimalFakeTemplateRepo implements IRecurringTemplateRepository {
   Future<Result<RecurringTemplate>> update(RecurringTemplate t) async => Ok(t);
 
   @override
-  Future<Result<void>> pause(String id, {required int pauseUntil}) async => const Ok(null);
+  Future<Result<void>> pause(String id, {required int pauseUntil}) async =>
+      const Ok(null);
 
   @override
   Future<Result<void>> resume(String id) async => const Ok(null);
@@ -304,7 +305,8 @@ void main() {
     // -------------------------------------------------------------------------
     // 8. Transfer fee panel is hidden for Expense type
     // -------------------------------------------------------------------------
-    testWidgets('Transfer fee panel is hidden for Expense type', (tester) async {
+    testWidgets('Transfer fee panel is hidden for Expense type',
+        (tester) async {
       await tester.pumpWidget(_buildTestWidget());
       await tester.pumpAndSettle();
 

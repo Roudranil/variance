@@ -67,24 +67,29 @@ void main() {
   tearDown(() => db.close());
 
   group('CurrencyRepositoryImpl — T-83', () {
-    test('T-83.1. watchEnabled() returns only is_active=true rows (all seeded)', () async {
+    test('T-83.1. watchEnabled() returns only is_active=true rows (all seeded)',
+        () async {
       final enabled = await repo.watchEnabled().first;
       // All bundled currencies are active by default.
       expect(enabled, isNotEmpty);
       expect(enabled.every((c) => c.isActive), isTrue);
     });
 
-    test('T-83.2. disableCurrency() causes watchEnabled() to exclude the currency', () async {
+    test(
+        'T-83.2. disableCurrency() causes watchEnabled() to exclude the currency',
+        () async {
       // Disable USD.
       final result = await repo.disableCurrency('USD');
       expect(result, isA<Ok<void>>());
 
       final enabled = await repo.watchEnabled().first;
       final usd = enabled.where((c) => c.code == 'USD').toList();
-      expect(usd, isEmpty, reason: 'USD should not appear in watchEnabled() after disable');
+      expect(usd, isEmpty,
+          reason: 'USD should not appear in watchEnabled() after disable');
     });
 
-    test('T-83.3. enableCurrency() re-includes a previously disabled currency', () async {
+    test('T-83.3. enableCurrency() re-includes a previously disabled currency',
+        () async {
       // Disable then re-enable EUR.
       await repo.disableCurrency('EUR');
       final afterDisable = await repo.watchEnabled().first;
@@ -108,7 +113,8 @@ void main() {
       expect(result, isA<Ok<void>>());
     });
 
-    test('T-83.6. watchAll() includes inactive currencies after disable', () async {
+    test('T-83.6. watchAll() includes inactive currencies after disable',
+        () async {
       await repo.disableCurrency('JPY');
 
       // watchAll is built on watchAllActive — so it still filters active.
@@ -120,12 +126,13 @@ void main() {
       expect(enabled.any((c) => c.code == 'JPY'), isFalse);
     });
 
-    test('T-83.7. watchEnabled() stream updates after disableCurrency', () async {
+    test('T-83.7. watchEnabled() stream updates after disableCurrency',
+        () async {
       // Hold a stream subscription before the disable call.
       final emissionsReceived = <int>[];
       final subscription = repo.watchEnabled().listen(
-        (list) => emissionsReceived.add(list.length),
-      );
+            (list) => emissionsReceived.add(list.length),
+          );
 
       // Drain first emission.
       await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -139,7 +146,8 @@ void main() {
       expect(
         emissionsReceived.last,
         lessThan(countBefore),
-        reason: 'watchEnabled() stream should emit a shorter list after disabling AUD',
+        reason:
+            'watchEnabled() stream should emit a shorter list after disabling AUD',
       );
 
       await subscription.cancel();
