@@ -134,5 +134,12 @@ abstract class AppSettings with _$AppSettings {
 
     /// Unix epoch of the last successful exchange rate fetch.
     int? lastExchangeRateFetch,
+
+    /// Unix epoch of the last successful local backup export.
+    ///
+    /// Written by [BackupService] on successful ZIP export (T-188, SET-07).
+    /// Read by HOME-05 to determine whether to show the backup reminder badge.
+    /// Null when no backup has ever been made.
+    int? lastBackupAt,
   }) = _AppSettings;
 }
