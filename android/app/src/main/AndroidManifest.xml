@@ -10,10 +10,25 @@
     <!-- POST_NOTIFICATIONS: required to display local notifications on
          Android 13+ (API 33+) for remind_and_confirm occurrences (T-118). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      android:allowBackup="true" with dataExtractionRules / fullBackupContent
+      allows selective Auto-Backup while excluding flutter_secure_storage.
+      Setting allowBackup="false" would suppress ALL backup which prevents
+      restoring non-sensitive user data; we use granular exclusion rules instead.
+
+      dataExtractionRules: API 31+ exclusion rules (cloud-backup + device-transfer).
+      fullBackupContent:   API 23–30 exclusion rules.
+
+      Both xml files exclude FlutterSecureStorage.xml to prevent PIN material
+      from appearing in device backups (OQ-SDS-SC-001, T-186).
+    -->
     <application
         android:label="app"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"
