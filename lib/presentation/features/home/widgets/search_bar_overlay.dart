@@ -78,9 +78,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
         // Forward query to SearchNotifier on each keystroke (post-frame
         // to avoid mutating state during build).
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref
-              .read(searchProvider.notifier)
-              .setQuery(controller.text);
+          ref.read(searchProvider.notifier).setQuery(controller.text);
         });
 
         // Wrap in a Consumer so suggestions rebuild on provider state changes.
