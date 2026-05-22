@@ -64,6 +64,9 @@ const _kDisplayName = 'display_name';
 /// app_settings key for last exchange rate fetch epoch.
 const _kLastExchangeRateFetch = 'last_exchange_rate_fetch';
 
+/// app_settings key for last local backup export epoch (T-186, SET-07).
+const _kLastBackupAt = 'last_backup_at';
+
 /// app_settings key for the decimal separator preference.
 const _kNumberDecimalSeparator = 'number_decimal_separator';
 
@@ -197,6 +200,14 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
         );
       }
 
+      if (patch.lastBackupAt != null) {
+        await _dao.upsert(
+          _kLastBackupAt,
+          patch.lastBackupAt!.toString(),
+          now,
+        );
+      }
+
       return const Ok(null);
     } on Exception catch (e) {
       return Err(DatabaseFailure(e.toString()));
@@ -259,6 +270,7 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
       displayName: kv[_kDisplayName],
       onboardingComplete: kv[_kOnboardingComplete] == '1',
       lastExchangeRateFetch: int.tryParse(kv[_kLastExchangeRateFetch] ?? ''),
+      lastBackupAt: int.tryParse(kv[_kLastBackupAt] ?? ''),
     );
   }
 

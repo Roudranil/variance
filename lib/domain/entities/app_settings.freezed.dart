@@ -71,6 +71,13 @@ mixin _$AppSettings {
   /// Unix epoch of the last successful exchange rate fetch.
   int? get lastExchangeRateFetch;
 
+  /// Unix epoch of the last successful local backup export.
+  ///
+  /// Written by [BackupService] on successful ZIP export (T-188, SET-07).
+  /// Read by HOME-05 to determine whether to show the backup reminder badge.
+  /// Null when no backup has ever been made.
+  int? get lastBackupAt;
+
   /// Create a copy of AppSettings
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -121,7 +128,9 @@ mixin _$AppSettings {
             (identical(other.schemaBackupVersion, schemaBackupVersion) ||
                 other.schemaBackupVersion == schemaBackupVersion) &&
             (identical(other.lastExchangeRateFetch, lastExchangeRateFetch) ||
-                other.lastExchangeRateFetch == lastExchangeRateFetch));
+                other.lastExchangeRateFetch == lastExchangeRateFetch) &&
+            (identical(other.lastBackupAt, lastBackupAt) ||
+                other.lastBackupAt == lastBackupAt));
   }
 
   @override
@@ -145,12 +154,13 @@ mixin _$AppSettings {
         displayName,
         onboardingComplete,
         schemaBackupVersion,
-        lastExchangeRateFetch
+        lastExchangeRateFetch,
+        lastBackupAt
       ]);
 
   @override
   String toString() {
-    return 'AppSettings(homeCurrency: $homeCurrency, theme: $theme, colorSchemeMode: $colorSchemeMode, colorSeed: $colorSeed, animationsEnabled: $animationsEnabled, numberDecimalSeparator: $numberDecimalSeparator, numberThousandsGrouping: $numberThousandsGrouping, currencySymbolPlacement: $currencySymbolPlacement, currencySymbolSpacing: $currencySymbolSpacing, weekStart: $weekStart, timeFormat: $timeFormat, percentagePrecision: $percentagePrecision, descriptionMaxLength: $descriptionMaxLength, backButtonBehaviour: $backButtonBehaviour, lockTimeoutSeconds: $lockTimeoutSeconds, displayName: $displayName, onboardingComplete: $onboardingComplete, schemaBackupVersion: $schemaBackupVersion, lastExchangeRateFetch: $lastExchangeRateFetch)';
+    return 'AppSettings(homeCurrency: $homeCurrency, theme: $theme, colorSchemeMode: $colorSchemeMode, colorSeed: $colorSeed, animationsEnabled: $animationsEnabled, numberDecimalSeparator: $numberDecimalSeparator, numberThousandsGrouping: $numberThousandsGrouping, currencySymbolPlacement: $currencySymbolPlacement, currencySymbolSpacing: $currencySymbolSpacing, weekStart: $weekStart, timeFormat: $timeFormat, percentagePrecision: $percentagePrecision, descriptionMaxLength: $descriptionMaxLength, backButtonBehaviour: $backButtonBehaviour, lockTimeoutSeconds: $lockTimeoutSeconds, displayName: $displayName, onboardingComplete: $onboardingComplete, schemaBackupVersion: $schemaBackupVersion, lastExchangeRateFetch: $lastExchangeRateFetch, lastBackupAt: $lastBackupAt)';
   }
 }
 
@@ -179,7 +189,8 @@ abstract mixin class $AppSettingsCopyWith<$Res> {
       String? displayName,
       bool onboardingComplete,
       int schemaBackupVersion,
-      int? lastExchangeRateFetch});
+      int? lastExchangeRateFetch,
+      int? lastBackupAt});
 }
 
 /// @nodoc
@@ -213,6 +224,7 @@ class _$AppSettingsCopyWithImpl<$Res> implements $AppSettingsCopyWith<$Res> {
     Object? onboardingComplete = null,
     Object? schemaBackupVersion = null,
     Object? lastExchangeRateFetch = freezed,
+    Object? lastBackupAt = freezed,
   }) {
     return _then(_self.copyWith(
       homeCurrency: null == homeCurrency
@@ -290,6 +302,10 @@ class _$AppSettingsCopyWithImpl<$Res> implements $AppSettingsCopyWith<$Res> {
       lastExchangeRateFetch: freezed == lastExchangeRateFetch
           ? _self.lastExchangeRateFetch
           : lastExchangeRateFetch // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lastBackupAt: freezed == lastBackupAt
+          ? _self.lastBackupAt
+          : lastBackupAt // ignore: cast_nullable_to_non_nullable
               as int?,
     ));
   }
@@ -407,7 +423,8 @@ extension AppSettingsPatterns on AppSettings {
             String? displayName,
             bool onboardingComplete,
             int schemaBackupVersion,
-            int? lastExchangeRateFetch)?
+            int? lastExchangeRateFetch,
+            int? lastBackupAt)?
         $default, {
     required TResult orElse(),
   }) {
@@ -433,7 +450,8 @@ extension AppSettingsPatterns on AppSettings {
             _that.displayName,
             _that.onboardingComplete,
             _that.schemaBackupVersion,
-            _that.lastExchangeRateFetch);
+            _that.lastExchangeRateFetch,
+            _that.lastBackupAt);
       case _:
         return orElse();
     }
@@ -473,7 +491,8 @@ extension AppSettingsPatterns on AppSettings {
             String? displayName,
             bool onboardingComplete,
             int schemaBackupVersion,
-            int? lastExchangeRateFetch)
+            int? lastExchangeRateFetch,
+            int? lastBackupAt)
         $default,
   ) {
     final _that = this;
@@ -498,7 +517,8 @@ extension AppSettingsPatterns on AppSettings {
             _that.displayName,
             _that.onboardingComplete,
             _that.schemaBackupVersion,
-            _that.lastExchangeRateFetch);
+            _that.lastExchangeRateFetch,
+            _that.lastBackupAt);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -537,7 +557,8 @@ extension AppSettingsPatterns on AppSettings {
             String? displayName,
             bool onboardingComplete,
             int schemaBackupVersion,
-            int? lastExchangeRateFetch)?
+            int? lastExchangeRateFetch,
+            int? lastBackupAt)?
         $default,
   ) {
     final _that = this;
@@ -562,7 +583,8 @@ extension AppSettingsPatterns on AppSettings {
             _that.displayName,
             _that.onboardingComplete,
             _that.schemaBackupVersion,
-            _that.lastExchangeRateFetch);
+            _that.lastExchangeRateFetch,
+            _that.lastBackupAt);
       case _:
         return null;
     }
@@ -591,7 +613,8 @@ class _AppSettings implements AppSettings {
       this.displayName,
       this.onboardingComplete = false,
       this.schemaBackupVersion = 1,
-      this.lastExchangeRateFetch});
+      this.lastExchangeRateFetch,
+      this.lastBackupAt});
 
   /// ISO 4217 home currency code; set during onboarding.
   @override
@@ -680,6 +703,14 @@ class _AppSettings implements AppSettings {
   @override
   final int? lastExchangeRateFetch;
 
+  /// Unix epoch of the last successful local backup export.
+  ///
+  /// Written by [BackupService] on successful ZIP export (T-188, SET-07).
+  /// Read by HOME-05 to determine whether to show the backup reminder badge.
+  /// Null when no backup has ever been made.
+  @override
+  final int? lastBackupAt;
+
   /// Create a copy of AppSettings
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -731,7 +762,9 @@ class _AppSettings implements AppSettings {
             (identical(other.schemaBackupVersion, schemaBackupVersion) ||
                 other.schemaBackupVersion == schemaBackupVersion) &&
             (identical(other.lastExchangeRateFetch, lastExchangeRateFetch) ||
-                other.lastExchangeRateFetch == lastExchangeRateFetch));
+                other.lastExchangeRateFetch == lastExchangeRateFetch) &&
+            (identical(other.lastBackupAt, lastBackupAt) ||
+                other.lastBackupAt == lastBackupAt));
   }
 
   @override
@@ -755,12 +788,13 @@ class _AppSettings implements AppSettings {
         displayName,
         onboardingComplete,
         schemaBackupVersion,
-        lastExchangeRateFetch
+        lastExchangeRateFetch,
+        lastBackupAt
       ]);
 
   @override
   String toString() {
-    return 'AppSettings(homeCurrency: $homeCurrency, theme: $theme, colorSchemeMode: $colorSchemeMode, colorSeed: $colorSeed, animationsEnabled: $animationsEnabled, numberDecimalSeparator: $numberDecimalSeparator, numberThousandsGrouping: $numberThousandsGrouping, currencySymbolPlacement: $currencySymbolPlacement, currencySymbolSpacing: $currencySymbolSpacing, weekStart: $weekStart, timeFormat: $timeFormat, percentagePrecision: $percentagePrecision, descriptionMaxLength: $descriptionMaxLength, backButtonBehaviour: $backButtonBehaviour, lockTimeoutSeconds: $lockTimeoutSeconds, displayName: $displayName, onboardingComplete: $onboardingComplete, schemaBackupVersion: $schemaBackupVersion, lastExchangeRateFetch: $lastExchangeRateFetch)';
+    return 'AppSettings(homeCurrency: $homeCurrency, theme: $theme, colorSchemeMode: $colorSchemeMode, colorSeed: $colorSeed, animationsEnabled: $animationsEnabled, numberDecimalSeparator: $numberDecimalSeparator, numberThousandsGrouping: $numberThousandsGrouping, currencySymbolPlacement: $currencySymbolPlacement, currencySymbolSpacing: $currencySymbolSpacing, weekStart: $weekStart, timeFormat: $timeFormat, percentagePrecision: $percentagePrecision, descriptionMaxLength: $descriptionMaxLength, backButtonBehaviour: $backButtonBehaviour, lockTimeoutSeconds: $lockTimeoutSeconds, displayName: $displayName, onboardingComplete: $onboardingComplete, schemaBackupVersion: $schemaBackupVersion, lastExchangeRateFetch: $lastExchangeRateFetch, lastBackupAt: $lastBackupAt)';
   }
 }
 
@@ -791,7 +825,8 @@ abstract mixin class _$AppSettingsCopyWith<$Res>
       String? displayName,
       bool onboardingComplete,
       int schemaBackupVersion,
-      int? lastExchangeRateFetch});
+      int? lastExchangeRateFetch,
+      int? lastBackupAt});
 }
 
 /// @nodoc
@@ -825,6 +860,7 @@ class __$AppSettingsCopyWithImpl<$Res> implements _$AppSettingsCopyWith<$Res> {
     Object? onboardingComplete = null,
     Object? schemaBackupVersion = null,
     Object? lastExchangeRateFetch = freezed,
+    Object? lastBackupAt = freezed,
   }) {
     return _then(_AppSettings(
       homeCurrency: null == homeCurrency
@@ -902,6 +938,10 @@ class __$AppSettingsCopyWithImpl<$Res> implements _$AppSettingsCopyWith<$Res> {
       lastExchangeRateFetch: freezed == lastExchangeRateFetch
           ? _self.lastExchangeRateFetch
           : lastExchangeRateFetch // ignore: cast_nullable_to_non_nullable
+              as int?,
+      lastBackupAt: freezed == lastBackupAt
+          ? _self.lastBackupAt
+          : lastBackupAt // ignore: cast_nullable_to_non_nullable
               as int?,
     ));
   }

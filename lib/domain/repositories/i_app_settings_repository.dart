@@ -31,6 +31,7 @@ class AppSettingsPatch {
     this.displayName,
     this.onboardingComplete,
     this.lastExchangeRateFetch,
+    this.lastBackupAt,
   });
 
   /// ISO 4217 home currency code.
@@ -86,6 +87,11 @@ class AppSettingsPatch {
 
   /// Unix epoch of the last successful exchange rate fetch.
   final int? lastExchangeRateFetch;
+
+  /// Unix epoch of the last successful local backup export.
+  ///
+  /// Written after a successful ZIP export (T-188, SET-07).
+  final int? lastBackupAt;
 }
 
 /// Contract for all AppSettings data-access operations.

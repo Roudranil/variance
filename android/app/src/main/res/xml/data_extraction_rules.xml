@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  data_extraction_rules.xml
+  ==========================
+  Android Auto-Backup exclusion rules for API 31+ (dataExtractionRules).
+  Replaces fullBackupContent for Android 12 and above.
+
+  Mirrors the exclusions in backup_rules.xml (API 23–30) for the newer rule
+  format that separates cloud-backup and device-transfer policies.
+
+  Both <cloud-backup> and <device-transfer> sections exclude the same paths
+  to ensure secure-storage blobs are never transported off-device regardless
+  of backup destination.
+
+  Resolution: OQ-SDS-SC-001 → RESOLVED (T-186).
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Exclude flutter_secure_storage shared preferences files. -->
+        <exclude
+            domain="sharedpref"
+            path="FlutterSecureStorage.xml" />
+        <exclude
+            domain="sharedpref"
+            path="FlutterSecureStorageAccountName.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <!-- Exclude flutter_secure_storage from device-to-device transfer.
+             Keys are hardware-bound and non-portable. -->
+        <exclude
+            domain="sharedpref"
+            path="FlutterSecureStorage.xml" />
+        <exclude
+            domain="sharedpref"
+            path="FlutterSecureStorageAccountName.xml" />
+    </device-transfer>
+</data-extraction-rules>

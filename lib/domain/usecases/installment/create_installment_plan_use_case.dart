@@ -360,17 +360,15 @@ class CreateInstallmentPlanUseCase {
     // by computing start of period (numberOfInstallments), which equals:
     //   startEpoch + numberOfInstallments × recurrenceN × unit_length
     return switch (recurrenceUnit) {
-      RecurrenceUnit.day => startEpochSeconds +
-          (numberOfInstallments * recurrenceN * 86400),
-      RecurrenceUnit.week => startEpochSeconds +
-          (numberOfInstallments * recurrenceN * 7 * 86400),
+      RecurrenceUnit.day =>
+        startEpochSeconds + (numberOfInstallments * recurrenceN * 86400),
+      RecurrenceUnit.week =>
+        startEpochSeconds + (numberOfInstallments * recurrenceN * 7 * 86400),
       // For month/year, use PeriodCalculator.compute to find the period
       // containing a reference point exactly (numberOfInstallments * period)
       // after start, then return that period's end. We do this by computing
       // the nth period's end via a reference-period lookup trick.
-      RecurrenceUnit.month ||
-      RecurrenceUnit.year =>
-        _computeVariableEndDate(
+      RecurrenceUnit.month || RecurrenceUnit.year => _computeVariableEndDate(
           startEpochSeconds: startEpochSeconds,
           recurrenceN: recurrenceN,
           recurrenceUnit: recurrenceUnit,
@@ -492,13 +490,10 @@ class CreateInstallmentPlanUseCase {
     required int index,
   }) {
     return switch (recurrenceUnit) {
-      RecurrenceUnit.day =>
-        startEpochSeconds + (index * recurrenceN * 86400),
+      RecurrenceUnit.day => startEpochSeconds + (index * recurrenceN * 86400),
       RecurrenceUnit.week =>
         startEpochSeconds + (index * recurrenceN * 7 * 86400),
-      RecurrenceUnit.month ||
-      RecurrenceUnit.year =>
-        _scheduledVariableDate(
+      RecurrenceUnit.month || RecurrenceUnit.year => _scheduledVariableDate(
           startEpochSeconds: startEpochSeconds,
           recurrenceN: recurrenceN,
           recurrenceUnit: recurrenceUnit,
@@ -524,8 +519,9 @@ class CreateInstallmentPlanUseCase {
       RecurrenceUnit.year => recurrenceN * 365 * 86400,
       _ => throw StateError('Only month/year handled here'),
     };
-    final referenceEpoch =
-        startEpochSeconds + (index * avgSecondsPerPeriod) + (avgSecondsPerPeriod ~/ 2);
+    final referenceEpoch = startEpochSeconds +
+        (index * avgSecondsPerPeriod) +
+        (avgSecondsPerPeriod ~/ 2);
 
     final range = _periodCalculator.compute(
       startEpochSeconds: startEpochSeconds,

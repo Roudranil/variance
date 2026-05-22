@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  backup_rules.xml
+  ================
+  Android Auto-Backup exclusion rules for API 23–30 (fullBackupContent).
+
+  Purpose: exclude flutter_secure_storage data from Android device backups.
+  flutter_secure_storage uses Android EncryptedSharedPreferences backed by
+  the Android Keystore; the encrypted blobs are tied to a device-specific
+  hardware key and are therefore non-portable and useless after restore on
+  another device (or after a factory-reset).
+
+  Including these blobs in a backup exposes the encrypted PIN material to
+  backup storage (Google Drive, ADB backup) even though it cannot be decoded
+  without the original device's hardware key. The exclusion ensures that:
+    1. PIN state is always device-local (PRD §5.4.6 security requirement).
+    2. Backup-restore attacks on PIN data (OQ-SDS-SC-001) are mitigated.
+
+  Resolution: OQ-SDS-SC-001 → RESOLVED (T-186).
+
+  flutter_secure_storage default SharedPreferences file:
+    FlutterSecureStorage.defaultAccountName = "FlutterSecureStorage"
+    Stored under: shared_prefs/FlutterSecureStorage.xml
+
+  See also: data_extraction_rules.xml (API 31+ equivalent).
+-->
+<full-backup-content>
+    <!-- Exclude flutter_secure_storage shared preferences file. -->
+    <exclude
+        domain="sharedpref"
+        path="FlutterSecureStorage.xml" />
+    <!-- Exclude entire keystore-backed preference directory as a belt-and-suspenders
+         measure against future flutter_secure_storage storage location changes. -->
+    <exclude
+        domain="sharedpref"
+        path="FlutterSecureStorageAccountName.xml" />
+</full-backup-content>

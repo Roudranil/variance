@@ -57,6 +57,7 @@ import 'package:variance/presentation/features/home/home_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/appearance_settings_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
+import 'package:variance/presentation/features/settings/backup/backup_data_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_detail_screen.dart';
 import 'package:variance/presentation/features/settings/categories/category_management_screen.dart';
 import 'package:variance/presentation/features/settings/currency/currency_picker_screen.dart';
@@ -568,15 +569,10 @@ GoRouter makeAppRouter(WidgetRef ref) {
                       errorMessage: 'Drafts settings not yet implemented.',
                     ),
                   ),
-                  // /settings/backup — placeholder
+                  // /settings/backup — BackupDataScreen (T-187)
                   GoRoute(
                     path: 'backup',
-                    builder: (context, state) {
-                      // TODO(dev): return BackupRestoreScreen();
-                      return const RouteErrorScreen(
-                        errorMessage: 'Backup & restore not yet implemented.',
-                      );
-                    },
+                    builder: (context, state) => const BackupDataScreen(),
                   ),
                   // /settings/about — placeholder
                   GoRoute(
