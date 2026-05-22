@@ -94,6 +94,21 @@ abstract interface class NotificationPluginAdapter {
   /// Parameters:
   /// - [id]: Notification id to cancel.
   Future<void> cancel(int id);
+
+  /// Shows an immediate (non-scheduled) notification (T-121).
+  ///
+  /// Used to display catch-up summary notifications after a sweep that
+  /// auto-approved stacked remind_and_confirm occurrences.
+  ///
+  /// Parameters:
+  /// - [id]: Unique notification identifier.
+  /// - [title]: Notification title text.
+  /// - [body]: Notification body text.
+  Future<void> show({
+    required int id,
+    required String title,
+    required String body,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +162,16 @@ class FlutterLocalNotificationsAdapter implements NotificationPluginAdapter {
   Future<void> cancel(int id) async {
     // ignore: avoid_dynamic_calls
     await _plugin.cancel(id);
+  }
+
+  @override
+  Future<void> show({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    // ignore: avoid_dynamic_calls
+    await _plugin.show(id, title, body, null);
   }
 
   /// Builds the [NotificationDetails] with Android-specific exact alarm config.

@@ -104,6 +104,13 @@ class _FakeNotificationPlugin implements NotificationPluginAdapter {
   }) async {}
   @override
   Future<void> cancel(int id) async => cancelCalls.add(id);
+
+  @override
+  Future<void> show({
+    required int id,
+    required String title,
+    required String body,
+  }) async {}
 }
 
 // ---------------------------------------------------------------------------
