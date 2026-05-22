@@ -2,6 +2,14 @@
     <!-- RECEIVE_BOOT_COMPLETED: required for WorkManager to re-register tasks
          after device restart (T-104, SCHED-01). -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- SCHEDULE_EXACT_ALARM: required for exact alarm delivery for
+         remind_and_confirm recurring templates (T-118, SCHED-02, API 31+). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- POST_NOTIFICATIONS: required to display local notifications on
+         Android 13+ (API 33+) for remind_and_confirm occurrences (T-118). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="app"
         android:name="${applicationName}"
