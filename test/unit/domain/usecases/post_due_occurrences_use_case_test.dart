@@ -148,6 +148,13 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
       _pending;
 
   @override
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(
+    DateTime asOf,
+  ) async =>
+      // Return empty list — stacked auto-approval tested in dedicated tests.
+      [];
+
+  @override
   Future<Result<void>> markPosted(String id, String transactionId) async {
     _posted[id] = transactionId;
     return const Ok(null);
@@ -291,8 +298,8 @@ void main() {
         txRepo: txRepo,
       ).call();
 
-      expect(result, isA<Ok<int>>());
-      expect((result as Ok<int>).value, 0);
+      expect(result, isA<Ok<PostingResult>>());
+      expect((result as Ok<PostingResult>).value.autoPostedCount, 0);
       expect(txRepo.created, isEmpty);
     });
 
@@ -310,8 +317,8 @@ void main() {
         txRepo: txRepo,
       ).call();
 
-      expect(result, isA<Ok<int>>());
-      expect((result as Ok<int>).value, 1);
+      expect(result, isA<Ok<PostingResult>>());
+      expect((result as Ok<PostingResult>).value.autoPostedCount, 1);
       expect(txRepo.created, hasLength(1));
       expect(occRepo.posted.keys, contains(occ.id));
     });
@@ -333,8 +340,8 @@ void main() {
         txRepo: txRepo,
       ).call();
 
-      expect(result, isA<Ok<int>>());
-      expect((result as Ok<int>).value, 3);
+      expect(result, isA<Ok<PostingResult>>());
+      expect((result as Ok<PostingResult>).value.autoPostedCount, 3);
       expect(txRepo.created, hasLength(3));
     });
 
@@ -376,8 +383,8 @@ void main() {
         txRepo: txRepo,
       ).call();
 
-      expect(result, isA<Ok<int>>());
-      expect((result as Ok<int>).value, 0);
+      expect(result, isA<Ok<PostingResult>>());
+      expect((result as Ok<PostingResult>).value.autoPostedCount, 0);
       expect(txRepo.created, isEmpty);
       expect(occRepo.posted, isEmpty);
     });
@@ -400,8 +407,8 @@ void main() {
         txRepo: txRepo,
       ).call();
 
-      expect(result, isA<Ok<int>>());
-      expect((result as Ok<int>).value, 0);
+      expect(result, isA<Ok<PostingResult>>());
+      expect((result as Ok<PostingResult>).value.autoPostedCount, 0);
       expect(txRepo.created, isEmpty);
     });
   });

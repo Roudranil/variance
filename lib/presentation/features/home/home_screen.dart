@@ -33,12 +33,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:variance/domain/entities/transaction.dart';
+import 'package:variance/infrastructure/scheduling/app_initializer.dart';
 import 'package:variance/presentation/features/home/notifiers/home_transaction_list_notifier.dart';
 import 'package:variance/presentation/features/home/widgets/alerts_strip.dart';
 import 'package:variance/presentation/features/home/widgets/financial_summary_grid.dart';
 import 'package:variance/presentation/features/home/widgets/greeting_row.dart';
 import 'package:variance/presentation/features/home/widgets/home_screen_body.dart';
 import 'package:variance/presentation/features/home/widgets/month_selector.dart';
+import 'package:variance/presentation/features/home/widgets/recurring_catch_up_banner.dart';
 import 'package:variance/presentation/features/home/widgets/transaction_date_group_header.dart';
 import 'package:variance/presentation/features/home/widgets/transaction_row.dart';
 import 'package:variance/presentation/navigation/app_router.dart';
@@ -188,6 +190,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // Zone 3: Alerts Strip
               const SliverToBoxAdapter(
                 child: AlertsStrip(),
+              ),
+
+              // Zone 3b: Recurring Catch-Up Banner (T-121)
+              // Shown when stacked remind_and_confirm occurrences were
+              // auto-approved in the launch sweep. Session-local dismissal.
+              SliverToBoxAdapter(
+                child: RecurringCatchUpBanner(
+                  autoApprovedCount: AppInitializer.lastAutoApprovedCount,
+                ),
               ),
 
               // Zone 4: Transaction list (date-grouped)

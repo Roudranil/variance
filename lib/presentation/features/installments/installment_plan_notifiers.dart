@@ -32,6 +32,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:variance/domain/entities/installment_occurrence.dart';
 import 'package:variance/domain/entities/installment_plan.dart';
 import 'package:variance/domain/entities/installment_tracking_amounts.dart';
+import 'package:variance/domain/entities/recurring_template.dart';
 import 'package:variance/presentation/providers/repository_providers.dart';
 
 part 'installment_plan_notifiers.g.dart';
@@ -66,6 +67,50 @@ class InstallmentPlanDetail {
 
   /// Whether [projectedFinalTotal] ≠ [totalConfigured].
   bool get hasMismatch => trackingAmounts.hasMismatch;
+}
+
+// ---------------------------------------------------------------------------
+// InstallmentTemplateList notifier
+// ---------------------------------------------------------------------------
+
+/// Reactive list of all recurring templates that are flagged as installment
+/// plans (isInstallment = true).
+///
+/// Used by the Installments tab in [RecurringTemplatesListScreen] to get
+/// status, title, and recurrence info for each installment template.
+/// This differs from [recurringTemplateListProvider] which filters to
+/// non-installment templates only.
+@riverpod
+class InstallmentTemplateList extends _$InstallmentTemplateList {
+  @override
+  Future<List<RecurringTemplate>> build() async {
+    final repo = await ref.watch(recurringTemplateRepositoryProvider.future);
+    final completer = Completer<List<RecurringTemplate>>();
+
+    final sub = repo.watchAll().listen(
+      (templates) {
+        // Filter to installment templates only (isInstallment = true).
+        final installments = templates.where((t) => t.isInstallment).toList();
+        if (!completer.isCompleted) {
+          completer.complete(installments);
+        } else {
+          if (ref.mounted) state = AsyncData(installments);
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        if (!completer.isCompleted) {
+          completer.completeError(error, stack);
+        } else {
+          if (ref.mounted) {
+            state = AsyncError<List<RecurringTemplate>>(error, stack);
+          }
+        }
+      },
+    );
+
+    ref.onDispose(sub.cancel);
+    return completer.future;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -120,12 +165,10 @@ class InstallmentPlanList extends _$InstallmentPlanList {
 /// The Completer bridge pattern ensures the initial [build] Future resolves
 /// only after all three streams emit their first value.
 @riverpod
-class InstallmentPlanDetailNotifier
-    extends _$InstallmentPlanDetailNotifier {
+class InstallmentPlanDetailNotifier extends _$InstallmentPlanDetailNotifier {
   @override
   Future<InstallmentPlanDetail> build(String templateId) async {
-    final planRepo =
-        await ref.watch(installmentPlanRepositoryProvider.future);
+    final planRepo = await ref.watch(installmentPlanRepositoryProvider.future);
     final occRepo =
         await ref.watch(installmentOccurrenceRepositoryProvider.future);
 
@@ -227,9 +270,8 @@ class InstallmentPlanDetailNotifier
 
     void startTrackingStream(int totalConfiguredMinor) {
       trackingSub?.cancel();
-      trackingSub = occRepo
-          .watchTrackingAmounts(templateId, totalConfiguredMinor)
-          .listen(
+      trackingSub =
+          occRepo.watchTrackingAmounts(templateId, totalConfiguredMinor).listen(
         (tracking) {
           latestTracking = tracking;
           tryEmit();

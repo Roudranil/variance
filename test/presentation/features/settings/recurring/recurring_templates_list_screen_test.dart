@@ -21,8 +21,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:variance/domain/core/result.dart';
+import 'package:variance/domain/entities/installment_occurrence.dart';
+import 'package:variance/domain/entities/installment_plan.dart';
 import 'package:variance/domain/entities/recurring_template.dart';
+import 'package:variance/domain/repositories/i_installment_plan_repository.dart';
 import 'package:variance/domain/repositories/i_recurring_template_repository.dart';
+import 'package:variance/presentation/features/installments/installment_plan_notifiers.dart';
 import 'package:variance/presentation/features/settings/recurring/recurring_template_list_notifier.dart';
 import 'package:variance/presentation/features/settings/recurring/recurring_templates_list_screen.dart';
 import 'package:variance/presentation/providers/repository_providers.dart';
@@ -123,6 +127,50 @@ class _ErrorNotifier extends RecurringTemplateList {
 }
 
 // ---------------------------------------------------------------------------
+// Stub installment plan repository for the Installments tab
+// ---------------------------------------------------------------------------
+
+class _StubInstallmentPlanRepository implements IInstallmentPlanRepository {
+  @override
+  Stream<List<InstallmentPlan>> watchAll() => Stream.value([]);
+
+  @override
+  Stream<InstallmentPlan?> watchById(String id) => Stream.value(null);
+
+  @override
+  Future<Result<InstallmentPlan>> createAtomic({
+    required RecurringTemplate template,
+    required InstallmentPlan plan,
+    required List<InstallmentOccurrence> occurrences,
+  }) async =>
+      Ok(plan);
+
+  @override
+  Future<Result<InstallmentPlan>> create(InstallmentPlan plan) async =>
+      Ok(plan);
+
+  @override
+  Future<Result<InstallmentPlan>> update(InstallmentPlan plan) async =>
+      Ok(plan);
+
+  @override
+  Future<Result<void>> closeEarly(String id) async => const Ok(null);
+}
+
+// ---------------------------------------------------------------------------
+// Fake InstallmentTemplateList notifier for the Installments tab
+// ---------------------------------------------------------------------------
+
+/// A fake [InstallmentTemplateList] notifier that returns an empty list.
+///
+/// Used to avoid needing [recurringTemplateRepositoryProvider] for the
+/// Installments tab in tests focused on the Recurring tab.
+class _FakeInstallmentTemplateListNotifier extends InstallmentTemplateList {
+  @override
+  Future<List<RecurringTemplate>> build() async => [];
+}
+
+// ---------------------------------------------------------------------------
 // Test widget builder
 // ---------------------------------------------------------------------------
 
@@ -139,6 +187,14 @@ Widget _buildTestWidget({
     overrides: [
       recurringTemplateRepositoryProvider.overrideWith(
         (_) async => fakeRepo,
+      ),
+      // Override installment providers so the Installments tab doesn't
+      // try to watch the real repository.
+      installmentTemplateListProvider.overrideWith(
+        _FakeInstallmentTemplateListNotifier.new,
+      ),
+      installmentPlanRepositoryProvider.overrideWith(
+        (_) async => _StubInstallmentPlanRepository(),
       ),
     ],
     child: const MaterialApp(
@@ -385,9 +441,10 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
-    // 10. Installments tab shows placeholder
+    // 10. Installments tab shows empty state (no more placeholder — T-139)
     // -------------------------------------------------------------------------
-    testWidgets('Installments tab shows placeholder', (tester) async {
+    testWidgets('Installments tab shows empty state when no plans',
+        (tester) async {
       await tester.pumpWidget(_buildTestWidget(templates: []));
       await tester.pumpAndSettle();
 
@@ -395,7 +452,8 @@ void main() {
       await tester.tap(find.text('Installments'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Installments — coming soon'), findsOneWidget);
+      // The real Installments tab now shows an empty state.
+      expect(find.textContaining('No installment'), findsOneWidget);
     });
 
     // -------------------------------------------------------------------------

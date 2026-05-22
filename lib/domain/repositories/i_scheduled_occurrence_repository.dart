@@ -3,9 +3,11 @@
 // Abstract repository interface for the ScheduledOccurrence aggregate (T-99).
 //
 // Extended in T-99 to add:
-//   - getPendingDue(asOf)     — query all pending occurrences due on or before asOf
-//   - markCancelled(id)       — cancel an occurrence (e.g. template soft-deleted)
-//   - generateLookahead(...)  — bulk insert pre-materialized future occurrences
+//   - getPendingDue(asOf)              — all pending occurrences due on or before asOf
+//   - markCancelled(id)                — cancel an occurrence
+//   - generateLookahead(...)           — bulk insert pre-materialized occurrences
+// Extended in T-120 to add:
+//   - getStackedRemindAndConfirm(asOf) — pending remind_and_confirm > 24h overdue
 
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/entities/scheduled_occurrence.dart';
@@ -17,6 +19,20 @@ abstract interface class IScheduledOccurrenceRepository {
   ///
   /// Used by [PostDueOccurrencesUseCase] and [AppInitializer] on each launch.
   Future<List<ScheduledOccurrence>> getPendingDue(DateTime asOf);
+
+  /// Returns all pending remind_and_confirm occurrences whose
+  /// scheduled_date is more than 24 hours before [asOf].
+  ///
+  /// These are "stacked" missed occurrences eligible for auto-approval (T-120).
+  /// The 24-hour grace period prevents auto-posting occurrences that were
+  /// just missed (user should still be able to confirm or skip them).
+  ///
+  /// Results are ordered by [ScheduledOccurrence.scheduledDate] ascending.
+  ///
+  /// Parameters:
+  /// - [asOf]: The current time; occurrences with
+  ///   `scheduled_date < asOf - 24h` are returned.
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(DateTime asOf);
 
   /// Marks a pending occurrence as posted and records the resulting
   /// [transactionId].

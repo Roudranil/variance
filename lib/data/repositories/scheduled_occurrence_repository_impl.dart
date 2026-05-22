@@ -47,6 +47,15 @@ class ScheduledOccurrenceRepositoryImpl
   }
 
   @override
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(
+    DateTime asOf,
+  ) {
+    // 24h grace period: occurrences scheduled more than 24h ago.
+    final cutoff = asOf.subtract(const Duration(hours: 24));
+    return _dao.pendingStackedBefore(_toEpochDay(cutoff));
+  }
+
+  @override
   Future<Result<void>> markPosted(String id, String transactionId) async {
     try {
       await _dao.updateStatus(

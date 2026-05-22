@@ -35,6 +35,12 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
   Future<List<ScheduledOccurrence>> getPendingDue(DateTime asOf) async => [];
 
   @override
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(
+    DateTime asOf,
+  ) async =>
+      [];
+
+  @override
   Future<Result<void>> markPosted(String id, String transactionId) async =>
       const Ok(null);
 

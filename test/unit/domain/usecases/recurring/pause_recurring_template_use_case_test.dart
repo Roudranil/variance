@@ -85,6 +85,12 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
   }
 
   @override
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(
+    DateTime asOf,
+  ) async =>
+      [];
+
+  @override
   Future<Result<void>> markSkipped(String id) async {
     skippedIds.add(id);
     return const Ok(null);

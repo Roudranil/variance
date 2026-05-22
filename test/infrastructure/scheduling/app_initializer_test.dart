@@ -47,6 +47,12 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
   }
 
   @override
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(
+    DateTime asOf,
+  ) async =>
+      [];
+
+  @override
   Future<Result<void>> markPosted(String id, String transactionId) async =>
       const Ok(null);
 
@@ -196,10 +202,10 @@ class _FakePostDueOccurrencesUseCase extends PostDueOccurrencesUseCase {
   bool called = false;
 
   @override
-  Future<Result<int>> call({DateTime? asOf}) async {
+  Future<Result<PostingResult>> call({DateTime? asOf}) async {
     called = true;
     if (shouldFail) return const Err(DatabaseFailure('Simulated failure'));
-    return Ok(returnCount);
+    return Ok(PostingResult(autoPostedCount: returnCount, autoApprovedCount: 0));
   }
 }
 
