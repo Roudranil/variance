@@ -54,6 +54,7 @@ import 'package:variance/presentation/features/accounts/account_form_screen.dart
 import 'package:variance/presentation/features/accounts/account_list_screen.dart';
 import 'package:variance/presentation/features/accounts/reconcile_screen.dart';
 import 'package:variance/presentation/features/home/home_screen.dart';
+import 'package:variance/presentation/features/installments/installment_plan_detail_screen.dart';
 import 'package:variance/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/appearance_settings_screen.dart';
 import 'package:variance/presentation/features/settings/appearance/color_scheme_preview_screen.dart';
@@ -175,6 +176,13 @@ abstract final class AppRoutes {
   /// Builds the recurring template detail path for [id].
   static String settingsRecurringDetailPath(String id) =>
       '/settings/recurring/$id';
+
+  /// Installment plan detail / edit (in-tab push on Tab 2).
+  static const settingsInstallmentDetail = '/settings/installments/:id';
+
+  /// Builds the installment plan detail path for [id].
+  static String settingsInstallmentDetailPath(String id) =>
+      '/settings/installments/$id';
 
   /// Drafts settings (in-tab push on Tab 2).
   static const settingsDrafts = '/settings/drafts';
@@ -561,6 +569,19 @@ GoRouter makeAppRouter(WidgetRef ref) {
                         },
                       ),
                     ],
+                  ),
+                  // /settings/installments/:id — Installment Plan Detail (T-137)
+                  GoRoute(
+                    path: 'installments/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'];
+                      if (id == null || id.isEmpty) {
+                        return const RouteErrorScreen(
+                          errorMessage: 'Installment plan ID is missing.',
+                        );
+                      }
+                      return InstallmentPlanDetailScreen(templateId: id);
+                    },
                   ),
                   // /settings/drafts — placeholder
                   GoRoute(
