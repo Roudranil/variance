@@ -1,27 +1,30 @@
 // lib/infrastructure/scheduling/app_initializer.dart
 //
-// AppInitializer — synchronous launch sweep before first frame (T-103).
+// AppInitializer — synchronous launch sweep before first frame (T-103, T-120).
 //
 // Called from main() before runApp(). Runs:
-//   1. PostDueOccurrencesUseCase — posts all overdue auto_post occurrences.
+//   1. PostDueOccurrencesUseCase — posts all overdue auto_post occurrences and
+//      auto-approves stacked remind_and_confirm occurrences > 24h (T-120).
 //   2. GenerateLookaheadUseCase  — refreshes the 90-day materialized window.
 //
-// The count of auto-posted occurrences is stored in [lastAutoPostedCount]
-// for use by the Catch-Up Banner (S-47).
+// The auto-approved count is stored in [lastAutoApprovedCount] for use by
+// the Catch-Up Banner (T-121, S-47).
 //
-// Spec: T-103, SCHED-01, SDS §1.4.3
+// Spec: T-103, T-120, SCHED-01, SDS §1.4.3
 //
 // Test cases (see test/infrastructure/scheduling/app_initializer_test.dart):
 //   1. both use cases called in order
 //   2. lastAutoPostedCount set to count returned by PostDueOccurrencesUseCase
-//   3. failure in PostDueOccurrencesUseCase is logged, lastAutoPostedCount = 0
-//   4. failure in GenerateLookaheadUseCase is logged, does not affect count
+//   3. lastAutoApprovedCount set to autoApprovedCount from PostingResult
+//   4. failure in PostDueOccurrencesUseCase is logged, counts = 0
+//   5. failure in GenerateLookaheadUseCase is logged, does not affect count
 
 import 'dart:developer' as dev;
 
 import 'package:variance/domain/core/result.dart';
 import 'package:variance/domain/usecases/recurring/generate_lookahead_use_case.dart';
-import 'package:variance/domain/usecases/recurring/post_due_occurrences_use_case.dart';
+import 'package:variance/domain/usecases/recurring/post_due_occurrences_use_case.dart'
+    show PostDueOccurrencesUseCase, PostingResult;
 
 /// Synchronous launch sweep that runs before the first Flutter frame.
 ///
@@ -31,11 +34,17 @@ import 'package:variance/domain/usecases/recurring/post_due_occurrences_use_case
 class AppInitializer {
   AppInitializer._();
 
-  /// Number of occurrences auto-posted in the most recent [run] call.
+  /// Number of auto_post occurrences posted in the most recent [run] call.
   ///
   /// Zero if [run] has not been called or if [PostDueOccurrencesUseCase]
   /// returned an error.
   static int lastAutoPostedCount = 0;
+
+  /// Number of stacked remind_and_confirm occurrences auto-approved in the
+  /// most recent [run] call (T-120).
+  ///
+  /// Zero if [run] has not been called or if posting failed.
+  static int lastAutoApprovedCount = 0;
 
   /// Runs the launch sweep.
   ///
@@ -50,18 +59,22 @@ class AppInitializer {
     required PostDueOccurrencesUseCase postDueOccurrences,
     required GenerateLookaheadUseCase generateLookahead,
   }) async {
-    // Step 1: post overdue occurrences.
+    // Step 1: post overdue occurrences and auto-approve stacked ones (T-120).
     try {
       final result = await postDueOccurrences.call();
       switch (result) {
-        case Ok(:final value):
-          lastAutoPostedCount = value;
+        case Ok(:final PostingResult value):
+          lastAutoPostedCount = value.autoPostedCount;
+          lastAutoApprovedCount = value.autoApprovedCount;
           dev.log(
-            'AppInitializer: posted $value overdue occurrence(s).',
+            'AppInitializer: posted ${value.autoPostedCount} auto_post '
+            'occurrence(s); auto-approved ${value.autoApprovedCount} '
+            'stacked remind_and_confirm occurrence(s).',
             name: 'AppInitializer',
           );
         case Err(:final failure):
           lastAutoPostedCount = 0;
+          lastAutoApprovedCount = 0;
           dev.log(
             'AppInitializer: PostDueOccurrencesUseCase failed: '
             '${failure.message}',
@@ -70,6 +83,7 @@ class AppInitializer {
       }
     } on Object catch (e) {
       lastAutoPostedCount = 0;
+      lastAutoApprovedCount = 0;
       dev.log(
         'AppInitializer: unexpected error in PostDueOccurrencesUseCase: $e',
         name: 'AppInitializer',
@@ -102,7 +116,11 @@ class AppInitializer {
 
   /// Resets state for test isolation.
   ///
-  /// Call in [setUp] for any test that checks [lastAutoPostedCount].
+  /// Call in [setUp] for any test that checks [lastAutoPostedCount] or
+  /// [lastAutoApprovedCount].
   // ignore: unused_element — used by test suite
-  static void clearForTest() => lastAutoPostedCount = 0;
+  static void clearForTest() {
+    lastAutoPostedCount = 0;
+    lastAutoApprovedCount = 0;
+  }
 }

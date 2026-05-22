@@ -87,6 +87,12 @@ class _FakeOccurrenceRepository implements IScheduledOccurrenceRepository {
       pendingOccurrences;
 
   @override
+  Future<List<ScheduledOccurrence>> getStackedRemindAndConfirm(
+    DateTime asOf,
+  ) async =>
+      [];
+
+  @override
   Future<Result<void>> markPosted(String id, String transactionId) async {
     markedPosted.add(id);
     return const Ok(null);
@@ -323,8 +329,8 @@ void main() {
       // Template was resumed.
       expect(templateRepo.resumedIds, contains('tpl-resume'));
       // No occurrences were posted (pending list was empty).
-      expect(result, isA<Ok<int>>());
-      expect((result as Ok<int>).value, 0);
+      expect(result, isA<Ok<PostingResult>>());
+      expect((result as Ok<PostingResult>).value.autoPostedCount, 0);
       // Skipped occurrence was not marked posted.
       expect(occRepoWithSkipped.markedPosted, isEmpty);
       // Verify the skipped occurrence is still in its original state

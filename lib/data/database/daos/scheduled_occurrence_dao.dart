@@ -60,6 +60,28 @@ class ScheduledOccurrenceDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Returns all pending occurrences whose `scheduled_date < [beforeDays]`,
+  /// ordered by `scheduled_date` ascending.
+  ///
+  /// Used by [IScheduledOccurrenceRepository.getStackedRemindAndConfirm]
+  /// to find remind_and_confirm occurrences older than 24h (T-120).
+  ///
+  /// Parameters:
+  /// - [beforeDays]: Exclusive upper bound as Unix epoch days.
+  Future<List<domain.ScheduledOccurrence>> pendingStackedBefore(
+    int beforeDays,
+  ) {
+    return (select(scheduledOccurrences)
+          ..where(
+            (t) =>
+                t.status.equals('pending') &
+                t.scheduledDate.isSmallerThanValue(beforeDays),
+          )
+          ..orderBy([(t) => OrderingTerm.asc(t.scheduledDate)]))
+        .map(_mapRow)
+        .get();
+  }
+
   /// Returns all occurrence scheduled dates (epoch-day integers) for
   /// [templateId] that are not cancelled.
   ///
