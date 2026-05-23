@@ -147,6 +147,18 @@ class AppSettingsDao extends DatabaseAccessor<AppDatabase>
     return value == '1';
   }
 
+  /// Returns the Unix epoch seconds when [onboarding_complete] was last set.
+  ///
+  /// Returns null if the row is absent or if onboarding has not been completed.
+  /// Used by [BackupReminderChecker] to compute elapsed days since onboarding.
+  Future<int?> getOnboardingCompletedAt() async {
+    final row = await (select(appSettings)
+          ..where((t) => t.key.equals('onboarding_complete')))
+        .getSingleOrNull();
+    if (row == null || row.value != '1') return null;
+    return row.updatedAt;
+  }
+
   /// Sets [onboarding_complete] to '1'.
   ///
   /// Calls [setValue] with the canonical key.

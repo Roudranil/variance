@@ -140,4 +140,10 @@ abstract interface class ITransactionRepository {
   /// - [id]: UUID of the pending transaction to post.
   /// - [entries]: Balanced entry list from [LedgerEngine].
   Future<Result<void>> postPending(String id, List<Entry> entries);
+
+  /// Returns the count of all non-deleted, non-voided posted transactions.
+  ///
+  /// Used by [BackupReminderChecker] to determine whether the 50-transaction
+  /// threshold has been reached (T-170).
+  Future<int> countPosted();
 }

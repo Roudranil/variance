@@ -52,6 +52,9 @@ class _FakeAppSettingsRepository implements IAppSettingsRepository {
     }
     return const Ok(null);
   }
+
+  @override
+  Future<int?> getOnboardingCompletedAt() async => null;
 }
 
 // ---------------------------------------------------------------------------

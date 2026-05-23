@@ -74,6 +74,9 @@ class _FakeAppSettingsRepository implements IAppSettingsRepository {
     return const Ok(null);
   }
 
+  @override
+  Future<int?> getOnboardingCompletedAt() async => null;
+
   /// Closes the underlying stream controller.
   Future<void> close() => _updates.close();
 }

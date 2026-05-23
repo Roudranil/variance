@@ -346,6 +346,21 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Returns the count of all posted, non-voided transactions.
+  ///
+  /// Used by [BackupReminderChecker] to determine whether the 50-transaction
+  /// threshold has been reached (T-170).
+  ///
+  /// Returns the row count as an [int].
+  Future<int> countPosted() async {
+    final countExpr = transactions.id.count();
+    final query = selectOnly(transactions)
+      ..addColumns([countExpr])
+      ..where(transactions.status.equals('posted'));
+    final row = await query.getSingle();
+    return row.read(countExpr) ?? 0;
+  }
+
   /// Atomically inserts [entries] and sets status = 'posted' for [id].
   ///
   /// Called by [PostPendingTransactionsUseCase] after building entries for a

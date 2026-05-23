@@ -880,3 +880,50 @@ final class RefreshExchangeRatesUseCaseProvider extends $FunctionalProvider<
 
 String _$refreshExchangeRatesUseCaseHash() =>
     r'9b017f66b3fc18fd5ed955f9823ee7058adf6f87';
+
+/// Provides a [GetCatchUpBannerUseCase] bound to the recurring template
+/// repository (T-171).
+
+@ProviderFor(getCatchUpBannerUseCase)
+final getCatchUpBannerUseCaseProvider = GetCatchUpBannerUseCaseProvider._();
+
+/// Provides a [GetCatchUpBannerUseCase] bound to the recurring template
+/// repository (T-171).
+
+final class GetCatchUpBannerUseCaseProvider extends $FunctionalProvider<
+        AsyncValue<GetCatchUpBannerUseCase>,
+        GetCatchUpBannerUseCase,
+        FutureOr<GetCatchUpBannerUseCase>>
+    with
+        $FutureModifier<GetCatchUpBannerUseCase>,
+        $FutureProvider<GetCatchUpBannerUseCase> {
+  /// Provides a [GetCatchUpBannerUseCase] bound to the recurring template
+  /// repository (T-171).
+  GetCatchUpBannerUseCaseProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'getCatchUpBannerUseCaseProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$getCatchUpBannerUseCaseHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<GetCatchUpBannerUseCase> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<GetCatchUpBannerUseCase> create(Ref ref) {
+    return getCatchUpBannerUseCase(ref);
+  }
+}
+
+String _$getCatchUpBannerUseCaseHash() =>
+    r'62801dd370c91850fe19adf13f3f62d8b468284f';

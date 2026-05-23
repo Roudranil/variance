@@ -88,6 +88,9 @@ class _FakeTransactionRepository implements ITransactionRepository {
   @override
   Future<Result<void>> postPending(String id, List<Entry> entries) =>
       throw UnimplementedError();
+
+  @override
+  Future<int> countPosted() => throw UnimplementedError();
 }
 
 // ---------------------------------------------------------------------------

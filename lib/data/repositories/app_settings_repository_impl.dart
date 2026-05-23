@@ -274,6 +274,9 @@ class AppSettingsRepositoryImpl implements IAppSettingsRepository {
     );
   }
 
+  @override
+  Future<int?> getOnboardingCompletedAt() => _dao.getOnboardingCompletedAt();
+
   /// Parses an enum value by [name] from [values], returning null if not found.
   T? _parseEnum<T extends Enum>(String? name, List<T> values) {
     if (name == null) return null;

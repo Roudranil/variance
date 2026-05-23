@@ -101,4 +101,10 @@ abstract interface class IAppSettingsRepository {
 
   /// Applies a partial patch to the settings.
   Future<Result<void>> update(AppSettingsPatch patch);
+
+  /// Returns the Unix epoch seconds when onboarding was completed, or null
+  /// if onboarding is not yet complete.
+  ///
+  /// Used by [BackupReminderChecker] to compute elapsed days since onboarding.
+  Future<int?> getOnboardingCompletedAt();
 }

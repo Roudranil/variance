@@ -250,4 +250,7 @@ class _FakeTxRepo implements ITransactionRepository {
   @override
   Future<List<Transaction>> getDuePendingTransactions(int nowEpoch) async =>
       [];
+
+  @override
+  Future<int> countPosted() async => 0;
 }

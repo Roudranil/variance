@@ -124,6 +124,9 @@ class _FakeTransactionRepository implements ITransactionRepository {
       Ok(draft);
 
   @override
+  Future<int> countPosted() async => 0;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
