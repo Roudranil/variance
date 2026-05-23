@@ -39,6 +39,7 @@ import 'package:variance/presentation/features/home/widgets/alerts_strip.dart';
 import 'package:variance/presentation/features/home/widgets/financial_summary_grid.dart';
 import 'package:variance/presentation/features/home/widgets/greeting_row.dart';
 import 'package:variance/presentation/features/home/widgets/home_screen_body.dart';
+import 'package:variance/presentation/features/home/widgets/home_speed_dial.dart';
 import 'package:variance/presentation/features/home/widgets/month_selector.dart';
 import 'package:variance/presentation/features/home/widgets/recurring_catch_up_banner.dart';
 import 'package:variance/presentation/features/home/widgets/transaction_date_group_header.dart';
@@ -134,11 +135,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         ),
       ),
-      // SpeedDial FAB placeholder — full implementation in future sprint.
-      floatingActionButton: _SpeedDialFab(
-        onExpense: () => context.push(AppRoutes.transactionNew),
-        onIncome: () => context.push(AppRoutes.transactionNew),
-        onTransfer: () => context.push(AppRoutes.transactionNew),
+      // HomeSpeedDial FAB — T-165/T-166.
+      floatingActionButton: HomeSpeedDial(
+        onExpense: () => context.push(
+          '${AppRoutes.transactionNew}?type=expense',
+        ),
+        onIncome: () => context.push(
+          '${AppRoutes.transactionNew}?type=income',
+        ),
+        onTransfer: () => context.push(
+          '${AppRoutes.transactionNew}?type=transfer',
+        ),
+        onDrafts: () => context.push(AppRoutes.settingsDrafts),
       ),
     );
   }
@@ -646,137 +654,6 @@ class _StaleFxBanner extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// SpeedDial FAB placeholder
-// ---------------------------------------------------------------------------
-
-/// SpeedDial FAB — expands to show Expense / Income / Transfer actions.
-///
-/// Current implementation: single FAB that opens the transaction new form.
-/// Full SpeedDial anatomy (§5.1.3) is deferred to the transaction-entry
-/// sprint.
-class _SpeedDialFab extends StatefulWidget {
-  const _SpeedDialFab({
-    required this.onExpense,
-    required this.onIncome,
-    required this.onTransfer,
-  });
-
-  final VoidCallback onExpense;
-  final VoidCallback onIncome;
-  final VoidCallback onTransfer;
-
-  @override
-  State<_SpeedDialFab> createState() => _SpeedDialFabState();
-}
-
-class _SpeedDialFabState extends State<_SpeedDialFab> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (!_expanded) {
-      return FloatingActionButton(
-        key: const Key('fab_collapsed'),
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        onPressed: () => setState(() => _expanded = true),
-        child: const Icon(Icons.add),
-      );
-    }
-
-    // Expanded state: 3 small FABs stacked above anchor.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _SmallFabAction(
-          key: const Key('fab_transfer'),
-          icon: Icons.swap_horiz,
-          label: 'Transfer',
-          backgroundColor: colorScheme.tertiaryContainer,
-          foregroundColor: colorScheme.onTertiaryContainer,
-          onTap: () {
-            setState(() => _expanded = false);
-            widget.onTransfer();
-          },
-        ),
-        const SizedBox(height: 8),
-        _SmallFabAction(
-          key: const Key('fab_income'),
-          icon: Icons.arrow_downward,
-          label: 'Income',
-          backgroundColor: colorScheme.secondaryContainer,
-          foregroundColor: colorScheme.onSecondaryContainer,
-          onTap: () {
-            setState(() => _expanded = false);
-            widget.onIncome();
-          },
-        ),
-        const SizedBox(height: 8),
-        _SmallFabAction(
-          key: const Key('fab_expense'),
-          icon: Icons.arrow_upward,
-          label: 'Expense',
-          backgroundColor: colorScheme.errorContainer,
-          foregroundColor: colorScheme.onErrorContainer,
-          onTap: () {
-            setState(() => _expanded = false);
-            widget.onExpense();
-          },
-        ),
-        const SizedBox(height: 8),
-        // Collapse FAB.
-        FloatingActionButton(
-          key: const Key('fab_collapse'),
-          backgroundColor: colorScheme.primaryContainer,
-          foregroundColor: colorScheme.onPrimaryContainer,
-          onPressed: () => setState(() => _expanded = false),
-          child: const Icon(Icons.close),
-        ),
-      ],
-    );
-  }
-}
-
-/// A small FAB with a text label, used in the SpeedDial expanded state.
-class _SmallFabAction extends StatelessWidget {
-  const _SmallFabAction({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.backgroundColor,
-    required this.foregroundColor,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color backgroundColor;
-  final Color foregroundColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(width: 8),
-        FloatingActionButton.small(
-          backgroundColor: backgroundColor,
-          foregroundColor: foregroundColor,
-          onPressed: onTap,
-          child: Icon(icon),
-        ),
-      ],
-    );
-  }
-}
+// _SpeedDialFab and _SmallFabAction removed in T-165.
+// HomeSpeedDial (lib/presentation/features/home/widgets/home_speed_dial.dart)
+// replaces the placeholder implementation.
