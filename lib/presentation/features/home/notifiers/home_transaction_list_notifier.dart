@@ -1,9 +1,9 @@
 // lib/presentation/features/home/notifiers/home_transaction_list_notifier.dart
 //
 // HomeTransactionListNotifier — cursor-based paginated transaction list for
-// the Home screen monthly view.
+// the Home screen monthly view with filter/sort support.
 //
-// Architecture (T-154, SDS §1.4.2):
+// Architecture (T-154, T-164, SDS §1.4.2):
 //   - Paginated query: LIMIT 51 (pageSize=50 + 1 lookahead for hasNextPage).
 //   - Cursor = (date, id) of the last row on the current page.
 //   - Month scoped via homeProvider.selectedMonth; resets cursor on changeMonth.
@@ -15,26 +15,34 @@
 //     the posted/non-reversal filter already. Additional adjustments filter
 //     (invisible journal) is done post-fetch here.
 //
+// Filter integration (T-164):
+//   - Watches filterProvider; rebuilds when FilterState changes.
+//   - Applies Dart-side predicates: type IN, category_id IN, account_id IN,
+//     date BETWEEN, amount BETWEEN, boolean flags (hasPhoto, hasTitle, etc.).
+//   - When isVoided is set in FilterState, voided transactions are INCLUDED
+//     (overrides normal exclusion).
+//   - Sort order from FilterState.sortField + sortDirection applied after
+//     filtering.
+//
 // Provider graph:
 //   homeTransactionListProvider
 //     ← transactionRepositoryProvider
 //     ← homeProvider (selectedMonth)
+//     ← filterProvider (FilterState, auto-dispose)
 //
-// Test cases (see test/.../home_transaction_list_notifier_test.dart):
-//   1. first page applies exclusion predicates
-//   2a. hasNextPage true when 51 rows returned
-//   2b. hasNextPage false when ≤50 rows returned
-//   3. loadNextPage appends next page
-//   4. loadNextPage no-op when hasNextPage = false
-//   5. changeMonth resets cursor and reloads
+// Test cases:
+//   - see test/presentation/features/home/notifiers/home_transaction_list_notifier_test.dart
+//   - see test/presentation/features/home/notifiers/home_transaction_list_filter_test.dart
 
 import 'dart:async';
 import 'dart:developer' as dev;
 
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:variance/domain/entities/transaction.dart';
 import 'package:variance/domain/repositories/i_transaction_repository.dart';
+import 'package:variance/presentation/providers/filter_providers.dart';
 import 'package:variance/presentation/providers/home_providers.dart';
 import 'package:variance/presentation/providers/repository_providers.dart';
 
@@ -130,6 +138,9 @@ class TxCursor {
 /// Loads cursor-based pages from [ITransactionRepository.watchByMonth], scoped
 /// to [homeProvider]'s current [selectedMonth].
 ///
+/// Watches [filterProvider] — when [FilterState] changes, the list is rebuilt
+/// with the new filter predicates applied Dart-side (T-164).
+///
 /// Call [loadNextPage] to append the next page. Call [changeMonth] to reset
 /// the list and reload from the new month.
 @riverpod
@@ -164,7 +175,11 @@ class HomeTransactionListNotifier extends _$HomeTransactionListNotifier {
     _year = homeState?.selectedMonth.year ?? DateTime.now().year;
     _month = homeState?.selectedMonth.month ?? DateTime.now().month;
 
-    // Reset accumulated state on each build (month change / reload).
+    // Watch FilterState so the list rebuilds when filters change (T-164).
+    ref.watch(filterProvider);
+
+    // Reset accumulated state on each build (month change / filter change /
+    // reload).
     _accumulated.clear();
     _cursor = null;
     _paging = false;
@@ -225,6 +240,9 @@ class HomeTransactionListNotifier extends _$HomeTransactionListNotifier {
   Future<TransactionListState> _loadPage(ITransactionRepository repo) async {
     final completer = Completer<TransactionListState>();
 
+    // Read current filter state — used for Dart-side predicates (T-164).
+    final filterState = ref.read(filterProvider);
+
     _sub = repo
         .watchByMonth(
       _year,
@@ -233,10 +251,8 @@ class HomeTransactionListNotifier extends _$HomeTransactionListNotifier {
     )
         .listen(
       (rows) {
-        // Apply additional exclusions beyond the DAO's posted/non-reversal
-        // filter: exclude invisible journal adjustments (purpose = system
-        // and no user-facing context) and superseded rows.
-        final filtered = _applyExclusionPredicates(rows);
+        // Apply exclusion predicates and active filter criteria (T-164).
+        final filtered = _applyExclusionPredicates(rows, filterState);
 
         // Trim to page window using cursor.
         final paged = _cursor == null
@@ -301,20 +317,122 @@ class HomeTransactionListNotifier extends _$HomeTransactionListNotifier {
     return completer.future;
   }
 
-  /// Applies exclusion predicates not handled by the DAO layer.
+  /// Applies exclusion predicates and active [FilterState] criteria.
   ///
-  /// Excludes:
-  /// - Voided transactions (status = voided).
+  /// Base exclusions (T-154):
+  /// - Voided transactions — unless [filter.isVoided] is true (show them).
   /// - Superseded transactions (purpose = reversal).
-  /// - Invisible journal adjustments (purpose = system with no user context).
-  List<Transaction> _applyExclusionPredicates(List<Transaction> rows) {
-    return rows.where((tx) {
-      // Exclude voided.
-      if (tx.status == TransactionStatus.voided) return false;
-      // Exclude reversal entries (superseded originals).
+  /// - Invisible journal adjustments (purpose = system).
+  ///
+  /// Filter predicates (T-164):
+  /// - [filter.types]: Keep only matching types (pass-through when empty).
+  /// - [filter.accountIds]: Match source or destination account.
+  /// - [filter.categoryIds]: Match category or subcategory.
+  /// - [filter.dateRange]: Transaction date within [DateTimeRange].
+  /// - [filter.minAmountMinor] / [filter.maxAmountMinor]: Amount bounds.
+  /// - Boolean flags: hasTitle, hasDescription, isRecurring (hasPhoto is
+  ///   metadata-only and not yet stored on the domain entity — skipped).
+  ///
+  /// After filtering, sort is applied according to [filter.sortField] and
+  /// [filter.sortDirection].
+  ///
+  /// Parameters:
+  /// - [rows]: Raw rows from the repository stream.
+  /// - [filter]: Active [FilterState]; use [const FilterState()] for no filter.
+  List<Transaction> _applyExclusionPredicates(
+    List<Transaction> rows,
+    FilterState filter,
+  ) {
+    final result = rows.where((tx) {
+      // --- Base exclusions ---
+      // Allow voided when isVoided flag is active; otherwise exclude.
+      if (tx.status == TransactionStatus.voided && !filter.isVoided) {
+        return false;
+      }
+      // Always exclude reversal (superseded) entries.
       if (tx.purpose == TransactionPurpose.reversal) return false;
+
+      // --- Type filter ---
+      if (filter.types.isNotEmpty && !filter.types.contains(tx.type)) {
+        return false;
+      }
+
+      // --- Account filter ---
+      if (filter.accountIds.isNotEmpty) {
+        final inSrc = tx.accountSourceId != null &&
+            filter.accountIds.contains(tx.accountSourceId);
+        final inDst = tx.accountDestinationId != null &&
+            filter.accountIds.contains(tx.accountDestinationId);
+        if (!inSrc && !inDst) return false;
+      }
+
+      // --- Category filter ---
+      if (filter.categoryIds.isNotEmpty) {
+        final inCat =
+            tx.categoryId != null && filter.categoryIds.contains(tx.categoryId);
+        final inSub = tx.subcategoryId != null &&
+            filter.categoryIds.contains(tx.subcategoryId);
+        if (!inCat && !inSub) return false;
+      }
+
+      // --- Date range filter ---
+      if (filter.dateRange != null) {
+        final range = filter.dateRange as DateTimeRange;
+        final startEpoch = range.start.millisecondsSinceEpoch ~/ 1000;
+        final endEpoch = range.end.millisecondsSinceEpoch ~/ 1000;
+        if (tx.dateTime < startEpoch || tx.dateTime > endEpoch) return false;
+      }
+
+      // --- Amount range filter ---
+      if (filter.minAmountMinor != null &&
+          tx.amountMinor < filter.minAmountMinor!) {
+        return false;
+      }
+      if (filter.maxAmountMinor != null &&
+          tx.amountMinor > filter.maxAmountMinor!) {
+        return false;
+      }
+
+      // --- Boolean flags ---
+      if (filter.hasTitle && (tx.title == null || tx.title!.isEmpty)) {
+        return false;
+      }
+      if (filter.hasDescription &&
+          (tx.description == null || tx.description!.isEmpty)) {
+        return false;
+      }
+      if (filter.isRecurring && tx.parentTemplateId == null) return false;
+
       return true;
     }).toList();
+
+    // --- Apply sort order (T-164) ---
+    _sortRows(result, filter.sortField, filter.sortDirection);
+
+    return result;
+  }
+
+  /// Sorts [rows] in-place according to [field] and [direction].
+  ///
+  /// Default (date desc) matches the repository's natural order and is a
+  /// no-op. Other combinations re-sort the Dart list.
+  ///
+  /// Parameters:
+  /// - [rows]: The list to sort in-place.
+  /// - [field]: The sort field (date or amount).
+  /// - [direction]: Ascending or descending.
+  void _sortRows(
+    List<Transaction> rows,
+    SortField field,
+    SortDirection direction,
+  ) {
+    rows.sort((a, b) {
+      final int cmp = switch (field) {
+        SortField.date => a.dateTime.compareTo(b.dateTime),
+        SortField.amount => a.amountMinor.compareTo(b.amountMinor),
+      };
+      return direction == SortDirection.descending ? -cmp : cmp;
+    });
   }
 
   void _cancelSub() {
