@@ -36,6 +36,7 @@ import 'package:variance/domain/entities/transaction.dart';
 import 'package:variance/infrastructure/scheduling/app_initializer.dart';
 import 'package:variance/presentation/features/home/notifiers/home_transaction_list_notifier.dart';
 import 'package:variance/presentation/features/home/widgets/alerts_strip.dart';
+import 'package:variance/presentation/features/home/widgets/catch_up_banner.dart';
 import 'package:variance/presentation/features/home/widgets/financial_summary_grid.dart';
 import 'package:variance/presentation/features/home/widgets/greeting_row.dart';
 import 'package:variance/presentation/features/home/widgets/home_screen_body.dart';
@@ -207,6 +208,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: RecurringCatchUpBanner(
                   autoApprovedCount: AppInitializer.lastAutoApprovedCount,
                 ),
+              ),
+
+              // Zone 3c: Auto-posted Catch-Up Banner (T-171)
+              // Shown when auto_post occurrences were posted during the
+              // launch sweep. Uses GetCatchUpBannerUseCase.
+              const SliverToBoxAdapter(
+                child: CatchUpBanner(),
               ),
 
               // Zone 4: Transaction list (date-grouped)

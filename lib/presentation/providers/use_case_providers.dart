@@ -35,6 +35,7 @@ import 'package:variance/domain/usecases/recurring/pause_recurring_template_use_
 import 'package:variance/domain/usecases/recurring/skip_occurrence_use_case.dart';
 import 'package:variance/domain/usecases/recurring/update_recurring_template_use_case.dart';
 import 'package:variance/domain/usecases/transaction/create_transaction_use_case.dart';
+import 'package:variance/domain/usecases/home/get_catch_up_banner_use_case.dart';
 import 'package:variance/domain/usecases/transaction/search_transactions_use_case.dart';
 import 'package:variance/domain/usecases/transaction/watch_monthly_transactions_use_case.dart';
 import 'package:variance/infrastructure/exchange_rates/exchange_rate_service.dart';
@@ -248,4 +249,17 @@ Future<RefreshExchangeRatesUseCase> refreshExchangeRatesUseCase(Ref ref) async {
     exchangeRateService: ExchangeRateService(),
     homeCurrency: homeCurrency,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Home use cases
+// ---------------------------------------------------------------------------
+
+/// Provides a [GetCatchUpBannerUseCase] bound to the recurring template
+/// repository (T-171).
+@riverpod
+Future<GetCatchUpBannerUseCase> getCatchUpBannerUseCase(Ref ref) async {
+  final templateRepo =
+      await ref.watch(recurringTemplateRepositoryProvider.future);
+  return GetCatchUpBannerUseCase(templateRepo);
 }
