@@ -13,7 +13,8 @@
 //     ├── scheduledOccurrenceDaoProvider
 //     ├── exchangeRateDaoProvider
 //     ├── currencyDaoProvider
-//     └── appSettingsDaoProvider
+//     ├── appSettingsDaoProvider
+//     └── searchDaoProvider
 //
 // Production: appDatabaseProvider calls AppDatabase.open() and stores the
 // encryption key in FlutterSecureStorage (Android Keystore backed).
@@ -38,6 +39,7 @@ import 'package:variance/data/database/daos/currency_dao.dart';
 import 'package:variance/data/database/daos/exchange_rate_dao.dart';
 import 'package:variance/data/database/daos/installment_dao.dart';
 import 'package:variance/data/database/daos/scheduled_occurrence_dao.dart';
+import 'package:variance/data/database/daos/search_dao.dart';
 import 'package:variance/data/database/daos/template_dao.dart';
 import 'package:variance/data/database/daos/transaction_dao.dart';
 
@@ -157,4 +159,13 @@ Future<InstallmentOccurrenceDao> installmentOccurrenceDao(Ref ref) async {
 Future<ScheduledOccurrenceDao> scheduledOccurrenceDao(Ref ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return db.scheduledOccurrenceDao;
+}
+
+/// Provides the [SearchDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+@Riverpod(keepAlive: true)
+Future<SearchDao> searchDao(Ref ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return db.searchDao;
 }

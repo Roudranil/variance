@@ -543,3 +543,47 @@ final class ScheduledOccurrenceDaoProvider extends $FunctionalProvider<
 
 String _$scheduledOccurrenceDaoHash() =>
     r'00bf340348eeae3ba99418ec951bf40b67d26be8';
+
+/// Provides the [SearchDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+@ProviderFor(searchDao)
+final searchDaoProvider = SearchDaoProvider._();
+
+/// Provides the [SearchDao] for the open [AppDatabase].
+///
+/// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+
+final class SearchDaoProvider extends $FunctionalProvider<AsyncValue<SearchDao>,
+        SearchDao, FutureOr<SearchDao>>
+    with $FutureModifier<SearchDao>, $FutureProvider<SearchDao> {
+  /// Provides the [SearchDao] for the open [AppDatabase].
+  ///
+  /// Depends on [appDatabaseProvider] and is kept alive for the app's lifetime.
+  SearchDaoProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'searchDaoProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchDaoHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<SearchDao> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SearchDao> create(Ref ref) {
+    return searchDao(ref);
+  }
+}
+
+String _$searchDaoHash() => r'223fecc967b22a2370c070e89b6f465db981cf06';
