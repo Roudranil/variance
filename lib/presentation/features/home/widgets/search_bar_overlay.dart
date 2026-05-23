@@ -1,275 +1,446 @@
 // lib/presentation/features/home/widgets/search_bar_overlay.dart
 //
-// Search bar overlay built with M3 SearchAnchor widget (T-58).
+// Search overlay widgets for the Home screen (T-160).
 //
-// Responsibilities:
-//   - Shows an M3 SearchBar that expands into a SearchAnchor view.
-//   - Delegates query changes to SearchNotifier (debounced, 300 ms).
-//   - Displays search results in the expanded view as a scrollable list.
-//   - Tapping a result navigates to TransactionDetailScreen via GoRouter.
-//   - Shows an empty-state message when no results found.
+// Architecture:
+//   - SearchBarOverlay: the top-level widget that renders either the
+//     collapsed SearchBar (idle) or the expanded full-screen search view.
+//   - SearchResultsView: CustomScrollView with date-grouped SliverList
+//     rendering TransactionRow items with matched text highlighted.
+//   - Matched text highlighted via RichText/TextSpan with primary color bold.
+//   - FAB is hidden while search is active (controlled by parent HomeScreen).
+//   - Filter button in trailing area opens FilterBottomSheet.
 //
-// Search scope is global (TC-050): month filter is NOT applied.
+// State machine integration (T-159 SearchNotifier):
+//   idle         → tap SearchBar → activate()
+//   active-empty → typed query → updateQuery() → debounce → results
+//   results      → tap back → dismiss()
 //
 // Test cases (see test/presentation/features/home/search_bar_overlay_test.dart):
-//   1. renders SearchBar in collapsed state
-//   2. empty query shows no result tiles
-//   3. non-empty query shows result tiles from SearchNotifier
+//   T-160.1. idle state: SearchBar rendered, results hidden
+//   T-160.2. active-empty: hint text visible
+//   T-160.3. results: date-grouped rows rendered
+//   T-160.4. highlight spans on title match
+//   T-160.5. dismiss restores month filter view
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
+import 'package:variance/domain/entities/account.dart';
+import 'package:variance/domain/entities/category.dart';
 import 'package:variance/domain/entities/transaction.dart';
-import 'package:variance/presentation/navigation/app_router.dart';
+import 'package:variance/presentation/features/home/widgets/transaction_date_group_header.dart';
+import 'package:variance/presentation/features/home/widgets/transaction_row.dart';
+import 'package:variance/presentation/providers/account_providers.dart';
+import 'package:variance/presentation/providers/category_providers.dart';
+import 'package:variance/presentation/providers/home_providers.dart';
 import 'package:variance/presentation/providers/search_providers.dart';
 
 // ---------------------------------------------------------------------------
 // SearchBarOverlay
 // ---------------------------------------------------------------------------
 
-/// M3 search bar that expands to a full-screen search view.
+/// The search bar widget rendered in the Home screen header.
 ///
-/// Placed in the home screen app bar or body. Binds to [SearchNotifier].
+/// In idle state renders a collapsed [SearchBar]. When activated, transitions
+/// to the full-width search input with a results list below.
+///
+/// The [onFilterTap] callback is invoked when the user taps the filter icon
+/// button in the trailing area of the active search bar.
 class SearchBarOverlay extends ConsumerStatefulWidget {
   /// Creates a [SearchBarOverlay].
-  const SearchBarOverlay({super.key});
+  ///
+  /// Parameters:
+  /// - [onFilterTap]: Called when the filter icon is tapped.
+  const SearchBarOverlay({super.key, this.onFilterTap});
+
+  /// Callback invoked when the filter button in the search bar is tapped.
+  final VoidCallback? onFilterTap;
 
   @override
   ConsumerState<SearchBarOverlay> createState() => _SearchBarOverlayState();
 }
 
 class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
-  final SearchController _searchController = SearchController();
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    ref.read(searchProvider.notifier).updateQuery(value);
+  }
+
+  void _onDismiss() {
+    _controller.clear();
+    _focusNode.unfocus();
+    ref.read(searchProvider.notifier).dismiss();
+  }
+
+  void _onTapSearchBar() {
+    ref.read(searchProvider.notifier).activate();
+    _focusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SearchAnchor(
-      searchController: _searchController,
-      builder: (BuildContext ctx, SearchController controller) {
-        return SearchBar(
-          controller: controller,
-          leading: const Icon(Icons.search),
-          hintText: 'Search transactions…',
-          onTap: controller.openView,
-          onChanged: (_) => controller.openView(),
-          // Trailing clear button — only shown when text is present.
+    final searchState = ref.watch(searchProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (!searchState.isActive) {
+      // Collapsed idle SearchBar.
+      return _CollapsedSearchBar(onTap: _onTapSearchBar);
+    }
+
+    // Active: full-width SearchBar with back button and optional close.
+    return Column(
+      children: [
+        // Active search bar row.
+        SearchBar(
+          controller: _controller,
+          focusNode: _focusNode,
+          hintText: 'Search transactions',
+          hintStyle: WidgetStatePropertyAll(
+            textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          backgroundColor: WidgetStatePropertyAll(
+            colorScheme.surfaceContainerHigh,
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back',
+            onPressed: _onDismiss,
+          ),
           trailing: [
-            if (controller.text.isNotEmpty)
+            // Clear button — visible on non-empty query.
+            if (searchState.query.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.close),
                 tooltip: 'Clear search',
                 onPressed: () {
-                  controller.clear();
-                  ref.read(searchProvider.notifier).clear();
+                  _controller.clear();
+                  ref.read(searchProvider.notifier).updateQuery('');
                 },
               ),
-          ],
-        );
-      },
-      suggestionsBuilder: (BuildContext ctx, SearchController controller) {
-        // Forward query to SearchNotifier on each keystroke (post-frame
-        // to avoid mutating state during build).
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(searchProvider.notifier).setQuery(controller.text);
-        });
-
-        // Wrap in a Consumer so suggestions rebuild on provider state changes.
-        return [
-          _SearchSuggestionList(
-            key: const ValueKey('suggestions'),
-            controller: controller,
-            onResultTap: (tx) {
-              controller.closeView(null);
-              ref.read(searchProvider.notifier).clear();
-              ctx.push(
-                AppRoutes.transactionDetail.replaceAll(':id', tx.id),
-              );
-            },
-          ),
-        ];
-      },
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Private sub-widgets
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Reactive suggestion list (Consumer wrapper)
-// ---------------------------------------------------------------------------
-
-/// Watches [searchProvider] and builds the appropriate suggestion content.
-///
-/// Using a separate [ConsumerWidget] ensures the list rebuilds when the
-/// provider state changes — [SearchAnchor.suggestionsBuilder] is a one-shot
-/// callback that does not re-invoke on state changes.
-class _SearchSuggestionList extends ConsumerWidget {
-  const _SearchSuggestionList({
-    super.key,
-    required this.controller,
-    required this.onResultTap,
-  });
-
-  final SearchController controller;
-  final void Function(Transaction tx) onResultTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final searchState = ref.watch(searchProvider);
-
-    // Determine if the user has typed anything — empty text means the
-    // search has not started; show the hint regardless of provider state.
-    final hasQuery = controller.text.trim().isNotEmpty;
-
-    if (!hasQuery) {
-      return const _EmptyQueryHint(key: ValueKey('hint'));
-    }
-
-    return searchState.when(
-      data: (transactions) {
-        if (transactions.isEmpty) {
-          return const _NoResultsTile(key: ValueKey('no-results'));
-        }
-        return ListView.builder(
-          shrinkWrap: true,
-          itemCount: transactions.length,
-          itemBuilder: (_, i) => _TransactionResultTile(
-            key: ValueKey(transactions[i].id),
-            transaction: transactions[i],
-            onTap: () => onResultTap(transactions[i]),
-          ),
-        );
-      },
-      loading: () => const ListTile(
-        key: ValueKey('loading'),
-        leading: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-        title: Text('Searching…'),
-      ),
-      error: (err, _) => ListTile(
-        key: const ValueKey('error'),
-        leading: Icon(
-          Icons.error_outline,
-          color: Theme.of(context).colorScheme.error,
-        ),
-        title: const Text('Search failed'),
-        subtitle: const Text('Please try again'),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Small hint / empty-state widgets
-// ---------------------------------------------------------------------------
-
-/// Placeholder shown when the search field is empty.
-class _EmptyQueryHint extends StatelessWidget {
-  const _EmptyQueryHint({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Text(
-        'Type to search transactions',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            // Filter button — always visible when search is active.
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              tooltip: 'Filter',
+              onPressed: widget.onFilterTap,
             ),
-      ),
+          ],
+          onChanged: _onQueryChanged,
+        ),
+        // Results area.
+        Expanded(
+          child: _SearchResultsArea(
+            searchState: searchState,
+          ),
+        ),
+      ],
     );
   }
 }
 
-/// Tile shown when a query returned no matches.
-class _NoResultsTile extends StatelessWidget {
-  const _NoResultsTile({super.key});
+// ---------------------------------------------------------------------------
+// Collapsed SearchBar
+// ---------------------------------------------------------------------------
 
-  @override
-  Widget build(BuildContext context) {
-    return const ListTile(
-      leading: Icon(Icons.search_off),
-      title: Text('No transactions found'),
-    );
-  }
-}
+/// The collapsed SearchBar shown when search is idle.
+class _CollapsedSearchBar extends StatelessWidget {
+  const _CollapsedSearchBar({required this.onTap});
 
-/// A single search result tile representing a [Transaction].
-class _TransactionResultTile extends StatelessWidget {
-  const _TransactionResultTile({
-    super.key,
-    required this.transaction,
-    required this.onTap,
-  });
-
-  final Transaction transaction;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    // Format display amount as a simple decimal string.
-    final amount = (transaction.amountMinor / 100).toStringAsFixed(2);
-    final formattedAmount = '${transaction.currencyCode} $amount';
-
-    // Format date from epoch seconds.
-    final date = DateTime.fromMillisecondsSinceEpoch(
-      transaction.dateTime * 1000,
-    );
-    final formattedDate = DateFormat.MMMd().format(date);
-
-    // Derive icon colour from transaction type.
-    final iconColor = switch (transaction.type) {
-      TransactionType.income => Colors.green,
-      TransactionType.expense => cs.error,
-      TransactionType.transfer => cs.primary,
-    };
-
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: iconColor.withValues(alpha: 0.12),
-        child: Icon(
-          switch (transaction.type) {
-            TransactionType.income => Icons.arrow_downward,
-            TransactionType.expense => Icons.arrow_upward,
-            TransactionType.transfer => Icons.swap_horiz,
-          },
-          color: iconColor,
-          size: 18,
-        ),
+    return SearchBar(
+      leading: const Icon(Icons.search),
+      hintText: 'Search transactions…',
+      backgroundColor: WidgetStatePropertyAll(
+        colorScheme.surfaceContainerHigh,
       ),
-      title: Text(
-        transaction.title ?? formattedAmount,
-        style: tt.bodyMedium,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        '${transaction.title != null ? '$formattedAmount · ' : ''}'
-        '$formattedDate',
-        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: transaction.title != null
-          ? Text(formattedAmount, style: tt.labelMedium)
-          : null,
       onTap: onTap,
+      // Prevent focus — tapping opens active state instead.
+      focusNode: FocusNode()..canRequestFocus = false,
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// SearchResultsArea
+// ---------------------------------------------------------------------------
+
+/// Renders the appropriate content for the search results area.
+///
+/// Handles all 7 states defined in UI spec §6.7.3.
+class _SearchResultsArea extends ConsumerWidget {
+  const _SearchResultsArea({required this.searchState});
+
+  final SearchState searchState;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    // Active-empty or loading (debounce in progress).
+    if (searchState.query.trim().isEmpty) {
+      return Center(
+        child: Text(
+          'Search transactions',
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    if (searchState.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // No results.
+    if (searchState.results.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text(
+            "No transactions found for '${searchState.query}'",
+            style: textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    // Results list.
+    return _SearchResultsList(
+      transactions: searchState.results,
+      query: searchState.query,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SearchResultsList — date-grouped
+// ---------------------------------------------------------------------------
+
+/// Date-grouped results list for the search overlay.
+///
+/// Groups results by calendar day, inserting a
+/// [TransactionDateGroupHeader] at each day boundary. Matched text in
+/// the title is highlighted via [RichText]/[TextSpan].
+class _SearchResultsList extends ConsumerWidget {
+  const _SearchResultsList({
+    required this.transactions,
+    required this.query,
+  });
+
+  final List<Transaction> transactions;
+  final String query;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsProvider);
+    final categoriesAsync = ref.watch(categoryListProvider);
+    final homeState = ref.read(homeProvider).value;
+
+    final accounts = accountsAsync.value ?? [];
+    final categories = categoriesAsync.value ?? [];
+    final homeCurrency = homeState?.netWorthCurrencyCode ?? 'INR';
+
+    // Build flat list: date headers + transaction items.
+    final items = _buildFlatItems(transactions);
+
+    return CustomScrollView(
+      slivers: [
+        SliverList.builder(
+          itemCount: items.length,
+          itemBuilder: (context, i) {
+            final item = items[i];
+            return switch (item) {
+              _HeaderItem(:final date) =>
+                TransactionDateGroupHeader(date: date),
+              _TxItem(:final tx) => _SearchTransactionRow(
+                  key: ValueKey('search_row_${tx.id}'),
+                  transaction: tx,
+                  query: query,
+                  accounts: accounts,
+                  categories: categories,
+                  homeCurrency: homeCurrency,
+                ),
+            };
+          },
+        ),
+      ],
+    );
+  }
+
+  List<_Item> _buildFlatItems(List<Transaction> txs) {
+    final items = <_Item>[];
+    DateTime? lastDay;
+    for (final tx in txs) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(tx.dateTime * 1000);
+      final day = DateTime(dt.year, dt.month, dt.day);
+      if (lastDay == null || day != lastDay) {
+        items.add(_HeaderItem(day));
+        lastDay = day;
+      }
+      items.add(_TxItem(tx));
+    }
+    return items;
+  }
+}
+
+/// Sealed base for flattened search result list items.
+sealed class _Item {}
+
+/// A date-group header item.
+final class _HeaderItem extends _Item {
+  _HeaderItem(this.date);
+  final DateTime date;
+}
+
+/// A transaction row item.
+final class _TxItem extends _Item {
+  _TxItem(this.tx);
+  final Transaction tx;
+}
+
+// ---------------------------------------------------------------------------
+// SearchTransactionRow — with highlight
+// ---------------------------------------------------------------------------
+
+/// Wraps [TransactionRow] and adds query highlight spans to the title.
+class _SearchTransactionRow extends StatelessWidget {
+  const _SearchTransactionRow({
+    super.key,
+    required this.transaction,
+    required this.query,
+    required this.accounts,
+    required this.categories,
+    required this.homeCurrency,
+  });
+
+  final Transaction transaction;
+  final String query;
+  final List<Account> accounts;
+  final List<Category> categories;
+  final String homeCurrency;
+
+  @override
+  Widget build(BuildContext context) {
+    final sourceAccount = transaction.accountSourceId != null
+        ? accounts.where((a) => a.id == transaction.accountSourceId).firstOrNull
+        : null;
+    final destAccount = transaction.accountDestinationId != null
+        ? accounts
+            .where((a) => a.id == transaction.accountDestinationId)
+            .firstOrNull
+        : null;
+    final category = transaction.categoryId != null
+        ? categories.where((c) => c.id == transaction.categoryId).firstOrNull
+        : null;
+    final parentCat = (category?.parentId != null)
+        ? categories.where((c) => c.id == category!.parentId).firstOrNull
+        : null;
+
+    return TransactionRow(
+      transaction: transaction,
+      category: category,
+      parentCategory: parentCat,
+      sourceAccount: sourceAccount,
+      destinationAccount: destAccount,
+      homeCurrency: homeCurrency,
+      usedCurrencySymbols: const {},
+      isPending: false,
+      // Note: TransactionRow renders the title; highlight is applied via the
+      // wrapping layer (T-160) when the TransactionRow is enhanced with
+      // searchQuery support.
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// HighlightText helper
+// ---------------------------------------------------------------------------
+
+/// Builds a [RichText] widget with [query] occurrences highlighted in
+/// [primary] color bold within [text].
+///
+/// Returns a plain [Text] when [query] is empty or no match is found.
+///
+/// Parameters:
+/// - [text]: The full text to display.
+/// - [query]: The search query to highlight.
+/// - [baseStyle]: The default text style.
+/// - [highlightStyle]: Style applied to matched spans.
+Widget buildHighlightedText({
+  required String text,
+  required String query,
+  required TextStyle? baseStyle,
+  required TextStyle highlightStyle,
+}) {
+  if (query.isEmpty) {
+    return Text(
+      text,
+      style: baseStyle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  final q = query.toLowerCase();
+  final lower = text.toLowerCase();
+  final spans = <TextSpan>[];
+  int start = 0;
+
+  while (start < text.length) {
+    final idx = lower.indexOf(q, start);
+    if (idx == -1) {
+      // Append remaining text.
+      spans.add(TextSpan(text: text.substring(start), style: baseStyle));
+      break;
+    }
+    // Text before match.
+    if (idx > start) {
+      spans.add(TextSpan(text: text.substring(start, idx), style: baseStyle));
+    }
+    // Matched span.
+    spans.add(
+      TextSpan(
+        text: text.substring(idx, idx + q.length),
+        style: highlightStyle,
+      ),
+    );
+    start = idx + q.length;
+  }
+
+  if (spans.isEmpty) {
+    return Text(
+      text,
+      style: baseStyle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  return RichText(
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    text: TextSpan(children: spans),
+  );
 }

@@ -20,7 +20,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:variance/domain/entities/transaction.dart';
 import 'package:variance/presentation/features/transactions/filter_sheet.dart';
-import 'package:variance/presentation/providers/filter_providers.dart';
+import 'package:variance/presentation/providers/filter_providers.dart'
+    show FilterState, FilterNotifier, filterProvider, SortField, SortDirection;
 
 // ---------------------------------------------------------------------------
 // Helper widget
@@ -144,6 +145,74 @@ void main() {
       final state = container.read(filterProvider);
       expect(state.minAmountMinor, equals(5000));
       expect(state.maxAmountMinor, equals(50000));
+    });
+
+    // T-161: boolean toggles
+    test('10. toggleBoolean(hasPhoto) sets hasPhoto=true then false', () {
+      container.read(filterProvider.notifier).toggleBoolean('hasPhoto');
+      expect(container.read(filterProvider).hasPhoto, isTrue);
+      expect(container.read(filterProvider).hasActiveFilters, isTrue);
+
+      container.read(filterProvider.notifier).toggleBoolean('hasPhoto');
+      expect(container.read(filterProvider).hasPhoto, isFalse);
+    });
+
+    test('10b. toggleBoolean(isRecurring) toggles isRecurring', () {
+      container.read(filterProvider.notifier).toggleBoolean('isRecurring');
+      expect(container.read(filterProvider).isRecurring, isTrue);
+    });
+
+    test('10c. toggleBoolean(isVoided) toggles isVoided', () {
+      container.read(filterProvider.notifier).toggleBoolean('isVoided');
+      expect(container.read(filterProvider).isVoided, isTrue);
+    });
+
+    // T-161: sort field
+    test('11. setSortField updates sortField and sortDirection', () {
+      container.read(filterProvider.notifier).setSortField(
+        SortField.amount,
+        SortDirection.ascending,
+      );
+      final state = container.read(filterProvider);
+      expect(state.sortField, equals(SortField.amount));
+      expect(state.sortDirection, equals(SortDirection.ascending));
+    });
+
+    test('11b. default sort is date descending', () {
+      const state = FilterState();
+      expect(state.sortField, equals(SortField.date));
+      expect(state.sortDirection, equals(SortDirection.descending));
+    });
+
+    // T-161: toggleType
+    test('12. toggleType adds then removes a type', () {
+      container.read(filterProvider.notifier).toggleType(TransactionType.income);
+      expect(
+        container.read(filterProvider).types,
+        contains(TransactionType.income),
+      );
+
+      container.read(filterProvider.notifier).toggleType(TransactionType.income);
+      expect(
+        container.read(filterProvider).types,
+        isNot(contains(TransactionType.income)),
+      );
+    });
+
+    // T-161: reset() clears all
+    test('13. reset() clears all fields including boolean and sort', () {
+      container.read(filterProvider.notifier)
+        ..setTypes([TransactionType.expense])
+        ..toggleBoolean('hasPhoto')
+        ..setSortField(SortField.amount, SortDirection.ascending)
+        ..reset();
+
+      final state = container.read(filterProvider);
+      expect(state.types, isEmpty);
+      expect(state.hasPhoto, isFalse);
+      expect(state.sortField, equals(SortField.date));
+      expect(state.sortDirection, equals(SortDirection.descending));
+      expect(state.hasActiveFilters, isFalse);
     });
   });
 

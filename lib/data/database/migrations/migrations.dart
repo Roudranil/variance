@@ -95,6 +95,31 @@ MigrationStrategy buildMigrationStrategy(
       // Create all Drift-managed tables.
       await m.createAll();
 
+      // Create the denormalized view used as the FTS5 content source
+      // (data model §10.2). Must be created before the FTS5 virtual table
+      // that references it via content='transactions_search_view'.
+      await database.customStatement('''
+        CREATE VIEW IF NOT EXISTS transactions_search_view AS
+        SELECT
+          t.rowid,
+          t.id                              AS transaction_id,
+          t.title,
+          t.description,
+          COALESCE(a_src.name, a_dst.name)  AS account_name,
+          COALESCE(c.name, '')              AS category_name
+        FROM transactions t
+        LEFT JOIN accounts a_src ON a_src.id = t.account_source_id
+        LEFT JOIN accounts a_dst ON a_dst.id = t.account_destination_id
+        LEFT JOIN categories c   ON c.id = t.category_id
+        WHERE t.status = 'posted'
+          AND t.purpose IN ('user', 'correction', 'system')
+      ''');
+
+      dev.log(
+        'AppDatabase onCreate: transactions_search_view view created',
+        name: 'AppDatabase',
+      );
+
       // Create the FTS5 virtual table for full-text transaction search.
       // FTS5 virtual tables cannot be represented as Drift Table classes;
       // they are created here with a raw SQL statement (SDS §2.8.2 /

@@ -134,12 +134,16 @@ void main() {
   });
 
   // T-132.1 Zero-posted state
-  test('T-132.1 zero-posted: runningTotal=0, totalRemaining=totalConfigured', () async {
+  test('T-132.1 zero-posted: runningTotal=0, totalRemaining=totalConfigured',
+      () async {
     // Three pending occurrences, no postings yet.
     await db.installmentOccurrenceDao.insertOccurrences([
-      _makeOcc(id: 'occ-1', templateId: templateId, seq: 1, amountMinor: 100000),
-      _makeOcc(id: 'occ-2', templateId: templateId, seq: 2, amountMinor: 100000),
-      _makeOcc(id: 'occ-3', templateId: templateId, seq: 3, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-1', templateId: templateId, seq: 1, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-2', templateId: templateId, seq: 2, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-3', templateId: templateId, seq: 3, amountMinor: 100000),
     ]);
 
     final amounts = await db.installmentOccurrenceDao
@@ -153,7 +157,8 @@ void main() {
   });
 
   // T-132.2 Partial-posted state
-  test('T-132.2 partial-posted: runningTotal reflects posted amounts', () async {
+  test('T-132.2 partial-posted: runningTotal reflects posted amounts',
+      () async {
     await db.customStatement('PRAGMA foreign_keys = OFF');
     await _insertTransaction(db, 'tx-1');
     await db.customStatement('PRAGMA foreign_keys = ON');
@@ -167,8 +172,10 @@ void main() {
         status: domain.InstallmentOccurrenceStatus.posted,
         childTransactionId: 'tx-1',
       ),
-      _makeOcc(id: 'occ-b', templateId: templateId, seq: 2, amountMinor: 100000),
-      _makeOcc(id: 'occ-c', templateId: templateId, seq: 3, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-b', templateId: templateId, seq: 2, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-c', templateId: templateId, seq: 3, amountMinor: 100000),
     ]);
 
     final amounts = await db.installmentOccurrenceDao
@@ -182,7 +189,8 @@ void main() {
   });
 
   // T-132.3 All-posted state
-  test('T-132.3 all-posted: runningTotal = totalConfigured, remaining = 0', () async {
+  test('T-132.3 all-posted: runningTotal = totalConfigured, remaining = 0',
+      () async {
     await db.customStatement('PRAGMA foreign_keys = OFF');
     await _insertTransaction(db, 'tx-p1');
     await _insertTransaction(db, 'tx-p2');
@@ -243,8 +251,10 @@ void main() {
         status: domain.InstallmentOccurrenceStatus.posted,
         childTransactionId: 'tx-voided',
       ),
-      _makeOcc(id: 'occ-pend', templateId: templateId, seq: 2, amountMinor: 100000),
-      _makeOcc(id: 'occ-pend2', templateId: templateId, seq: 3, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-pend', templateId: templateId, seq: 2, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-pend2', templateId: templateId, seq: 3, amountMinor: 100000),
     ]);
 
     final amounts = await db.installmentOccurrenceDao
@@ -301,9 +311,12 @@ void main() {
   // T-132.6 hasMismatch = false when matching
   test('T-132.6 hasMismatch false when projected = configured', () async {
     await db.installmentOccurrenceDao.insertOccurrences([
-      _makeOcc(id: 'occ-eq1', templateId: templateId, seq: 1, amountMinor: 100000),
-      _makeOcc(id: 'occ-eq2', templateId: templateId, seq: 2, amountMinor: 100000),
-      _makeOcc(id: 'occ-eq3', templateId: templateId, seq: 3, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-eq1', templateId: templateId, seq: 1, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-eq2', templateId: templateId, seq: 2, amountMinor: 100000),
+      _makeOcc(
+          id: 'occ-eq3', templateId: templateId, seq: 3, amountMinor: 100000),
     ]);
 
     final amounts = await db.installmentOccurrenceDao
