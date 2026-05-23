@@ -196,6 +196,9 @@ Widget _buildApp({
 
 class _NullTransactionRepo implements ITransactionRepository {
   @override
+  Future<int> countPosted() async => 0;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 

@@ -309,6 +309,9 @@ class TransactionRepositoryImpl implements ITransactionRepository {
     }
   }
 
+  @override
+  Future<int> countPosted() => _dao.countPosted();
+
   // -----------------------------------------------------------------------
   // Helpers
   // -----------------------------------------------------------------------

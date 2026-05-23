@@ -126,6 +126,9 @@ class _FakeTxRepo implements ITransactionRepository {
       const Stream.empty();
 
   @override
+  Future<int> countPosted() async => created.length;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

@@ -128,6 +128,9 @@ class FakeTransactionRepository implements ITransactionRepository {
       throw UnimplementedError();
 
   @override
+  Future<int> countPosted() => throw UnimplementedError();
+
+  @override
   Future<Result<Transaction>> updateNonFinancial(
     String id,
     TransactionNonFinancialPatch patch,

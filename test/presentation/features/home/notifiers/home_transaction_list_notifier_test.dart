@@ -130,6 +130,9 @@ class _FakeTransactionRepository implements ITransactionRepository {
   @override
   Future<Result<void>> postPending(String id, List<Entry> entries) async =>
       Ok(null);
+
+  @override
+  Future<int> countPosted() async => 0;
 }
 
 // ---------------------------------------------------------------------------
